@@ -45,7 +45,6 @@ export const zh: Dict = {
   'lobby.waitingPlayers': '等待更多玩家…',
   'gs.title': '游戏设置',
   'gs.hostOnly': '只有房主可以修改',
-  'gs.publicLocked': '公开房间使用标准设置',
   'gs.rounds': '回合数',
   'gs.maxPlayers': '最多玩家',
   'gs.drawTime': '作画时间',

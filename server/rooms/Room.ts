@@ -248,9 +248,14 @@ export class Room {
   // ================= lobby =================
 
   updateSettings(by: string, raw: unknown): void {
-    if (by !== this.hostId || this.phase !== 'lobby' || this.isPublic) return;
+    if (by !== this.hostId || this.phase !== 'lobby') return;
     this.settings = sanitizeSettings(raw, this.settings);
     this.settings.maxPlayers = Math.max(this.settings.maxPlayers, this.players.size);
+    // Public rooms are joined by strangers, so they never use host-written word lists.
+    if (this.isPublic) {
+      this.settings.customWords = [];
+      this.settings.customOnly = false;
+    }
     this.broadcastState();
   }
 

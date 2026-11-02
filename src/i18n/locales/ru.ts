@@ -45,7 +45,6 @@ export const ru: Dict = {
   'lobby.waitingPlayers': 'Ждём других игроков…',
   'gs.title': 'Настройки игры',
   'gs.hostOnly': 'Менять может только хост',
-  'gs.publicLocked': 'В публичных комнатах стандартные настройки',
   'gs.rounds': 'Раунды',
   'gs.maxPlayers': 'Макс. игроков',
   'gs.drawTime': 'Время рисования',

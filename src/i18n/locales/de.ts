@@ -45,7 +45,6 @@ export const de: Dict = {
   'lobby.waitingPlayers': 'Warte auf weitere Spieler…',
   'gs.title': 'Spieleinstellungen',
   'gs.hostOnly': 'Nur der Host kann das ändern',
-  'gs.publicLocked': 'Öffentliche Räume nutzen Standardeinstellungen',
   'gs.rounds': 'Runden',
   'gs.maxPlayers': 'Max. Spieler',
   'gs.drawTime': 'Zeichenzeit',

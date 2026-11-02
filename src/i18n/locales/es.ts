@@ -45,7 +45,6 @@ export const es: Dict = {
   'lobby.waitingPlayers': 'Esperando a más jugadores…',
   'gs.title': 'Ajustes de partida',
   'gs.hostOnly': 'Solo el anfitrión puede cambiarlos',
-  'gs.publicLocked': 'Las salas públicas usan ajustes estándar',
   'gs.rounds': 'Rondas',
   'gs.maxPlayers': 'Máx. jugadores',
   'gs.drawTime': 'Tiempo de dibujo',

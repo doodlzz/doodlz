@@ -48,7 +48,6 @@ export const en = {
   // game settings
   'gs.title': 'Game settings',
   'gs.hostOnly': 'Only the host can change these',
-  'gs.publicLocked': 'Public rooms use standard settings',
   'gs.rounds': 'Rounds',
   'gs.maxPlayers': 'Max players',
   'gs.drawTime': 'Draw time',

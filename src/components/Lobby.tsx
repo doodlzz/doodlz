@@ -186,7 +186,7 @@ function RoomView({ game }: { game: GameApi }) {
           </div>
           <GameSettingsPanel
             settings={state.settings}
-            editable={isHost && !state.isPublic}
+            editable={isHost}
             isPublic={state.isPublic}
             onChange={game.updateSettings}
             minPlayers={state.players.length}
@@ -229,18 +229,21 @@ function RoomView({ game }: { game: GameApi }) {
           </div>
 
           <div className="mt-5">
-            {state.isPublic ? (
-              <div className="rounded-2xl bg-indigo-50 py-4 text-center font-display text-lg font-semibold text-indigo-500">
+            {state.isPublic && (
+              <div className="mb-2 rounded-2xl bg-indigo-50 py-3 text-center font-display text-lg font-semibold text-indigo-500">
                 {state.autoStartAt ? t('lobby.autoStart', { s: autoLeft }) : t('lobby.waitingPlayers')}
               </div>
-            ) : isHost ? (
+            )}
+            {isHost ? (
               <button className="btn btn-green w-full py-4 text-xl" disabled={connectedCount < 2} onClick={game.startGame}>
                 <Play className="size-6 fill-current" /> {t('lobby.start')}
               </button>
             ) : (
-              <div className="rounded-2xl bg-indigo-50 py-4 text-center font-display text-lg font-semibold text-indigo-500">{t('lobby.waitingHost')}</div>
+              !state.isPublic && (
+                <div className="rounded-2xl bg-indigo-50 py-4 text-center font-display text-lg font-semibold text-indigo-500">{t('lobby.waitingHost')}</div>
+              )
             )}
-            {!state.isPublic && isHost && connectedCount < 2 && <p className="mt-2 text-center text-sm font-bold text-indigo-400">{t('lobby.inviteOne')}</p>}
+            {isHost && connectedCount < 2 && <p className="mt-2 text-center text-sm font-bold text-indigo-400">{t('lobby.inviteOne')}</p>}
           </div>
         </div>
 

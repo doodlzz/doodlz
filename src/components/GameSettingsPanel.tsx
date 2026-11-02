@@ -84,7 +84,7 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-indigo-900">
           <Settings className="size-5 text-sky-500" /> {t('gs.title')}
         </h2>
-        {!editable && <span className="text-xs font-bold text-indigo-300">{isPublic ? t('gs.publicLocked') : t('gs.hostOnly')}</span>}
+        {!editable && <span className="text-xs font-bold text-indigo-300">{t('gs.hostOnly')}</span>}
       </div>
 
       <div className="flex flex-col gap-2">
