@@ -1,11 +1,48 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --color-surface: #ffffff;
+  --color-ink: #1e1b4b;
   --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   --animate-float: float 3s ease-in-out infinite;
   --animate-fall: fall 3.5s linear infinite;
+}
+
+/*
+ * Dark mode swaps the light tints and dark inks of the palette, so every component
+ * that uses indigo-50 backgrounds / indigo-950 text flips without per-class dark: variants.
+ */
+.dark {
+  color-scheme: dark;
+  --color-surface: #1d1a3a;
+  --color-ink: #eef0ff;
+  --color-indigo-50: #27234d;
+  --color-indigo-100: #312c5e;
+  --color-indigo-200: #3f3974;
+  --color-indigo-300: #7b74c2;
+  --color-indigo-400: #9c96e6;
+  --color-indigo-600: #a5b4fc;
+  --color-indigo-700: #c7d2fe;
+  --color-indigo-900: #e0e7ff;
+  --color-indigo-950: #f1f0ff;
+  --color-slate-100: #2c2850;
+  --color-slate-200: #38335f;
+  --color-slate-400: #8d89b5;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-emerald-50: #11302b;
+  --color-emerald-100: #143a31;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-amber-50: #3a2e14;
+  --color-amber-600: #fbbf24;
+  --color-rose-50: #3d1a26;
+  --color-pink-50: #3d1a36;
+  --color-pink-200: #6d2b5a;
 }
 
 @keyframes pop {
@@ -25,7 +62,7 @@ html, body, #root { min-height: 100%; }
 
 body {
   font-family: var(--font-sans);
-  color: #1e1b4b;
+  color: var(--color-ink);
   background-color: #4f46e5;
   background-image:
     radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px),
@@ -33,10 +70,19 @@ body {
   background-size: 22px 22px, 100% 100%;
   background-attachment: fixed;
 }
+.dark body {
+  background-color: #0f0c24;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.06) 1.5px, transparent 1.5px),
+    linear-gradient(135deg, #17123a 0%, #2a1250 50%, #45103a 100%);
+}
 
 @layer components {
   .panel {
-    @apply rounded-3xl border-4 border-indigo-900/10 bg-white shadow-[0_6px_0_rgba(30,27,75,0.25)];
+    @apply rounded-3xl border-4 border-indigo-900/10 bg-surface shadow-[0_6px_0_rgba(30,27,75,0.25)];
+  }
+  .dark .panel {
+    @apply border-white/5 shadow-[0_6px_0_rgba(0,0,0,0.45)];
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-display text-lg font-semibold text-white
@@ -46,11 +92,17 @@ body {
   .btn-green { @apply bg-emerald-500 hover:bg-emerald-400; }
   .btn-blue { @apply bg-sky-500 hover:bg-sky-400; }
   .btn-pink { @apply bg-pink-500 hover:bg-pink-400; }
+  .btn-violet { @apply bg-violet-500 hover:bg-violet-400; }
   .btn-yellow { @apply bg-amber-400 text-amber-950 hover:bg-amber-300; }
   .btn-ghost { @apply bg-slate-100 text-slate-700 hover:bg-slate-200 shadow-[0_4px_0_rgba(0,0,0,0.12)]; }
   .input {
     @apply w-full rounded-2xl border-4 border-indigo-100 bg-indigo-50/60 px-4 py-3 font-bold text-indigo-950 outline-none
-      placeholder:font-semibold placeholder:text-indigo-300 focus:border-indigo-400 focus:bg-white transition;
+      placeholder:font-semibold placeholder:text-indigo-300 focus:border-indigo-400 focus:bg-surface transition;
   }
   .label { @apply mb-1.5 block font-display text-sm font-semibold uppercase tracking-wide text-indigo-400; }
+  .chip {
+    @apply cursor-pointer rounded-xl px-3 py-1.5 font-display text-sm font-semibold transition bg-surface text-indigo-700 hover:bg-indigo-100
+      disabled:cursor-default disabled:hover:bg-surface;
+  }
+  .chip-on { @apply bg-indigo-500 text-white shadow-[0_3px_0_#3730a3] hover:bg-indigo-500; }
 }

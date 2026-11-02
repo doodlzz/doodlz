@@ -14,7 +14,7 @@ export default function Logo({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
           {ch}
         </span>
       ))}
-      <span className="inline-block text-white drop-shadow-[0_3px_0_rgba(30,27,75,0.6)]">.gg</span>
+      <span className="inline-block text-white drop-shadow-[0_3px_0_rgba(30,27,75,0.6)]">.io</span>
     </h1>
   );
 }

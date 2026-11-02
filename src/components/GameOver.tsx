@@ -4,6 +4,8 @@ import type { PlayerPublic } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import Avatar from './Avatar';
 import Logo from './Logo';
+import { AdSlot } from './Promo';
+import { useT } from '../i18n';
 
 const CONFETTI_COLORS = ['#f87171', '#facc15', '#4ade80', '#38bdf8', '#c084fc', '#fb923c', '#f472b6'];
 
@@ -45,7 +47,7 @@ const PODIUM = [
   { place: 3, height: 'h-20 sm:h-28', color: 'bg-orange-300', text: 'text-orange-900', medal: 'text-orange-500' },
 ];
 
-function PodiumSpot({ player, spot, you }: { player?: PlayerPublic; spot: (typeof PODIUM)[number]; you: string }) {
+function PodiumSpot({ player, spot, you, youLabel }: { player?: PlayerPublic; spot: (typeof PODIUM)[number]; you: string; youLabel: string }) {
   return (
     <div className="flex w-24 flex-col items-center sm:w-36">
       {player ? (
@@ -54,9 +56,9 @@ function PodiumSpot({ player, spot, you }: { player?: PlayerPublic; spot: (typeo
           <Avatar avatar={player.avatar} size={spot.place === 1 ? 88 : 68} className={spot.place === 1 ? 'animate-float' : ''} />
           <span className="mt-1 max-w-full truncate font-display text-base font-bold text-white drop-shadow sm:text-lg">
             {player.name}
-            {player.id === you && ' (you)'}
+            {player.id === you && ` ${youLabel}`}
           </span>
-          <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-sm font-extrabold text-indigo-900">{player.score} pts</span>
+          <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-sm font-extrabold text-[#1e1b4b]">{player.score}</span>
         </div>
       ) : (
         <div className="mb-2 h-10" />
@@ -69,23 +71,23 @@ function PodiumSpot({ player, spot, you }: { player?: PlayerPublic; spot: (typeo
 }
 
 export default function GameOver({ game }: { game: GameApi }) {
+  const t = useT();
   const state = game.state!;
   const sorted = [...state.players].sort((a, b) => b.score - a.score);
   const isHost = state.hostId === state.you;
   const rest = sorted.slice(3);
+  const connected = state.players.filter((p) => p.connected).length;
 
   return (
     <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 py-8">
       <Confetti />
       <Logo size="sm" />
-      <h2 className="mt-4 font-display text-4xl font-bold text-white drop-shadow-[0_3px_0_rgba(30,27,75,0.5)] sm:text-5xl">Game over!</h2>
-      <p className="mt-1 font-display text-lg font-medium text-white/85">
-        {sorted[0] ? `${sorted[0].name} takes the crown 👑` : 'Thanks for playing!'}
-      </p>
+      <h2 className="mt-4 font-display text-4xl font-bold text-white drop-shadow-[0_3px_0_rgba(30,27,75,0.5)] sm:text-5xl">{t('over.title')}</h2>
+      <p className="mt-1 font-display text-lg font-medium text-white/85">{sorted[0] ? t('over.crown', { name: sorted[0].name }) : t('over.thanks')}</p>
 
       <div className="mt-8 flex items-end justify-center gap-2 sm:gap-4">
         {PODIUM.map((spot) => (
-          <PodiumSpot key={spot.place} spot={spot} player={sorted[spot.place - 1]} you={state.you} />
+          <PodiumSpot key={spot.place} spot={spot} player={sorted[spot.place - 1]} you={state.you} youLabel={t('lb.you')} />
         ))}
       </div>
 
@@ -98,40 +100,48 @@ export default function GameOver({ game }: { game: GameApi }) {
                 <Avatar avatar={p.avatar} size={32} />
                 <span className="flex-1 truncate font-bold text-indigo-950">
                   {p.name}
-                  {p.id === state.you && ' (you)'}
+                  {p.id === state.you && ` ${t('lb.you')}`}
                 </span>
-                <span className="font-bold text-indigo-500">{p.score} pts</span>
+                <span className="font-bold text-indigo-500">{t('lb.pts', { n: p.score })}</span>
               </li>
             ))}
           </ul>
         )}
 
-        {isHost ? (
+        {state.isPublic ? (
           <div className="flex flex-col gap-2">
-            <button className="btn btn-green w-full py-4 text-xl" onClick={game.startGame} disabled={state.players.length < 2}>
-              <RotateCcw className="size-6" /> Play again
+            <div className="rounded-2xl bg-indigo-50 py-4 text-center font-display text-lg font-semibold text-indigo-500">{t('over.nextGame')}</div>
+            <button className="btn btn-ghost text-base" onClick={game.leaveRoom}>
+              <DoorOpen className="size-5" /> {t('over.leaveRoom')}
             </button>
-            {state.players.length < 2 && <p className="text-center text-sm font-bold text-indigo-400">Need at least 2 players for a rematch</p>}
+          </div>
+        ) : isHost ? (
+          <div className="flex flex-col gap-2">
+            <button className="btn btn-green w-full py-4 text-xl" onClick={game.startGame} disabled={connected < 2}>
+              <RotateCcw className="size-6" /> {t('over.playAgain')}
+            </button>
+            {connected < 2 && <p className="text-center text-sm font-bold text-indigo-400">{t('over.needTwo')}</p>}
             <div className="grid grid-cols-2 gap-2">
               <button className="btn btn-blue text-base" onClick={game.backToLobby}>
-                <Home className="size-5" /> Lobby
+                <Home className="size-5" /> {t('over.lobby')}
               </button>
               <button className="btn btn-ghost text-base" onClick={game.leaveRoom}>
-                <DoorOpen className="size-5" /> Leave
+                <DoorOpen className="size-5" /> {t('over.leave')}
               </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             <button className="btn btn-green w-full py-4 text-xl" disabled>
-              <RotateCcw className="size-6" /> Waiting for host…
+              <RotateCcw className="size-6" /> {t('over.waitingHost')}
             </button>
             <button className="btn btn-ghost text-base" onClick={game.leaveRoom}>
-              <DoorOpen className="size-5" /> Leave room
+              <DoorOpen className="size-5" /> {t('over.leaveRoom')}
             </button>
           </div>
         )}
       </div>
+      <AdSlot className="mt-6 w-full max-w-md" />
     </div>
   );
 }
