@@ -214,6 +214,17 @@ export const en = {
   'bg.midnight': 'Midnight',
 
   // settings
+  'home.online': "{n} online",
+  'quests.title': "Daily quests",
+  'quests.resets': "Resets in {time}",
+  'quests.done': "Done!",
+  'quest.play3': "Play 3 games",
+  'quest.guess5': "Guess 5 words",
+  'quest.draw3': "Draw 3 times",
+  'quest.duo': "Play a Duo Draw game",
+  'quest.speed': "Play a Speed mode game",
+  'quest.random': "Play a game with randoms",
+  'socials.title': "Follow us",
   'set.open': 'Settings',
   'set.title': 'Settings',
   'set.language': 'Language',

@@ -204,4 +204,5 @@ export interface ServerToClientEvents {
   canvas_history: (ops: DrawOp[]) => void;
   chat_message: (m: ChatMessage) => void;
   kicked: (p: { reason: string }) => void;
+  online_count: (n: number) => void;
 }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Play, Shuffle, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
+import DailyQuests from './DailyQuests';
+import Socials from './Socials';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
 import { useT } from '../i18n';
@@ -20,6 +22,20 @@ function ConnectionBadge({ connected, resuming }: { connected: boolean; resuming
     <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold ${cls}`} role="status">
       {resuming ? <Loader2 className="size-3.5 animate-spin" /> : connected ? <Wifi className="size-3.5" /> : <WifiOff className="size-3.5" />}
       {resuming ? t('home.reconnecting') : connected ? t('home.connected') : t('home.connecting')}
+    </div>
+  );
+}
+
+function OnlineBadge({ online }: { online: number | null }) {
+  const t = useT();
+  if (online === null) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-extrabold text-white backdrop-blur-sm" role="status">
+      <span className="relative flex size-2.5">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
+      </span>
+      {t('home.online', { n: online.toLocaleString() })}
     </div>
   );
 }
@@ -45,7 +61,10 @@ function HomeView({ game }: { game: GameApi }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 py-8 sm:py-12">
+    <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
+      <div className="absolute top-4 left-4">
+        <OnlineBadge online={game.online} />
+      </div>
       <div className="absolute top-4 right-4">
         <SettingsButton />
       </div>
@@ -129,6 +148,9 @@ function HomeView({ game }: { game: GameApi }) {
       </div>
       <SupportCard className="mt-4 w-full max-w-xl" />
       <AdSlot className="mt-4 w-full max-w-xl" />
+      {/* Pinned to the bottom corners on wide screens; stacked at the end on smaller ones. */}
+      <DailyQuests className="mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:w-80" />
+      <Socials className="mt-6 xl:fixed xl:right-4 xl:bottom-4 xl:z-10 xl:mt-0" />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
 import { useGame } from './hooks/useGame';
+import { useQuestTracker } from './hooks/useQuestTracker';
 import { useT } from './i18n';
 import { SettingsProvider, useSettings } from './settings/SettingsContext';
 
@@ -13,6 +14,7 @@ function Shell() {
   const { settings } = useSettings();
   const game = useGame(settings.lang);
   useGameSounds(game);
+  useQuestTracker(game);
   const code = game.state?.code;
 
   // Keep the room code in the URL so it can be shared.

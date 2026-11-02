@@ -34,6 +34,7 @@ export function useGame(lang: Lang) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [wordChoices, setWordChoices] = useState<WordChoiceState | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [online, setOnline] = useState<number | null>(null);
   /** True while we hold a session token and are trying to get back into the room. */
   const [resuming, setResuming] = useState(() => loadSession() !== null);
   const clockOffset = useRef(0); // serverTime - localTime
@@ -95,6 +96,7 @@ export function useGame(lang: Lang) {
     socket.on('chat_message', onChat);
     socket.on('word_choices', onChoices);
     socket.on('kicked', onKicked);
+    socket.on('online_count', setOnline);
     if (socket.connected) tryResume();
     return () => {
       socket.off('connect', onConnect);
@@ -103,6 +105,7 @@ export function useGame(lang: Lang) {
       socket.off('chat_message', onChat);
       socket.off('word_choices', onChoices);
       socket.off('kicked', onKicked);
+      socket.off('online_count', setOnline);
     };
   }, [showToast, resetRoom]);
 
@@ -166,6 +169,7 @@ export function useGame(lang: Lang) {
 
   return {
     connected,
+    online,
     resuming,
     state,
     messages,

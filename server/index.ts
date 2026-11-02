@@ -19,7 +19,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, Record<string,
 });
 const manager = new RoomManager(io);
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, ...manager.stats() }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, online: io.engine.clientsCount, ...manager.stats() }));
 
 // In production, serve the built client from ./dist.
 const distDir = path.resolve(process.cwd(), 'dist');
@@ -31,7 +31,20 @@ if (existsSync(path.join(distDir, 'index.html'))) {
   });
 }
 
+// Everyone sees how many people are online; updates are batched to at most one per second.
+let onlineTimer: NodeJS.Timeout | null = null;
+const broadcastOnline = () => {
+  if (onlineTimer) return;
+  onlineTimer = setTimeout(() => {
+    onlineTimer = null;
+    io.emit('online_count', io.engine.clientsCount);
+  }, 1000);
+};
+
 io.on('connection', (socket) => {
+  socket.emit('online_count', io.engine.clientsCount);
+  broadcastOnline();
+  socket.on('disconnect', broadcastOnline);
   const ctx = createContext(socket, manager);
   registerLobbyHandlers(ctx);
   registerGameHandlers(ctx);
