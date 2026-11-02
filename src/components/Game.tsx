@@ -126,35 +126,38 @@ function ChoosingOverlay({ state }: { state: ClientRoomState }) {
   );
 }
 
-function TurnEndOverlay({ state }: { state: ClientRoomState }) {
+/** End-of-turn results, shown under the canvas so the finished drawing stays fully visible. */
+function TurnSummary({ state }: { state: ClientRoomState }) {
   const t = useT();
   const turn = state.lastTurn;
   if (!turn) return null;
   const reasons = { all_guessed: t('game.everyoneGuessed'), time_up: t('game.timeUp'), drawer_left: t('game.drawerLeft') };
   const rows = [...state.players].sort((a, b) => (turn.deltas[b.id] ?? 0) - (turn.deltas[a.id] ?? 0));
   return (
-    <div className="absolute inset-0 grid place-items-center overflow-y-auto bg-indigo-950/60 p-3 backdrop-blur-[2px]">
-      <div className="w-full max-w-sm animate-pop rounded-3xl bg-surface p-5 text-center shadow-xl">
-        <p className="font-display text-lg font-semibold text-indigo-400">{reasons[turn.reason]}</p>
-        {turn.word && (
-          <p className="mt-1 font-display text-xl font-semibold text-indigo-950">
+    <div className="panel animate-pop p-4" role="status">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        {turn.word ? (
+          <p className="font-display text-xl font-semibold text-indigo-950">
             {t('game.wordWas')} <span className="text-2xl font-bold text-pink-500 capitalize">{turn.word}</span>
           </p>
+        ) : (
+          <span />
         )}
-        <ul className="mt-4 flex max-h-56 flex-col gap-1.5 overflow-y-auto text-left">
-          {rows.map((p) => {
-            const d = turn.deltas[p.id] ?? 0;
-            return (
-              <li key={p.id} className="flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-1.5">
-                <Avatar avatar={p.avatar} size={28} />
-                <span className="flex-1 truncate font-bold text-indigo-950">{p.name}</span>
-                {state.drawerIds.includes(p.id) && <Pencil className="size-4 text-amber-500" />}
-                <span className={`font-display text-lg font-bold ${d > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>+{d}</span>
-              </li>
-            );
-          })}
-        </ul>
+        <p className="font-display text-base font-semibold text-indigo-400">{reasons[turn.reason]}</p>
       </div>
+      <ul className="mt-3 flex flex-wrap gap-1.5">
+        {rows.map((p) => {
+          const d = turn.deltas[p.id] ?? 0;
+          return (
+            <li key={p.id} className="flex items-center gap-1.5 rounded-full bg-indigo-50 py-1 pr-3 pl-1">
+              <Avatar avatar={p.avatar} size={26} />
+              <span className="max-w-32 truncate text-sm font-bold text-indigo-950">{p.name}</span>
+              {state.drawerIds.includes(p.id) && <Pencil className="size-3.5 text-amber-500" />}
+              <span className={`font-display font-bold ${d > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>+{d}</span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -170,7 +173,7 @@ export default function Game({ game }: { game: GameApi }) {
   const chooseSeconds = state.settings.speed ? 8 : 15;
 
   const timerTotal = state.phase === 'drawing' ? state.turnSeconds : state.phase === 'choosing' ? chooseSeconds : 6;
-  const overlay = state.phase === 'choosing' ? <ChoosingOverlay state={state} /> : state.phase === 'turn_end' ? <TurnEndOverlay state={state} /> : null;
+  const overlay = state.phase === 'choosing' ? <ChoosingOverlay state={state} /> : null;
   const blindfolded = isDrawer && state.settings.blindfold && state.phase === 'drawing';
 
   const placeholder =
@@ -212,7 +215,7 @@ export default function Game({ game }: { game: GameApi }) {
       <main className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[250px_minmax(0,1fr)_300px]">
         <div className="sm:col-span-2 lg:order-2 lg:col-span-1">
           <Canvas
-            isDrawer={isDrawer}
+            isDrawer={isDrawer && state.phase !== 'turn_end'}
             canDraw={isDrawer && state.phase === 'drawing'}
             blindfolded={blindfolded}
             lockedColor={state.drawColor}
@@ -220,6 +223,11 @@ export default function Game({ game }: { game: GameApi }) {
             onBackground={game.setBackground}
             overlay={overlay}
           />
+          {state.phase === 'turn_end' && (
+            <div className="mt-3">
+              <TurnSummary state={state} />
+            </div>
+          )}
         </div>
         <Leaderboard state={state} game={game} className="order-3 max-h-72 sm:order-none sm:h-[320px] sm:max-h-none lg:order-1 lg:h-auto lg:max-h-[calc(100vh-110px)]" />
         <Chat
