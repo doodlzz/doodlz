@@ -1,0 +1,13 @@
+# Render Blueprint: one free web service that serves the app and the Socket.io game server.
+services:
+  - type: web
+    name: doodlz
+    runtime: node
+    plan: free
+    # --include=dev: Vite/TypeScript are devDependencies but are needed to build.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.2
