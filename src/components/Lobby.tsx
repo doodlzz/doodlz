@@ -12,6 +12,7 @@ import Chat from './Chat';
 import GameSettingsPanel from './GameSettingsPanel';
 import { PlayerMenu } from './Leaderboard';
 import Logo from './Logo';
+import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
 
@@ -166,6 +167,7 @@ function RoomView({ game }: { game: GameApi }) {
   const emptySlots = Math.max(0, state.settings.maxPlayers - state.players.length);
   const autoLeft = useCountdown(state.autoStartAt ? game.toLocalTime(state.autoStartAt) : null);
   const connectedCount = state.players.filter((p) => p.connected).length;
+  const { hidden: codeHidden } = useCodeVisibility();
 
   const copy = async () => {
     try {
@@ -189,7 +191,7 @@ function RoomView({ game }: { game: GameApi }) {
         </div>
       </header>
 
-      <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1.2fr_1fr] lg:items-start">
         <div className="flex flex-col gap-4">
           <div className="panel p-5">
             <span className="label flex items-center gap-1.5">
@@ -197,8 +199,9 @@ function RoomView({ game }: { game: GameApi }) {
               {state.isPublic ? t('lobby.publicRoom') : t('lobby.roomCode')}
             </span>
             <div className="flex items-center gap-2">
-              <div className="flex-1 rounded-2xl bg-indigo-950 py-2 text-center font-display text-3xl font-bold tracking-[0.3em] text-yellow-300 dark:bg-black/40">
-                {state.code}
+              <div className="flex flex-1 items-center rounded-2xl bg-indigo-950 py-1.5 pr-1.5 pl-3 dark:bg-black/40">
+                <span className="flex-1 text-center font-display text-3xl font-bold tracking-[0.3em] text-yellow-300">{maskCode(state.code, codeHidden)}</span>
+                <CodeEyeButton className="size-10 text-yellow-300/80 hover:bg-white/10 hover:text-yellow-300" />
               </div>
               <button className={`btn ${copied ? 'btn-green' : 'btn-blue'} h-[52px]`} onClick={copy} title={t('lobby.invite')}>
                 {copied ? <Check className="size-5" /> : <Copy className="size-5" />}
@@ -222,7 +225,7 @@ function RoomView({ game }: { game: GameApi }) {
               {state.players.length}/{state.settings.maxPlayers}
             </span>
           </h2>
-          <div className="grid flex-1 auto-rows-min grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid auto-rows-min grid-cols-2 gap-3 sm:grid-cols-3">
             {state.players.map((p) => (
               <div
                 key={p.id}
@@ -269,7 +272,7 @@ function RoomView({ game }: { game: GameApi }) {
           </div>
         </div>
 
-        <Chat messages={game.messages} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="h-[360px] lg:h-auto" />
+        <Chat messages={game.messages} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
       </div>
     </div>
   );

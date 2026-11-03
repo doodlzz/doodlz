@@ -8,6 +8,7 @@ import Canvas from './canvas/Canvas';
 import Chat from './Chat';
 import Leaderboard from './Leaderboard';
 import Logo from './Logo';
+import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import SettingsButton from './SettingsModal';
 import WordSelectModal from './WordSelectModal';
 
@@ -171,6 +172,7 @@ export default function Game({ game }: { game: GameApi }) {
   const partner = state.drawerIds.length > 1 ? state.players.find((p) => p.id === state.drawerIds.find((id) => id !== state.you)) : undefined;
   const secondsLeft = useCountdown(state.phaseEndsAt === null ? null : game.toLocalTime(state.phaseEndsAt));
   const chooseSeconds = state.settings.speed ? 8 : 15;
+  const { hidden: codeHidden } = useCodeVisibility();
 
   const timerTotal = state.phase === 'drawing' ? state.turnSeconds : state.phase === 'choosing' ? chooseSeconds : 6;
   const overlay = state.phase === 'choosing' ? <ChoosingOverlay state={state} /> : null;
@@ -195,6 +197,13 @@ export default function Game({ game }: { game: GameApi }) {
           </span>
           <span className="font-display text-xl font-bold text-indigo-950">
             {Math.min(state.round, state.settings.rounds)} <span className="text-indigo-300">/ {state.settings.rounds}</span>
+          </span>
+        </div>
+        <div className="flex flex-col leading-tight">
+          <span className="text-xs font-extrabold tracking-wider text-indigo-300 uppercase">{t('game.code')}</span>
+          <span className="flex items-center gap-1">
+            <span className="font-display text-xl font-bold tracking-widest text-indigo-950">{maskCode(state.code, codeHidden)}</span>
+            <CodeEyeButton className="size-7 text-indigo-300 hover:bg-indigo-50 hover:text-indigo-700" />
           </span>
         </div>
         <div className="order-last flex min-w-0 basis-full flex-col items-center justify-center px-2 pb-1 text-center sm:order-none sm:flex-1 sm:basis-auto sm:pb-0">

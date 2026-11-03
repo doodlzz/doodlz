@@ -11,6 +11,7 @@ export interface Settings {
   theme: ThemePref;
   sfx: number; // 0..1
   music: number; // 0..1, 0 = off
+  hideCode: boolean; // streamer-friendly: mask the room code
 }
 
 const KEY = 'doodlz:settings';
@@ -20,7 +21,7 @@ function detectLang(): Lang {
   return LANGUAGES.includes(nav as Lang) ? (nav as Lang) : 'en';
 }
 
-const defaults = (): Settings => ({ lang: detectLang(), theme: 'system', sfx: 0.6, music: 0 });
+const defaults = (): Settings => ({ lang: detectLang(), theme: 'system', sfx: 0.6, music: 0, hideCode: false });
 
 interface Ctx {
   settings: Settings;
