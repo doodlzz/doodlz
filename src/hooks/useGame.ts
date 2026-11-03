@@ -50,6 +50,9 @@ export function useGame(lang: Lang) {
 
   const resetRoom = useCallback(() => {
     inRoom.current = false;
+    // Drop "?room=CODE" for the room we just lost, or the home screen would only offer to rejoin it.
+    const lost = loadSession()?.code;
+    if (lost && new URLSearchParams(location.search).get('room')?.toUpperCase() === lost) history.replaceState(null, '', '/');
     saveSession(null);
     setState(null);
     setMessages([]);

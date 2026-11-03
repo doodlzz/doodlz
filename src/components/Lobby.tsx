@@ -53,10 +53,15 @@ function HomeView({ game }: { game: GameApi }) {
   const [code, setCode] = useState(() => new URLSearchParams(location.search).get('room')?.toUpperCase() ?? '');
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false); // choosing a category for a new private room
-  const invited = new URLSearchParams(location.search).has('room');
+  const [invited, setInvited] = useState(() => new URLSearchParams(location.search).has('room'));
   const ready = game.connected && !busy && !game.resuming;
 
   useEffect(() => saveProfile(name, avatar), [name, avatar]);
+
+  // A failed reconnect clears "?room=" from the URL; drop the invite view with it.
+  useEffect(() => {
+    if (!game.resuming && !new URLSearchParams(location.search).has('room')) setInvited(false);
+  }, [game.resuming]);
 
   const run = async (fn: () => Promise<boolean>) => {
     setBusy(true);
@@ -102,7 +107,18 @@ function HomeView({ game }: { game: GameApi }) {
         </div>
 
         {invited ? (
-          <button className="btn btn-green w-full py-4 text-xl" disabled={!ready || !code} onClick={() => run(() => game.joinRoom(code, name, avatar))}>
+          <button className="btn btn-green w-full py-4 text-xl" disabled={!ready || !code} onClick={() =>
+              run(async () => {
+                const ok = await game.joinRoom(code, name, avatar);
+                // Dead or full invite: show the normal buttons again instead of trapping the player here.
+                if (!ok) {
+                  setInvited(false);
+                  history.replaceState(null, '', '/');
+                }
+                return ok;
+              })
+            }
+          >
             <UserPlus className="size-6" /> {t('home.joinInvite', { code })}
           </button>
         ) : (
