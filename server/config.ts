@@ -13,4 +13,5 @@ export const config = {
   turnEndMs: 6_000,
   publicAutoStartMs: 15_000,
   publicRestartMs: 12_000,
+  categoryPickMs: 25_000, // public rooms: time the first player gets to pick a category
 };

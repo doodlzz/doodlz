@@ -4,7 +4,23 @@
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
-export const CATEGORIES = ['animals', 'food', 'objects', 'places', 'nature', 'actions', 'fantasy', 'sports', 'tech'] as const;
+export const CATEGORIES = [
+  'games',
+  'heroes',
+  'cartoons',
+  'snacks',
+  'wildlife',
+  'landscapes',
+  'verbs',
+  'emotions',
+  'landmarks',
+  'history',
+  'household',
+  'brainrot',
+  'jobs',
+  'flags',
+  'movies',
+] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const BACKGROUNDS = ['white', 'paper', 'grid', 'dots', 'chalk', 'sky', 'midnight'] as const;
@@ -133,6 +149,9 @@ export interface ClientRoomState {
   hintsLeft: number; // for this guesser
   hintsUsed: number;
   autoStartAt: number | null; // public rooms start themselves
+  /** Public rooms: the first player still has to pick the category. */
+  categoryPending: boolean;
+  categoryPickEndsAt: number | null; // a random category is picked when this runs out
   reported: string[]; // players this client has already reported
 }
 
@@ -182,6 +201,7 @@ export interface ClientToServerEvents {
   resume_session: (p: { token: string }, ack: Ack<JoinResult>) => void;
   leave_room: () => void;
   update_settings: (s: Partial<RoomSettings>) => void;
+  choose_category: (c: Category) => void;
   start_game: (ack?: Ack) => void;
   back_to_lobby: () => void;
   select_word: (index: number) => void;

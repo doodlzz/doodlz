@@ -78,6 +78,7 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
 
   socket.on('leave_room', safe(leaveCurrent));
   socket.on('update_settings', safe(withRoom(ctx, (room, id, s) => room.updateSettings(id, s))));
+  socket.on('choose_category', safe(withRoom(ctx, (room, id, c) => room.chooseCategory(id, c))));
   socket.on(
     'start_game',
     safe((ack) => {

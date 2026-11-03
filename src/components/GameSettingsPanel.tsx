@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { BookText, Clock, EyeOff, Lightbulb, Minus, Palette, Plus, Repeat, Settings, Tags, Users, Users2, User, Zap } from 'lucide-react';
-import { CATEGORIES, MAX_CUSTOM_WORDS, SETTING_LIMITS, type RoomSettings, type SpeedCap } from '../../shared/types';
+import { BookText, Clock, EyeOff, Lightbulb, Minus, Palette, Plus, Repeat, Settings, Users, Users2, User, Zap } from 'lucide-react';
+import { MAX_CUSTOM_WORDS, SETTING_LIMITS, type RoomSettings, type SpeedCap } from '../../shared/types';
 import { useT } from '../i18n';
 
 const DRAW_TIMES = [30, 45, 60, 80, 100, 120, 150, 180];
@@ -72,11 +72,6 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
     if (parseWords(wordsText).join('|') !== settings.customWords.join('|')) setWordsText(settings.customWords.join(', '));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.customWords]);
-
-  const toggleCategory = (c: (typeof CATEGORIES)[number]) => {
-    const has = settings.categories.includes(c);
-    onChange({ categories: has ? settings.categories.filter((x) => x !== c) : [...settings.categories, c] });
-  };
 
   return (
     <div className="panel p-5">
@@ -158,21 +153,6 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
         <Row icon={<EyeOff className="size-4 text-slate-500" />} label={t('gs.blindfold')}>
           <Toggle on={settings.blindfold} disabled={!editable} label={t('gs.blindfold')} onChange={(blindfold) => onChange({ blindfold })} />
         </Row>
-
-        {/* words */}
-        <span className="label mt-2 flex items-center gap-1.5">
-          <Tags className="size-4" /> {t('gs.categories')}
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          <button type="button" disabled={!editable} onClick={() => onChange({ categories: [] })} className={`chip ${settings.categories.length === 0 ? 'chip-on' : 'bg-indigo-50'}`}>
-            {t('gs.allCategories')}
-          </button>
-          {CATEGORIES.map((c) => (
-            <button key={c} type="button" disabled={!editable} onClick={() => toggleCategory(c)} className={`chip ${settings.categories.includes(c) ? 'chip-on' : 'bg-indigo-50'}`}>
-              {t(`cat.${c}`)}
-            </button>
-          ))}
-        </div>
 
         {!isPublic && (
           <>

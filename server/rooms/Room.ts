@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { Server } from 'socket.io';
 import {
+  CATEGORIES,
   MAX_WARNINGS,
   SINGLE_COLORS,
   type Avatar,
   type BackgroundId,
+  type Category,
   type ChatKind,
   type ChatMessage,
   type ClientRoomState,
@@ -96,6 +98,9 @@ export class Room {
   private rerollsLeft = 0;
   private usedWords = new Set<string>();
   private autoStartAt: number | null = null;
+  private categoryPending = false;
+  private categoryPickEndsAt: number | null = null;
+  private categoryTimer: NodeJS.Timeout | null = null;
   private reports = new Map<string, Set<string>>(); // targetId -> reporter ids
   private bannedDevices = new Set<string>();
   private bannedIps = new Set<string>();
@@ -111,6 +116,15 @@ export class Room {
     private readonly hooks: RoomHooks,
   ) {
     this.settings = settings;
+    // Matchmade rooms get their category from the first player; pick one at random if they take too long.
+    if (isPublic && settings.categories.length === 0) {
+      this.categoryPending = true;
+      this.categoryPickEndsAt = Date.now() + config.categoryPickMs;
+      this.categoryTimer = setTimeout(() => {
+        this.categoryTimer = null;
+        this.setCategory(CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)]);
+      }, config.categoryPickMs);
+    }
   }
 
   // ================= players =================
@@ -249,7 +263,8 @@ export class Room {
 
   updateSettings(by: string, raw: unknown): void {
     if (by !== this.hostId || this.phase !== 'lobby') return;
-    this.settings = sanitizeSettings(raw, this.settings);
+    // The category only changes through chooseCategory.
+    this.settings = { ...sanitizeSettings(raw, this.settings), categories: this.settings.categories };
     this.settings.maxPlayers = Math.max(this.settings.maxPlayers, this.players.size);
     // Public rooms are joined by strangers, so they never use host-written word lists.
     if (this.isPublic) {
@@ -259,10 +274,29 @@ export class Room {
     this.broadcastState();
   }
 
+  /** Private rooms: the host can switch category in the lobby. Public rooms: picked once, then locked. */
+  chooseCategory(by: string, raw: unknown): void {
+    if (by !== this.hostId || this.phase !== 'lobby') return;
+    if (this.isPublic && !this.categoryPending) return;
+    if (!CATEGORIES.includes(raw as Category)) return;
+    this.setCategory(raw as Category);
+  }
+
+  private setCategory(c: Category): void {
+    this.settings = { ...this.settings, categories: [c] };
+    if (this.categoryTimer) clearTimeout(this.categoryTimer);
+    this.categoryTimer = null;
+    this.categoryPending = false;
+    this.categoryPickEndsAt = null;
+    this.checkAutoStart();
+    this.broadcastState();
+  }
+
   /** Returns an i18n error key, or null on success. `by` is null for automatic starts. */
   startGame(by: string | null): string | null {
     if (by !== null && by !== this.hostId) return 'err.notHost';
     if (this.phase !== 'lobby' && this.phase !== 'game_over') return 'err.alreadyRunning';
+    if (this.categoryPending) return 'err.pickCategory';
     const connected = this.connectedPlayers.length;
     if (connected < 2) return 'err.needTwo';
     if (this.settings.mode === 'duo' && connected < 3) return 'err.needThreeDuo';
@@ -306,7 +340,7 @@ export class Room {
   /** Public rooms start on their own a few seconds after two players are in. */
   private checkAutoStart(): void {
     if (!this.isPublic || this.phase !== 'lobby') return;
-    const enough = this.connectedPlayers.length >= 2;
+    const enough = this.connectedPlayers.length >= 2 && !this.categoryPending;
     if (enough && this.autoStartAt === null) {
       this.autoStartAt = Date.now() + config.publicAutoStartMs;
       this.autoTimer = setTimeout(() => {
@@ -712,6 +746,8 @@ export class Room {
       hintsLeft: this.phase === 'drawing' && !knows ? Math.max(0, this.maxHints() - p.hintsUsed) : 0,
       hintsUsed: p.hintsUsed,
       autoStartAt: this.autoStartAt,
+      categoryPending: this.categoryPending,
+      categoryPickEndsAt: this.categoryPickEndsAt,
       reported,
     };
   }
@@ -733,6 +769,7 @@ export class Room {
   destroy(): void {
     this.clearTimers();
     if (this.autoTimer) clearTimeout(this.autoTimer);
+    if (this.categoryTimer) clearTimeout(this.categoryTimer);
     for (const p of this.players.values()) if (p.graceTimer) clearTimeout(p.graceTimer);
   }
 }

@@ -1,50 +1,80 @@
 import type { Category, Difficulty } from '../../shared/types.js';
 
 export const WORDS: Record<Category, Record<Difficulty, string[]>> = {
-  animals: {
-    easy: ['cat', 'dog', 'fish', 'bird', 'duck', 'frog', 'pig', 'bee', 'cow', 'snake', 'mouse', 'lion', 'owl', 'bear'],
-    medium: ['penguin', 'giraffe', 'octopus', 'kangaroo', 'dolphin', 'jellyfish', 'hedgehog', 'peacock', 'flamingo', 'turtle', 'squirrel', 'zebra', 'crab', 'koala'],
-    hard: ['chameleon', 'platypus', 'hibernation', 'camouflage', 'migration', 'anteater', 'narwhal', 'axolotl', 'porcupine', 'armadillo', 'seahorse', 'sloth'],
+  games: {
+    easy: ['mario', 'pac-man', 'tetris', 'controller', 'joystick', 'sonic', 'creeper', 'coin', 'kirby', 'yoshi', 'pong', 'level up', 'boss', 'pikmin'],
+    medium: ['minecraft', 'fortnite', 'zelda', 'among us', 'donkey kong', 'game over', 'power up', 'roblox', 'angry birds', 'space invaders', 'mushroom kingdom', 'treasure chest', 'health bar', 'checkpoint'],
+    hard: ['fall guys', 'flappy bird', 'speedrun', 'respawn', 'loot box', 'victory royale', 'mario kart', 'animal crossing', 'pokeball', 'subway surfers', 'geometry dash', 'rage quit'],
   },
-  food: {
-    easy: ['apple', 'banana', 'cake', 'pizza', 'egg', 'bread', 'cookie', 'carrot', 'cheese', 'grapes', 'milk', 'pear', 'corn', 'candy'],
-    medium: ['hamburger', 'popcorn', 'sandwich', 'ice cream', 'hot dog', 'sushi', 'chocolate', 'pancake', 'spaghetti', 'taco', 'donut', 'watermelon', 'pretzel', 'lemonade'],
-    hard: ['barbecue', 'fondue', 'smoothie', 'birthday cake', 'fortune cookie', 'gingerbread', 'avocado toast', 'dumpling', 'croissant', 'cotton candy', 'food fight', 'picnic'],
+  heroes: {
+    easy: ['batman', 'superman', 'robot', 'alien', 'cape', 'mask', 'laser', 'ufo', 'rocket', 'hulk', 'shield', 'spaceship'],
+    medium: ['spider-man', 'iron man', 'wonder woman', 'captain america', 'lightsaber', 'thor', 'flash', 'black panther', 'cyborg', 'jetpack', 'force field', 'ray gun'],
+    hard: ['time machine', 'teleporter', 'wolverine', 'deadpool', 'black hole', 'darth vader', 'kryptonite', 'infinity gauntlet', 'hologram', 'invisibility', 'mind control', 'wormhole'],
   },
-  objects: {
-    easy: ['ball', 'book', 'chair', 'hat', 'key', 'cup', 'door', 'bed', 'clock', 'lamp', 'shoe', 'sock', 'ring', 'spoon'],
-    medium: ['umbrella', 'scissors', 'backpack', 'camera', 'toothbrush', 'magnet', 'anchor', 'telescope', 'compass', 'ladder', 'candle', 'guitar', 'balloon', 'hammer'],
-    hard: ['chandelier', 'hourglass', 'kaleidoscope', 'microscope', 'typewriter', 'stethoscope', 'blueprint', 'metronome', 'periscope', 'boomerang', 'padlock', 'trampoline'],
+  cartoons: {
+    easy: ['spongebob', 'pikachu', 'mickey mouse', 'shrek', 'elsa', 'garfield', 'snoopy', 'patrick', 'nemo', 'olaf', 'bluey', 'peppa pig'],
+    medium: ['scooby-doo', 'tom and jerry', 'bugs bunny', 'homer simpson', 'winnie the pooh', 'minion', 'dora', 'stitch', 'paw patrol', 'smurf', 'pink panther', 'squidward'],
+    hard: ['phineas and ferb', 'powerpuff girls', 'tweety', 'road runner', 'popeye', 'gumball', 'ben 10', 'adventure time', 'johnny bravo', 'courage', 'wall-e', 'kung fu panda'],
   },
-  places: {
-    easy: ['house', 'school', 'park', 'beach', 'farm', 'zoo', 'shop', 'bank', 'road', 'bridge', 'island', 'city'],
-    medium: ['castle', 'lighthouse', 'pyramid', 'igloo', 'airport', 'hospital', 'library', 'museum', 'stadium', 'jungle', 'desert', 'volcano'],
-    hard: ['labyrinth', 'observatory', 'skyscraper', 'aquarium', 'cathedral', 'colosseum', 'amusement park', 'haunted house', 'submarine base', 'space station', 'treehouse', 'oasis'],
+  snacks: {
+    easy: ['burger', 'fries', 'pizza', 'hot dog', 'donut', 'taco', 'cookie', 'popcorn', 'chips', 'soda', 'candy', 'ice cream'],
+    medium: ['nachos', 'milkshake', 'chicken nugget', 'pretzel', 'burrito', 'onion rings', 'cupcake', 'lollipop', 'corn dog', 'waffle', 'cheese puff', 'chocolate bar'],
+    hard: ['happy meal', 'drive-thru', 'gummy bear', 'cotton candy', 'slushie', 'cinnamon roll', 'popsicle', 'churro', 'mozzarella stick', 'jelly bean', 'bubble tea', 'kebab'],
   },
-  nature: {
-    easy: ['sun', 'moon', 'star', 'tree', 'cloud', 'flower', 'leaf', 'rain', 'snow', 'fire', 'rock', 'wave'],
-    medium: ['rainbow', 'tornado', 'waterfall', 'cactus', 'mushroom', 'lightning', 'mountain', 'river', 'snowflake', 'sunflower', 'cave', 'iceberg'],
-    hard: ['avalanche', 'solar eclipse', 'thunderstorm', 'photosynthesis', 'constellation', 'black hole', 'aurora', 'tsunami', 'quicksand', 'mirage', 'gravity', 'earthquake'],
+  wildlife: {
+    easy: ['lion', 'tiger', 'shark', 'snake', 'monkey', 'zebra', 'elephant', 'giraffe', 'crocodile', 'hippo', 'parrot', 'panda'],
+    medium: ['sloth', 'toucan', 'flamingo', 'kangaroo', 'koala', 'cheetah', 'gorilla', 'peacock', 'jellyfish', 'octopus', 'penguin', 'rhino'],
+    hard: ['chameleon', 'platypus', 'axolotl', 'narwhal', 'anteater', 'armadillo', 'komodo dragon', 'meerkat', 'red panda', 'manta ray', 'okapi', 'pufferfish'],
   },
-  actions: {
-    easy: ['run', 'jump', 'swim', 'sleep', 'eat', 'cry', 'sing', 'dance', 'read', 'smile', 'wave', 'fly'],
-    medium: ['juggling', 'fishing', 'camping', 'painting', 'sneezing', 'climbing', 'whistling', 'skiing', 'knitting', 'shopping', 'cooking', 'yawning'],
-    hard: ['sleepwalking', 'procrastination', 'hide and seek', 'meditation', 'brainstorm', 'daydreaming', 'eavesdropping', 'hiccups', 'tug of war', 'karaoke', 'recycling', 'sunbathing'],
+  landscapes: {
+    easy: ['sun', 'rain', 'snow', 'cloud', 'rainbow', 'mountain', 'beach', 'island', 'river', 'lake', 'wind', 'moon'],
+    medium: ['volcano', 'tornado', 'waterfall', 'desert', 'lightning', 'canyon', 'glacier', 'forest', 'snowstorm', 'fog', 'cave', 'sunset'],
+    hard: ['aurora', 'tsunami', 'avalanche', 'hurricane', 'oasis', 'sandstorm', 'thunderstorm', 'heatwave', 'rainforest', 'hailstorm', 'geyser', 'solar eclipse'],
   },
-  fantasy: {
-    easy: ['ghost', 'crown', 'wand', 'robot', 'alien', 'witch', 'magic', 'sword', 'dragon', 'elf', 'giant', 'monster'],
-    medium: ['unicorn', 'mermaid', 'wizard', 'vampire', 'pirate', 'skeleton', 'zombie', 'genie', 'werewolf', 'treasure', 'fairy', 'potion'],
-    hard: ['time machine', 'invisibility', 'telepathy', 'doppelganger', 'phoenix', 'centaur', 'minotaur', 'leprechaun', 'teleportation', 'crystal ball', 'haunted', 'superpower'],
+  verbs: {
+    easy: ['run', 'jump', 'swim', 'sleep', 'eat', 'cry', 'sing', 'dance', 'read', 'laugh', 'wave', 'kick'],
+    medium: ['juggling', 'fishing', 'sneezing', 'climbing', 'whistling', 'skiing', 'knitting', 'cooking', 'yawning', 'painting', 'skating', 'hugging'],
+    hard: ['sleepwalking', 'eavesdropping', 'hiccuping', 'tiptoeing', 'shivering', 'stretching', 'surfing', 'vacuuming', 'bowling', 'meditating', 'sunbathing', 'tug of war'],
   },
-  sports: {
-    easy: ['goal', 'bat', 'net', 'kick', 'race', 'golf', 'swing', 'medal', 'skate', 'bike', 'team', 'whistle'],
-    medium: ['basketball', 'bowling', 'skateboard', 'surfing', 'tennis', 'boxing', 'archery', 'hockey', 'marathon', 'trophy', 'baseball', 'snowboard'],
-    hard: ['referee', 'cheerleader', 'pole vault', 'high jump', 'gymnastics', 'wrestling', 'scuba diving', 'skydiving', 'water polo', 'photo finish', 'penalty kick', 'olympics'],
+  emotions: {
+    easy: ['love', 'happy', 'sad', 'angry', 'scared', 'tired', 'cold', 'hot', 'hungry', 'bored', 'kiss', 'idea'],
+    medium: ['surprise', 'jealous', 'confused', 'shy', 'proud', 'lonely', 'friendship', 'dream', 'time', 'music', 'luck', 'peace'],
+    hard: ['freedom', 'nostalgia', 'karma', 'gravity', 'balance', 'infinity', 'embarrassed', 'heartbreak', 'teamwork', 'secret', 'memory', 'déjà vu'],
   },
-  tech: {
-    easy: ['phone', 'tv', 'mouse', 'radio', 'laptop', 'robot', 'battery', 'plug', 'game', 'email', 'wifi', 'cable'],
-    medium: ['computer', 'keyboard', 'headphones', 'satellite', 'drone', 'printer', 'joystick', 'password', 'microphone', 'rocket', 'charger', 'website'],
-    hard: ['artificial intelligence', 'virus', 'firewall', 'hologram', 'virtual reality', 'algorithm', 'blockchain', 'selfie stick', 'social media', 'livestream', 'download', 'emoji'],
+  landmarks: {
+    easy: ['eiffel tower', 'pyramid', 'big ben', 'castle', 'lighthouse', 'bridge', 'statue', 'windmill', 'igloo', 'temple', 'tower', 'stadium'],
+    medium: ['statue of liberty', 'great wall', 'colosseum', 'taj mahal', 'leaning tower', 'mount rushmore', 'sphinx', 'golden gate', 'mount everest', 'stonehenge', 'hollywood sign', 'niagara falls'],
+    hard: ['sydney opera house', 'christ the redeemer', 'machu picchu', 'burj khalifa', 'tower bridge', 'easter island', 'grand canyon', 'mount fuji', 'notre dame', 'empire state building', 'kremlin', 'petra'],
+  },
+  history: {
+    easy: ['knight', 'castle', 'pirate', 'viking', 'dinosaur', 'caveman', 'king', 'queen', 'crown', 'sword', 'pharaoh', 'cowboy'],
+    medium: ['pyramid', 'mummy', 'samurai', 'gladiator', 'ninja', 'chariot', 'catapult', 'armor', 'ship wreck', 'stone age', 'ice age', 'cannon'],
+    hard: ['ancient egypt', 'roman empire', 'wild west', 'middle ages', 'renaissance', 'moon landing', 'steam engine', 'printing press', 'hieroglyphs', 'trojan horse', 'colosseum', 'industrial revolution'],
+  },
+  household: {
+    easy: ['lamp', 'chair', 'bed', 'cup', 'spoon', 'fork', 'door', 'clock', 'key', 'sock', 'pillow', 'mirror'],
+    medium: ['toaster', 'couch', 'toothbrush', 'fridge', 'umbrella', 'scissors', 'microwave', 'bathtub', 'candle', 'remote', 'ladder', 'kettle'],
+    hard: ['vacuum cleaner', 'washing machine', 'chandelier', 'dishwasher', 'blender', 'ironing board', 'coat hanger', 'bunk bed', 'doorbell', 'hourglass', 'plunger', 'smoke alarm'],
+  },
+  brainrot: {
+    easy: ['sus', 'npc', 'goat', 'aura', 'sigma', 'rizz', 'mid', 'cooked', 'slay', 'ohio', 'bruh', 'noob'],
+    medium: ['skibidi toilet', 'mewing', 'fanum tax', 'no cap', 'bussin', 'delulu', 'glazing', 'main character', 'lil bro', 'chill guy', 'griddy', 'pookie'],
+    hard: ['tung tung tung sahur', 'tralalero tralala', 'bombardiro crocodilo', 'ballerina cappuccina', 'brr brr patapim', 'six seven', 'aura farming', 'mogging', 'looksmaxxing', 'touch grass', 'sigma face', 'side eye'],
+  },
+  jobs: {
+    easy: ['doctor', 'chef', 'pilot', 'teacher', 'farmer', 'police', 'nurse', 'baker', 'clown', 'artist', 'dentist', 'singer'],
+    medium: ['firefighter', 'astronaut', 'mechanic', 'plumber', 'detective', 'lifeguard', 'magician', 'mail carrier', 'scientist', 'photographer', 'barber', 'builder'],
+    hard: ['archaeologist', 'veterinarian', 'electrician', 'lumberjack', 'beekeeper', 'zookeeper', 'surgeon', 'referee', 'judge', 'deep sea diver', 'youtuber', 'flight attendant'],
+  },
+  flags: {
+    easy: ['japan', 'canada', 'france', 'italy', 'usa', 'china', 'brazil', 'germany', 'mexico', 'egypt', 'india', 'spain'],
+    medium: ['australia', 'england', 'ireland', 'sweden', 'greece', 'turkey', 'russia', 'argentina', 'switzerland', 'south korea', 'jamaica', 'poland'],
+    hard: ['nepal', 'south africa', 'chile', 'portugal', 'norway', 'new zealand', 'kenya', 'vietnam', 'netherlands', 'ukraine', 'iceland', 'saudi arabia'],
+  },
+  movies: {
+    easy: ['titanic', 'jaws', 'frozen', 'cars', 'up', 'shrek', 'batman', 'avatar', 'barbie', 'moana', 'coco', 'rocky'],
+    medium: ['star wars', 'toy story', 'finding nemo', 'the lion king', 'harry potter', 'jurassic park', 'ghostbusters', 'king kong', 'spider-man', 'inside out', 'the incredibles', 'ratatouille'],
+    hard: ['godzilla', 'the matrix', 'back to the future', 'lord of the rings', 'jumanji', 'home alone', 'pirates of the caribbean', 'the wizard of oz', 'monsters inc', 'despicable me', 'kung fu panda', 'night at the museum'],
   },
 };
 

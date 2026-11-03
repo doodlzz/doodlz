@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Play, Shuffle, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
+import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Lock, Play, RefreshCw, Shuffle, Tags, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
+import type { Category } from '../../shared/types';
+import CategoryPicker, { CategoryTile } from './CategoryPicker';
 import DailyQuests from './DailyQuests';
 import Socials from './Socials';
 import type { GameApi } from '../hooks/useGame';
@@ -50,6 +52,7 @@ function HomeView({ game }: { game: GameApi }) {
   const [avatar, setAvatar] = useState(profile.avatar);
   const [code, setCode] = useState(() => new URLSearchParams(location.search).get('room')?.toUpperCase() ?? '');
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false); // choosing a category for a new private room
   const invited = new URLSearchParams(location.search).has('room');
   const ready = game.connected && !busy && !game.resuming;
 
@@ -61,8 +64,14 @@ function HomeView({ game }: { game: GameApi }) {
     setBusy(false);
   };
 
+  const createWith = (c: Category) => {
+    setPicking(false);
+    run(() => game.createRoom(name, avatar, { categories: [c] }));
+  };
+
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
+      {picking && <CategoryPicker onPick={createWith} onClose={() => setPicking(false)} />}
       <div className="absolute top-4 left-4">
         <OnlineBadge online={game.online} />
       </div>
@@ -101,7 +110,7 @@ function HomeView({ game }: { game: GameApi }) {
             <button className="btn btn-green py-4 text-lg" disabled={!ready} onClick={() => run(() => game.quickPlay(name, avatar))}>
               <Shuffle className="size-5" /> {t('home.playRandoms')}
             </button>
-            <button className="btn btn-blue py-4 text-lg" disabled={!ready} onClick={() => run(() => game.createRoom(name, avatar))}>
+            <button className="btn btn-blue py-4 text-lg" disabled={!ready} onClick={() => setPicking(true)}>
               <Play className="size-5 fill-current" /> {t('home.createPrivate')}
             </button>
           </div>
@@ -168,6 +177,9 @@ function RoomView({ game }: { game: GameApi }) {
   const autoLeft = useCountdown(state.autoStartAt ? game.toLocalTime(state.autoStartAt) : null);
   const connectedCount = state.players.filter((p) => p.connected).length;
   const { hidden: codeHidden } = useCodeVisibility();
+  const [changing, setChanging] = useState(false); // private host switching category
+  const pickEndsAt = state.categoryPickEndsAt ? game.toLocalTime(state.categoryPickEndsAt) : null;
+  const category = state.settings.categories.length === 1 ? state.settings.categories[0] : null;
 
   const copy = async () => {
     try {
@@ -179,8 +191,24 @@ function RoomView({ game }: { game: GameApi }) {
     }
   };
 
+  // Random lobby, first one in: pick the category before seeing anything else.
+  if (state.categoryPending && isHost) {
+    return <CategoryPicker onPick={game.chooseCategory} onClose={game.leaveRoom} endsAt={pickEndsAt} subtitle={t('pick.subtitlePublic')} />;
+  }
+
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6">
+      {changing && (
+        <CategoryPicker
+          selected={category ?? undefined}
+          closeKind="close"
+          onClose={() => setChanging(false)}
+          onPick={(c) => {
+            game.chooseCategory(c);
+            setChanging(false);
+          }}
+        />
+      )}
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <Logo size="sm" />
         <div className="flex gap-2">
@@ -208,6 +236,33 @@ function RoomView({ game }: { game: GameApi }) {
                 <span className="hidden sm:inline">{copied ? t('lobby.copied') : t('lobby.invite')}</span>
               </button>
             </div>
+          </div>
+          <div className="panel p-5">
+            <span className="label flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5">
+                <Tags className="size-4" /> {t('lobby.category')}
+              </span>
+              {state.isPublic ? (
+                <span className="flex items-center gap-1 normal-case">
+                  <Lock className="size-3.5" /> {t('lobby.locked')}
+                </span>
+              ) : (
+                isHost && (
+                  <button type="button" className="chip flex items-center gap-1 bg-indigo-50 py-1 normal-case" onClick={() => setChanging(true)}>
+                    <RefreshCw className="size-3.5" /> {t('lobby.change')}
+                  </button>
+                )
+              )}
+            </span>
+            {category ? (
+              <CategoryTile category={category} small />
+            ) : state.categoryPending ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-50 py-5 text-center font-display text-lg font-semibold text-indigo-500">
+                <Loader2 className="size-5 animate-spin" /> {t('lobby.picking')}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-indigo-50 py-4 text-center font-display text-lg font-semibold text-indigo-500">{t('pick.title')}</div>
+            )}
           </div>
           <GameSettingsPanel
             settings={state.settings}
