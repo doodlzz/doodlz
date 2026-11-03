@@ -40,10 +40,14 @@ export class RoomManager {
     return this.rooms.get(code.trim().toUpperCase());
   }
 
-  /** Matchmaking: the busiest public room this player may join, or a new one. */
+  /**
+   * Matchmaking: the busiest public room this player may join, or a new one.
+   * Matches in progress count (newcomers join as guessers and draw from the next round),
+   * and so do rooms on their game-over screen, which restart on their own. Private rooms never do.
+   */
   findOrCreatePublic(profile: Profile, ip: string): Room {
     const candidates = [...this.rooms.values()]
-      .filter((r) => r.isPublic && r.phase !== 'game_over' && r.joinError(profile, ip) === null)
+      .filter((r) => r.isPublic && r.joinError(profile, ip) === null)
       .sort((a, b) => b.players.size - a.players.size);
     return candidates[0] ?? this.create({ ...DEFAULT_SETTINGS }, true);
   }
