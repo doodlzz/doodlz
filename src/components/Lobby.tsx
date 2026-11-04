@@ -14,6 +14,7 @@ import Chat from './Chat';
 import GameSettingsPanel from './GameSettingsPanel';
 import { PlayerMenu } from './Leaderboard';
 import Logo from './Logo';
+import MouseTrail from './MouseTrail';
 import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
@@ -350,5 +351,10 @@ function RoomView({ game }: { game: GameApi }) {
 }
 
 export default function Lobby({ game }: { game: GameApi }) {
-  return game.state ? <RoomView game={game} /> : <HomeView game={game} />;
+  return (
+    <>
+      <MouseTrail />
+      {game.state ? <RoomView game={game} /> : <HomeView game={game} />}
+    </>
+  );
 }
