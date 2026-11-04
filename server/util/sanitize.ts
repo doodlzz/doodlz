@@ -1,3 +1,4 @@
+import { TAG_RE } from '../../shared/tag.js';
 import {
   BACKGROUNDS,
   CANVAS_HEIGHT,
@@ -23,7 +24,7 @@ const AVATAR_PART_COUNT = 6;
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
 export function sanitizeName(raw: unknown): string {
-  const name = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20) : '';
+  const name = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f#]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20) : '';
   if (!name || isProfane(name)) return `Doodler${Math.floor(Math.random() * 900 + 100)}`;
   return name;
 }
@@ -47,6 +48,8 @@ export function sanitizeProfile(raw: unknown): Profile {
     avatar: sanitizeAvatar(p.avatar),
     deviceId,
     lang: LANGUAGES.includes(p.lang as Lang) ? (p.lang as Lang) : 'en',
+    authToken: typeof p.authToken === 'string' ? p.authToken.slice(0, 128) : undefined,
+    guestTag: typeof p.guestTag === 'string' && TAG_RE.test(p.guestTag) ? p.guestTag : undefined,
   };
 }
 

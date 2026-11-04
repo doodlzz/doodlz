@@ -60,6 +60,10 @@ export interface Profile {
   avatar: Avatar;
   deviceId: string; // one per browser (shared by its tabs)
   lang: Lang;
+  /** Signed-in players send their session token; the server then uses the account's name#tag. */
+  authToken?: string;
+  /** Guests keep a tag per browser; the server swaps it if it clashes. */
+  guestTag?: string;
 }
 
 export interface RoomSettings {

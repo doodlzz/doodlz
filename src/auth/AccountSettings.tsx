@@ -59,7 +59,11 @@ export default function AccountSettings() {
   return (
     <div className="flex flex-col gap-3">
       <Section icon={<User className="size-5 text-pink-500" />} title={t('auth.username')} onSave={() => save({ username })}>
-        <input className="input mb-3" aria-label={t('auth.username')} value={username} onChange={(e) => setUsername(e.target.value)} maxLength={20} autoComplete="username" required />
+        <div className="relative mb-2">
+          <input className="input pr-20" aria-label={t('auth.username')} value={username} onChange={(e) => setUsername(e.target.value)} maxLength={20} autoComplete="username" required />
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-display font-semibold text-indigo-300">#{account.tag}</span>
+        </div>
+        <p className="mb-3 px-1 text-xs font-bold text-indigo-400">{t('auth.tagNote')}</p>
       </Section>
 
       <Section

@@ -14,7 +14,8 @@ import type {
   RoomSettings,
   WordChoice,
 } from '../../shared/types';
-import { deviceId, loadSession, saveSession } from '../lib/session';
+import { readToken } from '../auth/storage';
+import { deviceId, guestTag, loadSession, saveSession } from '../lib/session';
 import { socket } from '../socket';
 
 const MAX_MESSAGES = 200;
@@ -116,7 +117,10 @@ export function useGame(lang: Lang) {
   /** Convert a server timestamp to the local clock. */
   const toLocalTime = useCallback((serverTs: number) => serverTs - clockOffset.current, []);
 
-  const profile = useCallback((name: string, avatar: Avatar): Profile => ({ name, avatar, deviceId: deviceId(), lang }), [lang]);
+  const profile = useCallback(
+    (name: string, avatar: Avatar): Profile => ({ name, avatar, deviceId: deviceId(), lang, authToken: readToken() ?? undefined, guestTag: guestTag() }),
+    [lang],
+  );
 
   /** Shared handling for create / join / quick play answers. */
   const entered = useCallback(

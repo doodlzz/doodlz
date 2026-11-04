@@ -1,11 +1,12 @@
-import type { Ack, JoinResult } from '../../shared/types.js';
+import { randomTag } from '../../shared/tag.js';
+import type { Ack, JoinResult, Profile } from '../../shared/types.js';
 import type { Room } from '../rooms/Room.js';
 import { sanitizeProfile, sanitizeSettings } from '../util/sanitize.js';
 import { withRoom, type HandlerContext } from './context.js';
 
 /** Rooms: create / join / matchmake / resume / leave, settings and game start. */
 export function registerLobbyHandlers(ctx: HandlerContext): void {
-  const { socket, manager, safe } = ctx;
+  const { socket, manager, accounts, safe } = ctx;
 
   const leaveCurrent = () => {
     const cur = ctx.current();
@@ -13,9 +14,23 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
     socket.data.roomCode = socket.data.playerId = undefined;
   };
 
+  /**
+   * Give the player their "name#1234". Signed-in players get their account's name and tag.
+   * Guests keep their own tag unless a registered account or someone in the room already has that name#tag.
+   */
+  const withTag = (room: Room, profile: Profile): Profile => {
+    const id = accounts.identity(profile.authToken);
+    if (id) return { ...profile, name: `${id.username}#${id.tag}` };
+    const inRoom = new Set([...room.players.values()].map((p) => p.name.toLowerCase()));
+    const clashes = (tag: string) => accounts.isRegistered(profile.name, tag) || inRoom.has(`${profile.name}#${tag}`.toLowerCase());
+    let tag = profile.guestTag ?? randomTag();
+    for (let i = 0; clashes(tag) && i < 50; i++) tag = randomTag();
+    return { ...profile, name: `${profile.name}#${tag}` };
+  };
+
   /** Put this socket into `room` as a new player and answer the client. */
   const enter = (room: Room, rawProfile: unknown, ack: Ack<JoinResult>) => {
-    const profile = sanitizeProfile(rawProfile);
+    const profile = withTag(room, sanitizeProfile(rawProfile));
     const error = room.joinError(profile, ctx.ip);
     if (error) return ack({ ok: false, error });
     leaveCurrent();

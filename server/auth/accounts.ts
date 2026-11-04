@@ -4,6 +4,7 @@ import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { isProfane } from '../moderation/profanity.js';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -11,6 +12,7 @@ const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) =>
 interface Account {
   id: string;
   username: string;
+  tag: string; // 4 digits; username + tag is unique
   email: string;
   passHash: string; // "salt:hash", both hex
   createdAt: number;
@@ -24,6 +26,7 @@ interface Store {
 export interface PublicAccount {
   id: string;
   username: string;
+  tag: string;
   email: string;
 }
 
@@ -35,6 +38,7 @@ export type AuthError =
   | 'auth.err.password'
   | 'auth.err.badLogin'
   | 'auth.err.wrongPassword'
+  | 'auth.err.needTag'
   | 'auth.err.session';
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 90; // 90 days
@@ -51,6 +55,42 @@ export class AccountStore {
     } catch (err) {
       console.error('Could not read accounts file, starting empty:', err);
     }
+    // Accounts made before tags existed get one now.
+    let changed = false;
+    for (const a of this.store.accounts) {
+      if (!a.tag || !TAG_RE.test(a.tag)) {
+        a.tag = this.freeTag(a.username, a.id) ?? randomTag();
+        changed = true;
+      }
+    }
+    if (changed) this.save();
+  }
+
+  private sameName(username: string, exceptId?: string): Account[] {
+    const lower = username.toLowerCase();
+    return this.store.accounts.filter((a) => a.id !== exceptId && a.username.toLowerCase() === lower);
+  }
+
+  /** A random tag no other account with this username uses, or null if all 9999 are gone. */
+  private freeTag(username: string, exceptId?: string, prefer?: string): string | null {
+    const used = new Set(this.sameName(username, exceptId).map((a) => a.tag));
+    if (prefer && !used.has(prefer)) return prefer;
+    if (used.size >= 9999) return null;
+    for (;;) {
+      const t = randomTag();
+      if (!used.has(t)) return t;
+    }
+  }
+
+  /** Is "username#tag" owned by a registered account? (Guests can't take it.) */
+  isRegistered(username: string, tag: string): boolean {
+    return this.sameName(username).some((a) => a.tag === tag);
+  }
+
+  /** Signed-in player's name and tag for a session token. */
+  identity(token: unknown): { username: string; tag: string } | null {
+    const a = typeof token === 'string' ? this.accountFor(token) : null;
+    return a ? { username: a.username, tag: a.tag } : null;
   }
 
   private save() {
@@ -62,7 +102,7 @@ export class AccountStore {
   }
 
   private toPublic(a: Account): PublicAccount {
-    return { id: a.id, username: a.username, email: a.email };
+    return { id: a.id, username: a.username, tag: a.tag, email: a.email };
   }
 
   private newSession(accountId: string): string {
@@ -71,10 +111,8 @@ export class AccountStore {
     return token;
   }
 
-  private checkUsername(username: string, exceptId?: string): AuthError | null {
+  private checkUsername(username: string): AuthError | null {
     if (!USERNAME_RE.test(username) || isProfane(username)) return 'auth.err.username';
-    const lower = username.toLowerCase();
-    if (this.store.accounts.some((a) => a.id !== exceptId && a.username.toLowerCase() === lower)) return 'auth.err.usernameTaken';
     return null;
   }
 
@@ -98,19 +136,29 @@ export class AccountStore {
     const password = String(rawPassword ?? '');
     const bad = this.checkUsername(username) ?? this.checkEmail(email) ?? (AccountStore.validPassword(password) ? null : 'auth.err.password');
     if (bad) return { error: bad };
+    const tag = this.freeTag(username);
+    if (!tag) return { error: 'auth.err.usernameTaken' };
 
-    const account: Account = { id: randomBytes(12).toString('hex'), username, email, passHash: await this.hashPassword(password), createdAt: Date.now() };
+    const account: Account = { id: randomBytes(12).toString('hex'), username, tag, email, passHash: await this.hashPassword(password), createdAt: Date.now() };
     this.store.accounts.push(account);
     const token = this.newSession(account.id);
     this.save();
     return { token, account: this.toPublic(account) };
   }
 
-  /** `login` can be the username or the email. */
+  /** `login` can be the email, "name#1234", or just the name when only one account has it. */
   async login(rawLogin: unknown, rawPassword: unknown): Promise<{ token: string; account: PublicAccount } | { error: AuthError }> {
     const login = String(rawLogin ?? '').trim().toLowerCase();
     const password = String(rawPassword ?? '');
-    const account = this.store.accounts.find((a) => a.email === login || a.username.toLowerCase() === login);
+    let account: Account | undefined;
+    const tagged = /^(.+)#(\d{4})$/.exec(login);
+    if (login.includes('@')) account = this.store.accounts.find((a) => a.email === login);
+    else if (tagged) account = this.sameName(tagged[1]).find((a) => a.tag === tagged[2]);
+    else {
+      const matches = this.sameName(login);
+      if (matches.length > 1) return { error: 'auth.err.needTag' };
+      account = matches[0];
+    }
     if (!account || !(await this.checkPassword(account, password))) return { error: 'auth.err.badLogin' };
     const token = this.newSession(account.id);
     this.pruneSessions();
@@ -148,9 +196,14 @@ export class AccountStore {
     const email = changes.email === undefined ? undefined : String(changes.email).trim().toLowerCase();
     const newPassword = changes.newPassword === undefined ? undefined : String(changes.newPassword);
 
+    let newTag = account.tag;
     if (username !== undefined && username !== account.username) {
-      const bad = this.checkUsername(username, account.id);
+      const bad = this.checkUsername(username);
       if (bad) return { error: bad };
+      // Keep the current tag if nobody with the new name has it; otherwise pick a new one.
+      const tag = this.freeTag(username, account.id, account.tag);
+      if (!tag) return { error: 'auth.err.usernameTaken' };
+      newTag = tag;
     }
     const emailChanged = email !== undefined && email !== account.email;
     if (emailChanged) {
@@ -162,7 +215,10 @@ export class AccountStore {
       return { error: 'auth.err.wrongPassword' };
     }
 
-    if (username !== undefined) account.username = username;
+    if (username !== undefined) {
+      account.username = username;
+      account.tag = newTag;
+    }
     if (emailChanged) account.email = email;
     if (newPassword !== undefined) {
       account.passHash = await this.hashPassword(newPassword);

@@ -4,6 +4,7 @@ import type { ClientRoomState, PlayerPublic, ReportReason } from '../../shared/t
 import type { GameApi } from '../hooks/useGame';
 import { useT } from '../i18n';
 import Avatar from './Avatar';
+import TaggedName from './TaggedName';
 
 const RANK_STYLES = ['bg-amber-400 text-amber-950', 'bg-slate-300 text-slate-800', 'bg-orange-300 text-orange-950'];
 const REASONS: ReportReason[] = ['drawing', 'chat', 'name', 'other'];
@@ -114,7 +115,7 @@ export default function Leaderboard({ state, game, className = '' }: Props) {
               <Avatar avatar={p.avatar} size={36} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1 font-bold text-indigo-950">
-                  <span className="truncate">{p.name}</span>
+                  <TaggedName name={p.name} className="truncate" />
                   {p.id === state.hostId && <Crown className="size-3.5 shrink-0 text-amber-500" aria-label={t('lb.host')} />}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-1.5 text-sm font-bold text-indigo-400">

@@ -263,7 +263,6 @@ export const zh: Dict = {
   "auth.already": "已经注册？",
   "auth.noAccount": "还没有账号？",
   "auth.username": "用户名",
-  "auth.usernameOrEmail": "用户名或邮箱",
   "auth.email": "邮箱",
   "auth.password": "密码",
   "auth.createAccount": "创建账号",
@@ -291,4 +290,8 @@ export const zh: Dict = {
   "auth.confirmNewPassword": "确认新密码",
   "auth.err.mismatch": "两次输入的密码不一致",
   "auth.err.wrongPassword": "当前密码错误",
+  "home.nameFromAccount": "已登录——你将以账号名称游戏。可在此修改：",
+  "auth.tagNote": "其他人可以使用相同的名字——你的 #标签 用来区分你。除非新名字下已有人使用该标签，否则标签保持不变。",
+  "auth.err.needTag": "有多个玩家使用该名字——请加上你的 #标签，例如 sandro#1234",
+  "auth.usernameOrEmail": "邮箱或 名字#1234",
 };

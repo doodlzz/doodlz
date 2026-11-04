@@ -1,4 +1,5 @@
 import { LogIn, LogOut, UserCircle2, UserPlus } from 'lucide-react';
+import TaggedName from '../components/TaggedName';
 import { useT } from '../i18n';
 import { useAuth } from './AuthContext';
 
@@ -16,7 +17,7 @@ export default function AuthButtons() {
           className="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-white/15 px-3 py-2 font-display text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25"
           title={t('auth.accountTitle')}
         >
-          <UserCircle2 className="size-5 shrink-0" /> <span className="max-w-[7rem] truncate sm:max-w-[12rem]">{account.username}</span>
+          <UserCircle2 className="size-5 shrink-0" /> <TaggedName name={account.username} tag={account.tag} className="max-w-[8rem] truncate sm:max-w-[14rem]" />
         </button>
         <button type="button" className="btn btn-ghost px-3 py-2 text-sm" onClick={() => open('logout')} title={t('auth.signOut')} aria-label={t('auth.signOut')}>
           <LogOut className="size-5" />

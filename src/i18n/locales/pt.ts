@@ -263,7 +263,6 @@ export const pt: Dict = {
   "auth.already": "Já tem conta?",
   "auth.noAccount": "Ainda não tem conta?",
   "auth.username": "Usuário",
-  "auth.usernameOrEmail": "Usuário ou e-mail",
   "auth.email": "E-mail",
   "auth.password": "Senha",
   "auth.createAccount": "Criar conta",
@@ -291,4 +290,8 @@ export const pt: Dict = {
   "auth.confirmNewPassword": "Confirmar nova senha",
   "auth.err.mismatch": "As senhas não coincidem",
   "auth.err.wrongPassword": "A senha atual está errada",
+  "home.nameFromAccount": "Conectado — você joga com o nome da sua conta. Altere em",
+  "auth.tagNote": "Outros podem usar o mesmo nome — sua #tag diferencia você. Ela não muda, a menos que alguém com seu novo nome já a tenha.",
+  "auth.err.needTag": "Vários jogadores usam esse nome — adicione sua #tag, ex.: sandro#1234",
+  "auth.usernameOrEmail": "E-mail ou nome#1234",
 };

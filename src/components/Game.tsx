@@ -11,6 +11,7 @@ import Logo from './Logo';
 import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import SettingsButton from './SettingsModal';
 import WordSelectModal from './WordSelectModal';
+import TaggedName from './TaggedName';
 
 function Timer({ secondsLeft, total }: { secondsLeft: number; total: number }) {
   const r = 26;
@@ -113,7 +114,9 @@ function ChoosingOverlay({ state }: { state: ClientRoomState }) {
     <div className="absolute inset-0 grid place-items-center bg-indigo-950/50 backdrop-blur-[2px]">
       <div className="flex animate-pop flex-col items-center gap-2 rounded-3xl bg-surface px-8 py-6 text-center shadow-xl">
         <Avatar avatar={lead.avatar} size={80} className="animate-float" />
-        <p className="font-display text-2xl font-bold text-indigo-950">{lead.name}</p>
+        <p className="font-display text-2xl font-bold text-indigo-950">
+          <TaggedName name={lead.name} />
+        </p>
         <p className="flex items-center gap-1 font-bold text-indigo-400">
           {t('game.isChoosing')}
           <span className="flex gap-0.5">
@@ -152,7 +155,7 @@ function TurnSummary({ state }: { state: ClientRoomState }) {
           return (
             <li key={p.id} className="flex items-center gap-1.5 rounded-full bg-indigo-50 py-1 pr-3 pl-1">
               <Avatar avatar={p.avatar} size={26} />
-              <span className="max-w-32 truncate text-sm font-bold text-indigo-950">{p.name}</span>
+              <TaggedName name={p.name} className="max-w-32 truncate text-sm font-bold text-indigo-950" />
               {state.drawerIds.includes(p.id) && <Pencil className="size-3.5 text-amber-500" />}
               <span className={`font-display font-bold ${d > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>+{d}</span>
             </li>

@@ -263,7 +263,6 @@ export const ru: Dict = {
   "auth.already": "Уже зарегистрирован?",
   "auth.noAccount": "Ещё нет аккаунта?",
   "auth.username": "Имя пользователя",
-  "auth.usernameOrEmail": "Имя пользователя или email",
   "auth.email": "Email",
   "auth.password": "Пароль",
   "auth.createAccount": "Создать аккаунт",
@@ -291,4 +290,8 @@ export const ru: Dict = {
   "auth.confirmNewPassword": "Повтори новый пароль",
   "auth.err.mismatch": "Пароли не совпадают",
   "auth.err.wrongPassword": "Неверный текущий пароль",
+  "home.nameFromAccount": "Ты вошёл — играешь под именем аккаунта. Изменить в",
+  "auth.tagNote": "Другие могут носить то же имя — твой #тег вас различает. Он не меняется, если только кто-то с твоим новым именем уже не занял его.",
+  "auth.err.needTag": "Это имя у нескольких игроков — добавь свой #тег, например sandro#1234",
+  "auth.usernameOrEmail": "Email или имя#1234",
 };

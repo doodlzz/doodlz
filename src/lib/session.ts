@@ -1,7 +1,10 @@
+import { randomTag, TAG_RE } from '../../shared/tag';
+
 // Identity helpers kept in browser storage. Every access is wrapped: storage can be unavailable.
 
 const DEVICE_KEY = 'doodlz:device';
 const SESSION_KEY = 'doodlz:session';
+const GUEST_TAG_KEY = 'doodlz:guestTag';
 
 function randomId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -9,6 +12,21 @@ function randomId(): string {
 }
 
 let memoryDevice: string | null = null;
+let memoryTag: string | null = null;
+
+/** Guests keep the same #1234 tag in this browser. */
+export function guestTag(): string {
+  try {
+    let tag = localStorage.getItem(GUEST_TAG_KEY);
+    if (!tag || !TAG_RE.test(tag)) {
+      tag = randomTag();
+      localStorage.setItem(GUEST_TAG_KEY, tag);
+    }
+    return tag;
+  } catch {
+    return (memoryTag ??= randomTag());
+  }
+}
 
 /** One id per browser (shared across tabs) so the server can stop one person filling a room with tabs. */
 export function deviceId(): string {

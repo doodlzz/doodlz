@@ -144,10 +144,10 @@ export class Room {
   }
 
   addPlayer(socketId: string, profile: Profile, ip: string): Player {
-    // Name collisions get a tag: "Sam", "Sam#2", "Sam#3"…
+    // Names already carry a #tag; the rare exact clash (same account twice) gets a suffix.
     let name = profile.name;
     const taken = new Set([...this.players.values()].map((p) => p.name.toLowerCase()));
-    for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${profile.name.slice(0, 16)}#${n}`;
+    for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${profile.name} (${n})`;
 
     const player: Player = {
       id: randomUUID(),

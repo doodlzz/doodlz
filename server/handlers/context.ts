@@ -1,5 +1,6 @@
 import type { Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../shared/types.js';
+import type { AccountStore } from '../auth/accounts.js';
 import { config } from '../config.js';
 import type { Room } from '../rooms/Room.js';
 import type { RoomManager } from '../rooms/RoomManager.js';
@@ -15,6 +16,7 @@ export type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents, Reco
 export interface HandlerContext {
   socket: GameSocket;
   manager: RoomManager;
+  accounts: AccountStore;
   ip: string;
   /** The room and player id this socket is bound to, if any. */
   current(): { room: Room; playerId: string } | null;
@@ -31,10 +33,11 @@ export function clientIp(socket: GameSocket): string {
   return socket.handshake.address ?? '';
 }
 
-export function createContext(socket: GameSocket, manager: RoomManager): HandlerContext {
+export function createContext(socket: GameSocket, manager: RoomManager, accounts: AccountStore): HandlerContext {
   return {
     socket,
     manager,
+    accounts,
     ip: clientIp(socket),
     current() {
       const { roomCode, playerId } = socket.data;

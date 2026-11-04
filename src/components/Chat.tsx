@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Lock, LogIn, LogOut, MessageCircle, SendHorizontal, Sparkles } from 'lucide-react';
 import type { ChatMessage } from '../../shared/types';
 import { useT, type TFn } from '../i18n';
+import TaggedName from './TaggedName';
 
 interface Props {
   messages: ChatMessage[];
@@ -65,7 +66,10 @@ function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
         <div className={`${base} text-emerald-700 ${odd ? 'bg-emerald-50/70' : 'bg-emerald-50/40'}`}>
           <Lock className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            <b>{m.name}:</b> {text}
+            <b>
+              <TaggedName name={m.name ?? ''} />:
+            </b>{' '}
+            {text}
           </span>
         </div>
       );
@@ -73,7 +77,10 @@ function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
       return (
         <div className={`${base} text-slate-700 ${stripe}`}>
           <span>
-            <b className="text-indigo-950">{m.name}:</b> {text}
+            <b className="text-indigo-950">
+              <TaggedName name={m.name ?? ''} />:
+            </b>{' '}
+            {text}
           </span>
         </div>
       );

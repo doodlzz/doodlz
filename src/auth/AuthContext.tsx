@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AuthModal, { type AuthMode } from './AuthModal';
+import { readGuest, readToken, writeGuest, writeToken } from './storage';
 
 export interface Account {
   id: string;
   username: string;
+  tag: string;
   email: string;
 }
 
@@ -12,49 +14,6 @@ export interface AccountChanges {
   email?: string;
   newPassword?: string;
   currentPassword?: string;
-}
-
-const TOKEN_KEY = 'doodlz:authToken';
-const GUEST_KEY = 'doodlz:guest';
-
-// "Remember me" keeps the sign-in in localStorage; otherwise it lives in sessionStorage and ends when the browser closes.
-function store(kind: 'local' | 'session'): Storage | null {
-  try {
-    return kind === 'local' ? localStorage : sessionStorage;
-  } catch {
-    return null;
-  }
-}
-function readToken(): string | null {
-  try {
-    return store('local')?.getItem(TOKEN_KEY) ?? store('session')?.getItem(TOKEN_KEY) ?? null;
-  } catch {
-    return null;
-  }
-}
-function writeToken(token: string | null, remember = true) {
-  try {
-    store('local')?.removeItem(TOKEN_KEY);
-    store('session')?.removeItem(TOKEN_KEY);
-    if (token) store(remember ? 'local' : 'session')?.setItem(TOKEN_KEY, token);
-  } catch {
-    // ignore
-  }
-}
-function readGuest(): boolean {
-  try {
-    return store('local')?.getItem(GUEST_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-function writeGuest(on: boolean) {
-  try {
-    if (on) store('local')?.setItem(GUEST_KEY, '1');
-    else store('local')?.removeItem(GUEST_KEY);
-  } catch {
-    // ignore
-  }
 }
 
 type ApiResult = { token?: string; account?: Account; error?: string };

@@ -10,6 +10,7 @@ import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
 import { useT } from '../i18n';
 import { loadProfile, saveProfile } from '../lib/avatar';
+import { guestTag } from '../lib/session';
 import Avatar from './Avatar';
 import AvatarBuilder from './AvatarBuilder';
 import Chat from './Chat';
@@ -19,6 +20,7 @@ import Logo from './Logo';
 import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
+import TaggedName from './TaggedName';
 
 function ConnectionBadge({ connected, resuming }: { connected: boolean; resuming: boolean }) {
   const t = useT();
@@ -57,12 +59,8 @@ function HomeView({ game }: { game: GameApi }) {
   const [picking, setPicking] = useState(false); // choosing a category for a new private room
   const [invited, setInvited] = useState(() => new URLSearchParams(location.search).has('room'));
   const ready = game.connected && !busy && !game.resuming;
-  const { account, requireAccount } = useAuth();
-
-  // Signed in with no nickname yet: use the account's username.
-  useEffect(() => {
-    if (account) setName((n) => n.trim() || account.username);
-  }, [account]);
+  const { account, open, requireAccount } = useAuth();
+  const [myGuestTag] = useState(guestTag);
 
   useEffect(() => saveProfile(name, avatar), [name, avatar]);
 
@@ -72,7 +70,7 @@ function HomeView({ game }: { game: GameApi }) {
   }, [game.resuming]);
 
   // Every way into a game asks to register / play as guest first (once).
-  // `fn` gets the nickname to use: the typed one, or the account's username if it's blank.
+  // `fn` gets the nickname to use; signed-in players always play as their account name#tag (set by the server).
   const run = (fn: (name: string) => Promise<boolean>) =>
     requireAccount(async (acc) => {
       setBusy(true);
@@ -103,15 +101,30 @@ function HomeView({ game }: { game: GameApi }) {
         <label className="label" htmlFor="nickname">
           {t('home.nickname')}
         </label>
-        <input
-          id="nickname"
-          className="input mb-5 text-lg"
-          placeholder={t('home.nicknamePlaceholder')}
-          value={name}
-          maxLength={20}
-          onChange={(e) => setName(e.target.value)}
-          autoFocus
-        />
+        {/* Everyone plays as name#1234. Signed-in players use their account name, changed in account settings. */}
+        <div className="relative mb-5">
+          <input
+            id="nickname"
+            className={`input pr-20 text-lg ${account ? 'cursor-default' : ''}`}
+            placeholder={t('home.nicknamePlaceholder')}
+            value={account ? account.username : name}
+            maxLength={20}
+            readOnly={!!account}
+            onChange={(e) => setName(e.target.value.replace(/#/g, ''))}
+            autoFocus={!account}
+          />
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-display text-lg font-semibold text-indigo-300">
+            #{account ? account.tag : myGuestTag}
+          </span>
+          {account && (
+            <p className="mt-1.5 px-1 text-xs font-bold text-indigo-400">
+              {t('home.nameFromAccount')}{' '}
+              <button type="button" className="cursor-pointer text-pink-500 underline underline-offset-2 hover:text-pink-400" onClick={() => open('account')}>
+                {t('auth.accountTitle')}
+              </button>
+            </p>
+          )}
+        </div>
 
         <span className="label">{t('home.avatar')}</span>
         <div className="mb-6 flex justify-center">
@@ -325,7 +338,7 @@ function RoomView({ game }: { game: GameApi }) {
                   </div>
                 )}
                 <Avatar avatar={p.avatar} size={64} />
-                <div className="mt-1 w-full truncate text-center font-bold text-indigo-950">{p.name}</div>
+                <TaggedName name={p.name} stacked className="mt-1 w-full text-center font-bold text-indigo-950" />
                 {p.id === state.you && <div className="text-xs font-extrabold text-pink-500">{t('lobby.thatsYou')}</div>}
               </div>
             ))}

@@ -280,7 +280,6 @@ export const en = {
   "auth.already": "Already registered?",
   "auth.noAccount": "No account yet?",
   "auth.username": "Username",
-  "auth.usernameOrEmail": "Username or email",
   "auth.email": "Email",
   "auth.password": "Password",
   "auth.createAccount": "Create account",
@@ -308,6 +307,10 @@ export const en = {
   "auth.confirmNewPassword": "Confirm new password",
   "auth.err.mismatch": "Passwords don't match",
   "auth.err.wrongPassword": "Current password is wrong",
+  "home.nameFromAccount": "Signed in — you play as your account name. Change it in",
+  "auth.tagNote": "Others can use the same name — your #tag tells you apart. It stays the same unless someone with your new name already has it.",
+  "auth.err.needTag": "Several players use that name — add your #tag, e.g. sandro#1234",
+  "auth.usernameOrEmail": "Email or name#1234",
 } as const;
 
 export type TKey = keyof typeof en;

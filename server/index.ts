@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
   socket.emit('online_count', io.engine.clientsCount);
   broadcastOnline();
   socket.on('disconnect', broadcastOnline);
-  const ctx = createContext(socket, manager);
+  const ctx = createContext(socket, manager, accounts);
   registerLobbyHandlers(ctx);
   registerGameHandlers(ctx);
   registerCanvasHandlers(ctx);

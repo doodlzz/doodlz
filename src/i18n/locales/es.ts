@@ -263,7 +263,6 @@ export const es: Dict = {
   "auth.already": "¿Ya tienes cuenta?",
   "auth.noAccount": "¿Aún no tienes cuenta?",
   "auth.username": "Usuario",
-  "auth.usernameOrEmail": "Usuario o correo",
   "auth.email": "Correo",
   "auth.password": "Contraseña",
   "auth.createAccount": "Crear cuenta",
@@ -291,4 +290,8 @@ export const es: Dict = {
   "auth.confirmNewPassword": "Confirmar nueva contraseña",
   "auth.err.mismatch": "Las contraseñas no coinciden",
   "auth.err.wrongPassword": "La contraseña actual es incorrecta",
+  "home.nameFromAccount": "Sesión iniciada: juegas con el nombre de tu cuenta. Cámbialo en",
+  "auth.tagNote": "Otros pueden usar el mismo nombre; tu #etiqueta te distingue. No cambia salvo que alguien con tu nuevo nombre ya la tenga.",
+  "auth.err.needTag": "Varios jugadores usan ese nombre: añade tu #etiqueta, p. ej. sandro#1234",
+  "auth.usernameOrEmail": "Correo o nombre#1234",
 };
