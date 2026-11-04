@@ -6,8 +6,8 @@ import { useT } from '../i18n';
 
 const STYLE: Record<Difficulty, { card: string; badge: string; stars: number }> = {
   easy: { card: 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100 shadow-[0_5px_0_#6ee7b7]', badge: 'bg-emerald-500', stars: 1 },
-  medium: { card: 'bg-amber-50 border-amber-300 hover:bg-amber-100 shadow-[0_5px_0_#fcd34d]', badge: 'bg-amber-500', stars: 2 },
-  hard: { card: 'bg-rose-50 border-rose-300 hover:bg-rose-100 shadow-[0_5px_0_#fda4af]', badge: 'bg-rose-500', stars: 3 },
+  medium: { card: 'bg-amber-50 border-amber-300 hover:bg-amber-100 dark:hover:bg-[#45371a] shadow-[0_5px_0_#fcd34d]', badge: 'bg-amber-500', stars: 2 },
+  hard: { card: 'bg-rose-50 border-rose-300 hover:bg-rose-100 dark:hover:bg-[#4a1f2e] shadow-[0_5px_0_#fda4af]', badge: 'bg-rose-500', stars: 3 },
 };
 
 interface Props {
