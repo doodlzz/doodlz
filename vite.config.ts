@@ -12,6 +12,7 @@ export default defineConfig({
     // Socket.io traffic goes to the game server, so the client can always use its own origin.
     proxy: {
       '/socket.io': { target: `http://localhost:${SERVER_PORT}`, ws: true },
+      '/api': { target: `http://localhost:${SERVER_PORT}` },
     },
   },
 });

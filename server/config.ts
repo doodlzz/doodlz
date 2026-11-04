@@ -7,6 +7,8 @@ export const config = {
   maxPerIp: Number(process.env.MAX_PLAYERS_PER_IP ?? 4),
   /** Trust X-Forwarded-For (true behind Render's proxy). */
   trustProxy: process.env.TRUST_PROXY !== '0',
+  /** Folder where player accounts are saved. Must be on a persistent disk in production. */
+  dataDir: process.env.DATA_DIR ?? 'data',
   reconnectGraceMs: Number(process.env.RECONNECT_GRACE_MS ?? 60_000),
   chooseMs: 15_000,
   speedChooseMs: 8_000,

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Lock, Play, RefreshCw, Shuffle, Tags, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
 import type { Category } from '../../shared/types';
+import AuthButtons from '../auth/AuthButtons';
+import { useAuth } from '../auth/AuthContext';
 import CategoryPicker, { CategoryTile } from './CategoryPicker';
 import DailyQuests from './DailyQuests';
 import Socials from './Socials';
@@ -55,6 +57,12 @@ function HomeView({ game }: { game: GameApi }) {
   const [picking, setPicking] = useState(false); // choosing a category for a new private room
   const [invited, setInvited] = useState(() => new URLSearchParams(location.search).has('room'));
   const ready = game.connected && !busy && !game.resuming;
+  const { account, requireAccount } = useAuth();
+
+  // Signed in with no nickname yet: use the account's username.
+  useEffect(() => {
+    if (account) setName((n) => n.trim() || account.username);
+  }, [account]);
 
   useEffect(() => saveProfile(name, avatar), [name, avatar]);
 
@@ -63,15 +71,18 @@ function HomeView({ game }: { game: GameApi }) {
     if (!game.resuming && !new URLSearchParams(location.search).has('room')) setInvited(false);
   }, [game.resuming]);
 
-  const run = async (fn: () => Promise<boolean>) => {
-    setBusy(true);
-    await fn();
-    setBusy(false);
-  };
+  // Every way into a game asks to register / play as guest first (once).
+  // `fn` gets the nickname to use: the typed one, or the account's username if it's blank.
+  const run = (fn: (name: string) => Promise<boolean>) =>
+    requireAccount(async (acc) => {
+      setBusy(true);
+      await fn(name.trim() || acc?.username || '');
+      setBusy(false);
+    });
 
   const createWith = (c: Category) => {
     setPicking(false);
-    run(() => game.createRoom(name, avatar, { categories: [c] }));
+    run((n) => game.createRoom(n, avatar, { categories: [c] }));
   };
 
   return (
@@ -80,7 +91,8 @@ function HomeView({ game }: { game: GameApi }) {
       <div className="absolute top-4 left-4">
         <OnlineBadge online={game.online} />
       </div>
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <AuthButtons />
         <SettingsButton />
       </div>
       <Logo />
@@ -108,8 +120,8 @@ function HomeView({ game }: { game: GameApi }) {
 
         {invited ? (
           <button className="btn btn-green w-full py-4 text-xl" disabled={!ready || !code} onClick={() =>
-              run(async () => {
-                const ok = await game.joinRoom(code, name, avatar);
+              run(async (n) => {
+                const ok = await game.joinRoom(code, n, avatar);
                 // Dead or full invite: show the normal buttons again instead of trapping the player here.
                 if (!ok) {
                   setInvited(false);
@@ -123,10 +135,10 @@ function HomeView({ game }: { game: GameApi }) {
           </button>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            <button className="btn btn-green py-4 text-lg" disabled={!ready} onClick={() => run(() => game.quickPlay(name, avatar))}>
+            <button className="btn btn-green py-4 text-lg" disabled={!ready} onClick={() => run((n) => game.quickPlay(n, avatar))}>
               <Shuffle className="size-5" /> {t('home.playRandoms')}
             </button>
-            <button className="btn btn-blue py-4 text-lg" disabled={!ready} onClick={() => setPicking(true)}>
+            <button className="btn btn-blue py-4 text-lg" disabled={!ready} onClick={() => requireAccount(() => setPicking(true))}>
               <Play className="size-5 fill-current" /> {t('home.createPrivate')}
             </button>
           </div>
@@ -140,7 +152,7 @@ function HomeView({ game }: { game: GameApi }) {
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (code.trim()) run(() => game.joinRoom(code.trim(), name, avatar));
+            if (code.trim()) run((n) => game.joinRoom(code.trim(), n, avatar));
           }}
         >
           <input

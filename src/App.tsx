@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
+import { AuthProvider } from './auth/AuthContext';
 import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
@@ -45,7 +46,9 @@ function Shell() {
 export default function App() {
   return (
     <SettingsProvider>
-      <Shell />
+      <AuthProvider>
+        <Shell />
+      </AuthProvider>
     </SettingsProvider>
   );
 }

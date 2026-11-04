@@ -4,6 +4,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { Server } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../shared/types.js';
+import { AccountStore } from './auth/accounts.js';
+import { authRoutes } from './auth/routes.js';
 import { config } from './config.js';
 import { createContext, type SocketData } from './handlers/context.js';
 import { registerCanvasHandlers, registerGameHandlers, registerModerationHandlers } from './handlers/gameHandlers.js';
@@ -18,6 +20,9 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, Record<string,
   maxHttpBufferSize: 1e6,
 });
 const manager = new RoomManager(io);
+
+const accounts = new AccountStore(path.join(config.dataDir, 'accounts.json'));
+app.use('/api/auth', authRoutes(accounts));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, online: io.engine.clientsCount, ...manager.stats() }));
 
