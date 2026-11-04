@@ -294,4 +294,5 @@ export const zh: Dict = {
   "auth.tagNote": "其他人可以使用相同的名字——你的 #标签 用来区分你。除非新名字下已有人使用该标签，否则标签保持不变。",
   "auth.err.needTag": "有多个玩家使用该名字——请加上你的 #标签，例如 sandro#1234",
   "auth.usernameOrEmail": "邮箱或 名字#1234",
+  "quests.note": "完成整局游戏后才会计入进度。",
 };

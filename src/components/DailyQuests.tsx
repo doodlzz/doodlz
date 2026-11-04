@@ -39,6 +39,7 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
         </h2>
         <span className="text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(left) })}</span>
       </div>
+      <p className="-mt-1.5 mb-2.5 text-xs font-bold text-indigo-400">{t('quests.note')}</p>
       <ul className="flex flex-col gap-2">
         {quests.map((q) => {
           const n = progress.progress[q.id] ?? 0;

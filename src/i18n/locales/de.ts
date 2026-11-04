@@ -294,4 +294,5 @@ export const de: Dict = {
   "auth.tagNote": "Andere können denselben Namen haben – dein #Tag unterscheidet dich. Er bleibt gleich, außer jemand mit deinem neuen Namen hat ihn schon.",
   "auth.err.needTag": "Mehrere Spieler haben diesen Namen – gib deinen #Tag an, z. B. sandro#1234",
   "auth.usernameOrEmail": "E-Mail oder Name#1234",
+  "quests.note": "Fortschritt zählt, wenn du ein Spiel beendest.",
 };
