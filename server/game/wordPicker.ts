@@ -1,4 +1,4 @@
-import { CATEGORIES, DIFFICULTY_MULTIPLIER, type Category, type Difficulty, type RoomSettings, type WordChoice } from '../../shared/types.js';
+import { CATEGORIES, SCORING, type Category, type Difficulty, type RoomSettings, type WordChoice } from '../../shared/types.js';
 import { COMPOUNDS, WORDS } from './words.js';
 import { letterCount } from './text.js';
 
@@ -14,7 +14,7 @@ const difficultyOf = (word: string): Difficulty => {
 const choice = (word: string, difficulty: Difficulty, category: WordChoice['category'], parts?: [string, string]): WordChoice => ({
   word,
   difficulty,
-  multiplier: DIFFICULTY_MULTIPLIER[difficulty],
+  points: SCORING.word[difficulty],
   category,
   ...(parts ? { parts } : {}),
 });

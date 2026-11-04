@@ -1,4 +1,4 @@
-import { AlarmClock, DoorOpen, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
+import { AlarmClock, DoorOpen, Flag, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
 import type { ClientRoomState } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
@@ -199,9 +199,25 @@ export default function Game({ game }: { game: GameApi }) {
             {state.settings.speed > 0 && <Zap className="size-3.5 text-amber-500" />}
           </span>
           <span className="font-display text-xl font-bold text-indigo-950">
-            {Math.min(state.round, state.settings.rounds)} <span className="text-indigo-300">/ {state.settings.rounds}</span>
+            {state.settings.targetScore > 0 ? (
+              state.round
+            ) : (
+              <>
+                {Math.min(state.round, state.settings.rounds)} <span className="text-indigo-300">/ {state.settings.rounds}</span>
+              </>
+            )}
           </span>
         </div>
+        {state.settings.targetScore > 0 && (
+          <div className="hidden flex-col leading-tight sm:flex">
+            <span className="flex items-center gap-1 text-xs font-extrabold tracking-wider text-indigo-300 uppercase">
+              <Flag className="size-3.5 text-emerald-500" /> {t('game.goal')}
+            </span>
+            <span className="font-display text-xl font-bold text-indigo-950">
+              {state.settings.targetScore} <span className="text-sm text-indigo-300">{t('gs.pts')}</span>
+            </span>
+          </div>
+        )}
         <div className="flex flex-col leading-tight">
           <span className="text-xs font-extrabold tracking-wider text-indigo-300 uppercase">{t('game.code')}</span>
           <span className="flex items-center gap-1">

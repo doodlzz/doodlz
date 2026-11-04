@@ -88,6 +88,7 @@ export function sanitizeSettings(raw: unknown, base: RoomSettings = DEFAULT_SETT
       : base.categories,
     customWords: s.customWords !== undefined ? sanitizeWords(s.customWords) : base.customWords,
     customOnly: bool(s.customOnly, base.customOnly),
+    targetScore: s.targetScore === 0 ? 0 : num(s.targetScore, base.targetScore, SETTING_LIMITS.targetScore),
   };
 }
 

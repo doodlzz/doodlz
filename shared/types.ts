@@ -33,9 +33,21 @@ export type GameMode = 'classic' | 'duo';
 export type SpeedCap = 0 | 30 | 40;
 export type ReportReason = 'drawing' | 'chat' | 'name' | 'other';
 
-export const DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = { easy: 1, medium: 1.5, hard: 2 };
+/** Simple, visible scoring rules (shown to players in "How points work"). */
+export const SCORING = {
+  word: { easy: 30, medium: 40, hard: 50 } as Record<Difficulty, number>, // a correct guess
+  firstBonus: 10, // first player to guess
+  secondBonus: 5, // second player to guess
+  hintCost: 10, // each hint a guesser uses
+  minGuess: 10, // a correct guess is always worth at least this
+  drawerPerGuess: 10, // drawer earns this for each player who guesses
+  drawerMax: 50,
+} as const;
+/** "First to X points" presets; 0 means off (play a set number of rounds). */
+export const TARGET_SCORES = [100, 150, 200, 250, 300] as const;
+/** Safety stop for "first to X" games where nobody gets there. */
+export const MAX_TARGET_ROUNDS = 20;
 export const MAX_WARNINGS = 3;
-export const HINT_PENALTY = 0.25; // each hint removes 25% of the points for a correct guess
 export const MAX_CUSTOM_WORDS = 300;
 
 /** Colors handed out in "Single Color Only" mode. */
@@ -84,6 +96,8 @@ export interface RoomSettings {
   categories: Category[]; // empty = all categories
   customWords: string[];
   customOnly: boolean;
+  /** First player to reach this many points wins; 0 = off (play `rounds` rounds). */
+  targetScore: number;
 }
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -98,12 +112,14 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   categories: [],
   customWords: [],
   customOnly: false,
+  targetScore: 0,
 };
 
 export const SETTING_LIMITS = {
   rounds: [1, 10],
   drawTime: [30, 180],
   maxPlayers: [2, 12],
+  targetScore: [50, 1000],
 } as const;
 
 export type Phase = 'lobby' | 'choosing' | 'drawing' | 'turn_end' | 'game_over';
@@ -120,7 +136,7 @@ export interface PlayerPublic {
 export interface WordChoice {
   word: string;
   difficulty: Difficulty;
-  multiplier: number;
+  points: number; // what a correct guess is worth (before bonuses)
   category: Category | 'custom' | 'compound';
   parts?: [string, string]; // duo mode: who draws which half
 }

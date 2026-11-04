@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { BookText, Clock, EyeOff, Lightbulb, Minus, Palette, Plus, Repeat, Settings, Users, Users2, User, Zap } from 'lucide-react';
-import { MAX_CUSTOM_WORDS, SETTING_LIMITS, type RoomSettings, type SpeedCap } from '../../shared/types';
+import { BookText, Clock, EyeOff, Flag, Lightbulb, Minus, Palette, Plus, Repeat, Settings, Users, Users2, User, Zap } from 'lucide-react';
+import { MAX_CUSTOM_WORDS, SETTING_LIMITS, TARGET_SCORES, type RoomSettings, type SpeedCap } from '../../shared/types';
 import { useT } from '../i18n';
+import ScoringHelp from './ScoringHelp';
 
 const DRAW_TIMES = [30, 45, 60, 80, 100, 120, 150, 180];
 const SPEEDS: SpeedCap[] = [0, 30, 40];
@@ -48,6 +49,76 @@ function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: 
   );
 }
 
+/** "First to X points" picker: off, presets, or a custom number. */
+function TargetPicker({ value, disabled, onChange }: { value: number; disabled: boolean; onChange: (v: number) => void }) {
+  const t = useT();
+  const isCustom = value > 0 && !(TARGET_SCORES as readonly number[]).includes(value);
+  const [custom, setCustom] = useState(isCustom);
+  const [text, setText] = useState(isCustom ? String(value) : '');
+  const [min, max] = SETTING_LIMITS.targetScore;
+
+  // Follow changes from the server (e.g. the host picking for everyone). A host who just tapped
+  // "Custom" but hasn't typed a number yet (value still 0) keeps the box open.
+  useEffect(() => {
+    if (value > 0 && !(TARGET_SCORES as readonly number[]).includes(value)) {
+      setCustom(true);
+      setText(String(value));
+    } else if (value > 0 || disabled) setCustom(false);
+  }, [value, disabled]);
+
+  const applyCustom = () => {
+    const n = Math.round(Number(text));
+    if (Number.isFinite(n) && n > 0) onChange(Math.min(max, Math.max(min, n)));
+  };
+
+  return (
+    <div className="rounded-2xl bg-indigo-50/70 px-3 py-2.5">
+      <div className="mb-1 flex items-center gap-2 font-bold text-indigo-900">
+        <Flag className="size-4 text-emerald-500" /> {t('gs.target')}
+      </div>
+      <p className="mb-2 text-xs font-bold text-indigo-400">{t('gs.targetDesc')}</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        <button type="button" disabled={disabled} onClick={() => (setCustom(false), onChange(0))} className={`chip ${value === 0 && !custom ? 'chip-on' : ''}`}>
+          {t('gs.speedOff')}
+        </button>
+        {TARGET_SCORES.map((n) => (
+          <button key={n} type="button" disabled={disabled} onClick={() => (setCustom(false), onChange(n))} className={`chip ${value === n && !custom ? 'chip-on' : ''}`}>
+            {n}
+          </button>
+        ))}
+        <button type="button" disabled={disabled} onClick={() => setCustom(true)} className={`chip ${custom ? 'chip-on' : ''}`}>
+          {t('gs.custom')}
+        </button>
+      </div>
+      {custom && (
+        <form
+          className="mt-2 flex items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            applyCustom();
+          }}
+        >
+          <input
+            type="number"
+            inputMode="numeric"
+            min={min}
+            max={max}
+            step={5}
+            className="input py-1.5 text-center font-display text-lg"
+            placeholder={`${min}–${max}`}
+            value={text}
+            disabled={disabled}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={applyCustom}
+            aria-label={t('gs.target')}
+          />
+          <span className="shrink-0 text-sm font-bold text-indigo-400">{t('gs.pts')}</span>
+        </form>
+      )}
+    </div>
+  );
+}
+
 const parseWords = (s: string) =>
   s
     .split(/[,\n]/)
@@ -79,7 +150,10 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-indigo-900">
           <Settings className="size-5 text-sky-500" /> {t('gs.title')}
         </h2>
-        {!editable && <span className="text-xs font-bold text-indigo-300">{t('gs.hostOnly')}</span>}
+        <span className="flex items-center gap-1">
+          {!editable && <span className="text-xs font-bold text-indigo-300">{t('gs.hostOnly')}</span>}
+          <ScoringHelp targetScore={settings.targetScore} />
+        </span>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -109,7 +183,11 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
         </div>
 
         <Row icon={<Repeat className="size-4 text-pink-500" />} label={t('gs.rounds')}>
-          <Stepper value={settings.rounds} min={SETTING_LIMITS.rounds[0]} max={SETTING_LIMITS.rounds[1]} disabled={!editable} onChange={(rounds) => onChange({ rounds })} />
+          {settings.targetScore > 0 ? (
+            <span className="text-sm font-bold text-indigo-400">{t('gs.untilWin', { n: settings.targetScore })}</span>
+          ) : (
+            <Stepper value={settings.rounds} min={SETTING_LIMITS.rounds[0]} max={SETTING_LIMITS.rounds[1]} disabled={!editable} onChange={(rounds) => onChange({ rounds })} />
+          )}
         </Row>
         <Row icon={<Users className="size-4 text-emerald-500" />} label={t('gs.maxPlayers')}>
           <Stepper
@@ -135,6 +213,7 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
 
         {/* modifiers */}
         <span className="label mt-2">{t('gs.modifiers')}</span>
+        <TargetPicker value={settings.targetScore} disabled={!editable} onChange={(targetScore) => onChange({ targetScore })} />
         <Row icon={<Zap className="size-4 text-amber-500" />} label={t('gs.speed')}>
           <div className="flex gap-1.5">
             {SPEEDS.map((s) => (

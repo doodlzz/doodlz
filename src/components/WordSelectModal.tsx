@@ -62,7 +62,7 @@ export default function WordSelectModal({ choices, totalSeconds, rerollsLeft, pa
                     <Star key={k} className={`size-5 ${k < s.stars ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
                   ))}
                 </span>
-                <span className="font-display text-lg font-semibold text-indigo-700">{t('words.points', { n: c.multiplier })}</span>
+                <span className="font-display text-lg font-semibold text-indigo-700">{t('words.points', { n: c.points })}</span>
               </button>
             );
           })}

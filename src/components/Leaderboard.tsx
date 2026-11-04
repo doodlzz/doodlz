@@ -5,6 +5,7 @@ import type { GameApi } from '../hooks/useGame';
 import { useT } from '../i18n';
 import Avatar from './Avatar';
 import TaggedName from './TaggedName';
+import ScoringHelp from './ScoringHelp';
 
 const RANK_STYLES = ['bg-amber-400 text-amber-950', 'bg-slate-300 text-slate-800', 'bg-orange-300 text-orange-950'];
 const REASONS: ReportReason[] = ['drawing', 'chat', 'name', 'other'];
@@ -96,7 +97,11 @@ export default function Leaderboard({ state, game, className = '' }: Props) {
     <div className={`panel flex min-h-0 flex-col overflow-hidden ${className}`}>
       <div className="flex items-center gap-2 border-b-4 border-indigo-50 px-4 py-2.5 font-display text-lg font-semibold text-indigo-900">
         <Trophy className="size-5 text-amber-500" />
-        {t('lb.players')}
+        <span className="flex-1">{t('lb.players')}</span>
+        {state.settings.targetScore > 0 && (
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-extrabold text-emerald-700">{t('lb.goal', { n: state.settings.targetScore })}</span>
+        )}
+        <ScoringHelp targetScore={state.settings.targetScore} />
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto">
         {ranked.map((p) => {
@@ -128,6 +133,11 @@ export default function Leaderboard({ state, game, className = '' }: Props) {
                     </span>
                   )}
                 </div>
+                {state.settings.targetScore > 0 && (
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-indigo-100" title={`${p.score} / ${state.settings.targetScore}`}>
+                    <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-500" style={{ width: `${Math.min(100, (p.score / state.settings.targetScore) * 100)}%` }} />
+                  </div>
+                )}
               </div>
               {isDrawer && (
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-amber-400 text-amber-950" title={t('lb.drawing')}>

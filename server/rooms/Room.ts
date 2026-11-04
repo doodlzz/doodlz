@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'socket.io';
 import {
   CATEGORIES,
+  MAX_TARGET_ROUNDS,
   MAX_WARNINGS,
+  SCORING,
   SINGLE_COLORS,
   type Avatar,
   type BackgroundId,
@@ -362,11 +364,16 @@ export class Room {
     const connectedIds = () => this.connectedPlayers.map((p) => p.id);
     if (this.players.size < 2 || connectedIds().length === 0) return this.endGame();
 
+    // "First to X points": the game ends after the turn in which someone gets there.
+    const target = this.settings.targetScore;
+    if (target > 0 && [...this.players.values()].some((p) => p.score >= target)) return this.endGame();
+
     if (this.drawQueue.length === 0) {
       this.round++;
-      if (this.round > this.settings.rounds) return this.endGame();
+      if (this.round > (target > 0 ? MAX_TARGET_ROUNDS : this.settings.rounds)) return this.endGame();
       this.drawQueue = connectedIds();
-      this.chat('system', 'chat.round', { round: this.round, total: this.settings.rounds });
+      if (target > 0) this.chat('system', 'chat.roundTarget', { round: this.round, target });
+      else this.chat('system', 'chat.round', { round: this.round, total: this.settings.rounds });
     }
 
     const wanted = this.settings.mode === 'duo' && connectedIds().length >= 3 ? 2 : 1;
@@ -482,14 +489,15 @@ export class Room {
     if (this.phase !== 'choosing' && this.phase !== 'drawing') return;
     this.clearTimers();
 
-    // Drawers are paid at the end of the turn, based on how well their drawing landed.
-    const guessers = this.connectedPlayers.filter((p) => !this.drawerIds.includes(p.id)).length;
-    const pts = drawerPoints({ guessScores: this.guessScores, guessers, drawers: this.drawerIds.length });
+    // Drawers are paid at the end of the turn: 10 for every player who guessed, up to 50.
+    const correct = this.guessScores.length;
+    const pts = drawerPoints(correct);
     for (const id of this.drawerIds) {
       const d = this.players.get(id);
       if (d && pts > 0) {
         d.score += pts;
         this.deltas[id] = (this.deltas[id] ?? 0) + pts;
+        this.chat('system', 'chat.drawerPoints', { name: d.name, points: pts, n: correct });
       }
     }
 
@@ -621,15 +629,15 @@ export class Room {
   }
 
   private correctGuess(player: Player): void {
-    const now = Date.now();
-    const timeRatio = ((this.phaseEndsAt ?? now) - now) / (this.turnMs || 1);
-    const points = guessPoints({ timeRatio, difficulty: this.difficulty ?? 'easy', order: this.guessScores.length, hintsUsed: player.hintsUsed });
+    const order = this.guessScores.length;
+    const points = guessPoints({ difficulty: this.difficulty ?? 'easy', order, hintsUsed: player.hintsUsed });
     player.score += points;
     player.hasGuessed = true;
     this.guessScores.push(points);
     this.deltas[player.id] = (this.deltas[player.id] ?? 0) + points;
 
-    this.chat('correct', 'chat.correct', { name: player.name, points }, player);
+    const key = order === 0 ? 'chat.correctFirst' : order === 1 ? 'chat.correctSecond' : 'chat.correct';
+    this.chat('correct', key, { name: player.name, points }, player);
     if (this.everyoneGuessed()) this.endTurn('all_guessed');
     else this.broadcastState();
   }
@@ -643,7 +651,7 @@ export class Room {
     if (hidden.length <= 1) return;
     p.hintIdx.add(pick(hidden));
     p.hintsUsed++;
-    this.privateMsg(p, 'system', 'chat.hintUsed', { penalty: Math.round(p.hintsUsed * 25) });
+    this.privateMsg(p, 'system', 'chat.hintUsed', { penalty: p.hintsUsed * SCORING.hintCost });
     this.sendState(p);
   }
 

@@ -70,8 +70,9 @@ src/
 - **Modes:** Classic (one drawer) or Duo Draw (two drawers split a compound word, e.g. space · ship; needs 3+ players).
 - **Modifiers:** Speed mode (caps the timer at 30s or 40s), Single color only, Blindfolded drawer.
 - **Words:** 9 categories, or host-supplied custom words (mixed in, or custom only). The drawer can re-roll their choices once per turn.
-- **Scoring:** a correct guess earns `300 × difficulty × (35% + 65% × time left) × order bonus × hint penalty`, so a hard word is worth at most 600. Drawers are paid at turn end: 75% of the average guess score × share of players who guessed (60% each in Duo).
-- **Hints:** guessers can reveal up to 3 letters for themselves; each costs 25% of their points for that word.
+- **Scoring:** a correct guess is worth 30 / 40 / 50 (easy / medium / hard), +10 for guessing first and +5 for second. Drawers get 10 for every player who guesses, up to 50. Rules live in `SCORING` in `shared/types.ts`.
+- **Win condition:** most points after the set number of rounds, or (with *First to … points*) the first player to reach 100 / 150 / 200 / 250 / 300 or a custom score.
+- **Hints:** guessers can reveal up to 3 letters for themselves; each costs 10 points (a correct guess is always worth at least 10).
 - **Chat:** the answer is starred out in public chat; guesses 1–2 letters off are highlighted as close; profanity is censored and earns warnings (3 = kicked).
 - **Moderation:** report a player from the ⋮ menu; enough reports (at least 2, or half the room) kick them and block them from rejoining. Hosts of private rooms can kick directly.
 - **Reconnects:** a dropped player keeps their slot and score for 60 seconds; refreshing the tab rejoins automatically.
