@@ -52,7 +52,13 @@ export interface Avatar {
   eyes: number;
   mouth: number;
   accessory: number;
+  /** Uploaded picture URL (signed-in players only; always set by the server). */
+  image?: string;
 }
+
+/** Eyes / mouths / extras everyone gets, and how many signed-in players get. */
+export const AVATAR_PARTS_FREE = 6;
+export const AVATAR_PARTS_MEMBER = 12;
 
 /** What a client sends when it creates, joins or matchmakes. */
 export interface Profile {

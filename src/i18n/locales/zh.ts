@@ -295,4 +295,11 @@ export const zh: Dict = {
   "auth.err.needTag": "有多个玩家使用该名字——请加上你的 #标签，例如 sandro#1234",
   "auth.usernameOrEmail": "邮箱或 名字#1234",
   "quests.note": "完成整局游戏后才会计入进度。",
+  "avatar.upload": "上传图片",
+  "avatar.removePicture": "移除图片",
+  "avatar.pictureNote": "当前显示你的图片而不是脸。移除图片即可重新使用脸。",
+  "avatar.unlock": "注册即可解锁每类再多 6 个 + 自定义图片",
+  "avatar.edit": "更换头像",
+  "avatar.colorShort": "颜色",
+  "auth.err.image": "无法使用该图片——请尝试 PNG 或 JPG",
 };

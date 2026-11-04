@@ -1,5 +1,6 @@
 import { TAG_RE } from '../../shared/tag.js';
 import {
+  AVATAR_PARTS_MEMBER,
   BACKGROUNDS,
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -19,7 +20,6 @@ import {
 import { isProfane } from '../moderation/profanity.js';
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-const AVATAR_PART_COUNT = 6;
 
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -29,9 +29,10 @@ export function sanitizeName(raw: unknown): string {
   return name;
 }
 
-export function sanitizeAvatar(raw: unknown): Avatar {
+/** Clean an avatar from a client. `parts` is how many eyes/mouths/extras this player may use. Never keeps `image`. */
+export function sanitizeAvatar(raw: unknown, parts: number = AVATAR_PARTS_MEMBER): Avatar {
   const a = (raw ?? {}) as Partial<Avatar>;
-  const part = (n: unknown) => (Number.isInteger(n) ? clamp(n as number, 0, AVATAR_PART_COUNT - 1) : 0);
+  const part = (n: unknown) => (Number.isInteger(n) && (n as number) >= 0 && (n as number) < parts ? (n as number) : 0);
   return {
     color: typeof a.color === 'string' && HEX_COLOR.test(a.color) ? a.color : '#f472b6',
     eyes: part(a.eyes),

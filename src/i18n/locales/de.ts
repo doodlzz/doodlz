@@ -295,4 +295,11 @@ export const de: Dict = {
   "auth.err.needTag": "Mehrere Spieler haben diesen Namen – gib deinen #Tag an, z. B. sandro#1234",
   "auth.usernameOrEmail": "E-Mail oder Name#1234",
   "quests.note": "Fortschritt zählt, wenn du ein Spiel beendest.",
+  "avatar.upload": "Bild hochladen",
+  "avatar.removePicture": "Bild entfernen",
+  "avatar.pictureNote": "Dein Bild wird statt des Gesichts angezeigt. Entferne es, um wieder ein Gesicht zu nutzen.",
+  "avatar.unlock": "Registriere dich für 6 weitere von jedem + dein eigenes Bild",
+  "avatar.edit": "Avatar ändern",
+  "avatar.colorShort": "Farbe",
+  "auth.err.image": "Dieses Bild geht nicht – versuch PNG oder JPG",
 };

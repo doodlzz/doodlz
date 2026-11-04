@@ -295,4 +295,11 @@ export const es: Dict = {
   "auth.err.needTag": "Varios jugadores usan ese nombre: añade tu #etiqueta, p. ej. sandro#1234",
   "auth.usernameOrEmail": "Correo o nombre#1234",
   "quests.note": "El progreso cuenta al terminar una partida.",
+  "avatar.upload": "Subir imagen",
+  "avatar.removePicture": "Quitar imagen",
+  "avatar.pictureNote": "Se muestra tu imagen en lugar de la cara. Quítala para volver a usar una cara.",
+  "avatar.unlock": "Regístrate para desbloquear 6 más de cada uno + tu propia imagen",
+  "avatar.edit": "Cambiar avatar",
+  "avatar.colorShort": "Color",
+  "auth.err.image": "No se pudo usar esa imagen: prueba con PNG o JPG",
 };

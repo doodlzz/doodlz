@@ -20,6 +20,8 @@ function limiter(max: number, windowMs: number) {
 
 export function authRoutes(accounts: AccountStore): Router {
   const router = express.Router();
+  // Uploaded pictures are small (shrunk in the browser), but bigger than the other requests.
+  router.use('/avatar', express.json({ limit: '400kb' }));
   router.use(express.json({ limit: '10kb' }));
   const allow = limiter(20, 10 * 60 * 1000);
 
@@ -44,8 +46,28 @@ export function authRoutes(accounts: AccountStore): Router {
   router.post('/account', async (req, res) => {
     if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
     const b = req.body ?? {};
-    const result = await accounts.update(bearer(req), { username: b.username, email: b.email, newPassword: b.newPassword, currentPassword: b.currentPassword });
+    const result = await accounts.update(bearer(req), {
+      username: b.username,
+      email: b.email,
+      newPassword: b.newPassword,
+      currentPassword: b.currentPassword,
+      avatar: b.avatar,
+    });
     res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
+  // Upload ({ image: "data:image/…" }) or remove ({ image: null }) your picture.
+  router.post('/avatar', (req, res) => {
+    if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
+    const result = accounts.setImage(bearer(req), req.body?.image);
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
+  router.get('/avatar/:id', (req, res) => {
+    const found = /^[a-f0-9]{24}$/.test(req.params.id) ? accounts.imageFile(req.params.id) : null;
+    if (!found) return res.status(404).end();
+    res.set({ 'Content-Type': found.type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=31536000, immutable' });
+    res.sendFile(found.file);
   });
 
   router.post('/logout', (req, res) => {

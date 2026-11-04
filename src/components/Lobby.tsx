@@ -9,7 +9,8 @@ import Socials from './Socials';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
 import { useT } from '../i18n';
-import { loadProfile, saveProfile } from '../lib/avatar';
+import { AVATAR_PARTS_FREE, AVATAR_PARTS_MEMBER } from '../../shared/types';
+import { limitAvatar, loadProfile, saveProfile } from '../lib/avatar';
 import { guestTag } from '../lib/session';
 import Avatar from './Avatar';
 import AvatarBuilder from './AvatarBuilder';
@@ -53,16 +54,34 @@ function HomeView({ game }: { game: GameApi }) {
   const t = useT();
   const [profile] = useState(loadProfile);
   const [name, setName] = useState(profile.name);
-  const [avatar, setAvatar] = useState(profile.avatar);
+  const [face, setFace] = useState(() => limitAvatar(profile.avatar, AVATAR_PARTS_MEMBER));
   const [code, setCode] = useState(() => new URLSearchParams(location.search).get('room')?.toUpperCase() ?? '');
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false); // choosing a category for a new private room
   const [invited, setInvited] = useState(() => new URLSearchParams(location.search).has('room'));
   const ready = game.connected && !busy && !game.resuming;
-  const { account, open, requireAccount } = useAuth();
+  const { account, open, requireAccount, updateAccount } = useAuth();
+  // Signed-in players get all 12 of each part and their uploaded picture; guests get the first 6.
+  const parts = account ? AVATAR_PARTS_MEMBER : AVATAR_PARTS_FREE;
+  const image = account?.avatar?.image;
+  const avatar = { ...limitAvatar(face, parts), ...(image ? { image } : {}) };
+
+  // Signing in loads the face saved on the account (so it follows you to other devices)…
+  const accountId = account?.id;
+  const savedFace = account?.avatar;
+  useEffect(() => {
+    if (savedFace) setFace(limitAvatar(savedFace, AVATAR_PARTS_MEMBER));
+  }, [accountId]);
+
+  // …and changes are saved back to it shortly after you stop clicking.
+  useEffect(() => {
+    if (!accountId) return;
+    const id = setTimeout(() => updateAccount({ avatar: face }), 700);
+    return () => clearTimeout(id);
+  }, [face, accountId]);
   const [myGuestTag] = useState(guestTag);
 
-  useEffect(() => saveProfile(name, avatar), [name, avatar]);
+  useEffect(() => saveProfile(name, face), [name, face]);
 
   // A failed reconnect clears "?room=" from the URL; drop the invite view with it.
   useEffect(() => {
@@ -90,7 +109,7 @@ function HomeView({ game }: { game: GameApi }) {
         <OnlineBadge online={game.online} />
       </div>
       <div className="absolute top-4 right-4 flex items-center gap-2">
-        <AuthButtons />
+        <AuthButtons avatar={avatar} onAvatarChange={setFace} parts={parts} />
         <SettingsButton />
       </div>
       <Logo />
@@ -128,7 +147,7 @@ function HomeView({ game }: { game: GameApi }) {
 
         <span className="label">{t('home.avatar')}</span>
         <div className="mb-6 flex justify-center">
-          <AvatarBuilder avatar={avatar} onChange={setAvatar} />
+          <AvatarBuilder avatar={avatar} onChange={setFace} parts={parts} />
         </div>
 
         {invited ? (

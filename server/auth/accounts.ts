@@ -1,11 +1,13 @@
 // Player accounts: username + email + password, stored in a JSON file on disk.
 // Passwords are hashed with scrypt; sign-ins get a random session token.
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
+import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { isProfane } from '../moderation/profanity.js';
+import { sanitizeAvatar } from '../util/sanitize.js';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 
@@ -16,7 +18,13 @@ interface Account {
   email: string;
   passHash: string; // "salt:hash", both hex
   createdAt: number;
+  avatar?: Avatar; // saved face (no image)
+  image?: { ext: ImageExt; version: number }; // uploaded picture, stored as a file
 }
+
+type ImageExt = 'png' | 'jpg' | 'webp';
+const IMAGE_TYPES: Record<ImageExt, string> = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
+const MAX_IMAGE_BYTES = 200 * 1024;
 
 interface Store {
   accounts: Account[];
@@ -28,6 +36,8 @@ export interface PublicAccount {
   username: string;
   tag: string;
   email: string;
+  /** Saved face; `image` is set when they uploaded a picture. */
+  avatar?: Avatar;
 }
 
 export type AuthError =
@@ -39,6 +49,7 @@ export type AuthError =
   | 'auth.err.badLogin'
   | 'auth.err.wrongPassword'
   | 'auth.err.needTag'
+  | 'auth.err.image'
   | 'auth.err.session';
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 90; // 90 days
@@ -87,10 +98,65 @@ export class AccountStore {
     return this.sameName(username).some((a) => a.tag === tag);
   }
 
-  /** Signed-in player's name and tag for a session token. */
-  identity(token: unknown): { username: string; tag: string } | null {
+  /** Signed-in player's name, tag and picture URL for a session token. */
+  identity(token: unknown): { username: string; tag: string; image?: string } | null {
     const a = typeof token === 'string' ? this.accountFor(token) : null;
-    return a ? { username: a.username, tag: a.tag } : null;
+    return a ? { username: a.username, tag: a.tag, image: this.imageUrl(a) } : null;
+  }
+
+  private imageUrl(a: Account): string | undefined {
+    return a.image ? `/api/auth/avatar/${a.id}?v=${a.image.version}` : undefined;
+  }
+
+  private avatarOf(a: Account): Avatar | undefined {
+    const image = this.imageUrl(a);
+    if (!a.avatar && !image) return undefined;
+    return { ...(a.avatar ?? { color: '#f472b6', eyes: 0, mouth: 0, accessory: 0 }), ...(image ? { image } : {}) };
+  }
+
+  private imagePath(a: Account): string | null {
+    return a.image ? path.join(path.dirname(this.file), 'avatars', `${a.id}.${a.image.ext}`) : null;
+  }
+
+  /** Save an uploaded picture (a data: URL of a PNG, JPEG or WebP), or remove it with null. */
+  setImage(token: string | undefined, dataUrl: unknown): { account: PublicAccount } | { error: AuthError } {
+    const account = this.accountFor(token);
+    if (!account) return { error: 'auth.err.session' };
+    const old = this.imagePath(account);
+    if (dataUrl === null) {
+      if (old) rmSync(old, { force: true });
+      account.image = undefined;
+      this.save();
+      return { account: this.toPublic(account) };
+    }
+    const m = typeof dataUrl === 'string' ? /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl) : null;
+    if (!m) return { error: 'auth.err.image' };
+    const bytes = Buffer.from(m[2], 'base64');
+    const ext: ImageExt = m[1] === 'jpeg' ? 'jpg' : (m[1] as ImageExt);
+    // Check the file really is that kind of image, not something else with an image label.
+    const magic =
+      ext === 'png'
+        ? bytes.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+        : ext === 'jpg'
+          ? bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))
+          : bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP';
+    if (!magic || bytes.length > MAX_IMAGE_BYTES) return { error: 'auth.err.image' };
+
+    if (old) rmSync(old, { force: true });
+    // A fresh version each upload, so browsers never show a cached older picture.
+    account.image = { ext, version: Date.now() };
+    const file = this.imagePath(account)!;
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, bytes);
+    this.save();
+    return { account: this.toPublic(account) };
+  }
+
+  /** File and content type of an account's picture, for serving it. */
+  imageFile(id: string): { file: string; type: string } | null {
+    const a = this.store.accounts.find((x) => x.id === id);
+    const file = a ? this.imagePath(a) : null;
+    return a?.image && file && existsSync(file) ? { file: path.resolve(file), type: IMAGE_TYPES[a.image.ext] } : null;
   }
 
   private save() {
@@ -102,7 +168,7 @@ export class AccountStore {
   }
 
   private toPublic(a: Account): PublicAccount {
-    return { id: a.id, username: a.username, tag: a.tag, email: a.email };
+    return { id: a.id, username: a.username, tag: a.tag, email: a.email, avatar: this.avatarOf(a) };
   }
 
   private newSession(accountId: string): string {
@@ -188,7 +254,7 @@ export class AccountStore {
   /** Change username, email and/or password. Email and password changes need the current password. */
   async update(
     token: string | undefined,
-    changes: { username?: unknown; email?: unknown; newPassword?: unknown; currentPassword?: unknown },
+    changes: { username?: unknown; email?: unknown; newPassword?: unknown; currentPassword?: unknown; avatar?: unknown },
   ): Promise<{ account: PublicAccount } | { error: AuthError }> {
     const account = this.accountFor(token);
     if (!account) return { error: 'auth.err.session' };
@@ -215,6 +281,7 @@ export class AccountStore {
       return { error: 'auth.err.wrongPassword' };
     }
 
+    if (changes.avatar !== undefined) account.avatar = sanitizeAvatar(changes.avatar, AVATAR_PARTS_MEMBER);
     if (username !== undefined) {
       account.username = username;
       account.tag = newTag;

@@ -312,6 +312,13 @@ export const en = {
   "auth.err.needTag": "Several players use that name — add your #tag, e.g. sandro#1234",
   "auth.usernameOrEmail": "Email or name#1234",
   "quests.note": "Progress counts when you finish a game.",
+  "avatar.upload": "Upload picture",
+  "avatar.removePicture": "Remove picture",
+  "avatar.pictureNote": "Your picture is shown instead of the face. Remove it to use a face again.",
+  "avatar.unlock": "Sign up to unlock 6 more of each + your own picture",
+  "avatar.edit": "Change avatar",
+  "avatar.colorShort": "Color",
+  "auth.err.image": "That picture couldn't be used — try a PNG or JPG",
 } as const;
 
 export type TKey = keyof typeof en;

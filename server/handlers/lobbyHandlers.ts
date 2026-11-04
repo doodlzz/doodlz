@@ -1,7 +1,7 @@
 import { randomTag } from '../../shared/tag.js';
-import type { Ack, JoinResult, Profile } from '../../shared/types.js';
+import { AVATAR_PARTS_FREE, type Ack, type JoinResult, type Profile } from '../../shared/types.js';
 import type { Room } from '../rooms/Room.js';
-import { sanitizeProfile, sanitizeSettings } from '../util/sanitize.js';
+import { sanitizeAvatar, sanitizeProfile, sanitizeSettings } from '../util/sanitize.js';
 import { withRoom, type HandlerContext } from './context.js';
 
 /** Rooms: create / join / matchmake / resume / leave, settings and game start. */
@@ -15,12 +15,14 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
   };
 
   /**
-   * Give the player their "name#1234". Signed-in players get their account's name and tag.
+   * Give the player their "name#1234" and allowed look. Signed-in players get their account's name, tag,
+   * all avatar parts and their uploaded picture; guests only the free parts.
    * Guests keep their own tag unless a registered account or someone in the room already has that name#tag.
    */
   const withTag = (room: Room, profile: Profile): Profile => {
     const id = accounts.identity(profile.authToken);
-    if (id) return { ...profile, name: `${id.username}#${id.tag}` };
+    if (id) return { ...profile, name: `${id.username}#${id.tag}`, avatar: { ...profile.avatar, ...(id.image ? { image: id.image } : {}) } };
+    profile = { ...profile, avatar: sanitizeAvatar(profile.avatar, AVATAR_PARTS_FREE) };
     const inRoom = new Set([...room.players.values()].map((p) => p.name.toLowerCase()));
     const clashes = (tag: string) => accounts.isRegistered(profile.name, tag) || inRoom.has(`${profile.name}#${tag}`.toLowerCase());
     let tag = profile.guestTag ?? randomTag();

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { Avatar } from '../../shared/types';
 import AuthModal, { type AuthMode } from './AuthModal';
 import { readGuest, readToken, writeGuest, writeToken } from './storage';
 
@@ -7,6 +8,8 @@ export interface Account {
   username: string;
   tag: string;
   email: string;
+  /** Saved face; `avatar.image` is their uploaded picture, if any. */
+  avatar?: Avatar;
 }
 
 export interface AccountChanges {
@@ -14,6 +17,7 @@ export interface AccountChanges {
   email?: string;
   newPassword?: string;
   currentPassword?: string;
+  avatar?: Avatar;
 }
 
 type ApiResult = { token?: string; account?: Account; error?: string };
@@ -37,6 +41,8 @@ interface Ctx {
   login: (login: string, password: string, remember: boolean) => Promise<string | null>;
   /** Returns an error key, or null on success. */
   updateAccount: (changes: AccountChanges) => Promise<string | null>;
+  /** Upload a picture (data URL) or remove it with null. Returns an error key, or null on success. */
+  setImage: (dataUrl: string | null) => Promise<string | null>;
   /** Sign out right away (the sign-out button asks first via open('logout')). */
   logout: () => void;
   /** Run `action` now if signed in or already chose guest; otherwise ask first, then run it. */
@@ -89,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: async (login, password, remember) => signedIn(await api('login', { login, password }), remember),
       updateAccount: async (changes) => {
         const res = await api('account', changes, readToken());
+        if (!res.account) return res.error ?? 'auth.err.network';
+        setAccount(res.account);
+        return null;
+      },
+      setImage: async (dataUrl) => {
+        const res = await api('avatar', { image: dataUrl }, readToken());
         if (!res.account) return res.error ?? 'auth.err.network';
         setAccount(res.account);
         return null;
