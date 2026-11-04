@@ -30,7 +30,11 @@ export default function AvatarMenu({ avatar, onChange, parts }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    // Clicks in the picture crop window (shown on top of the page) shouldn't close the menu.
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Element;
+      if (!root.current?.contains(target) && !target.closest?.('[data-avatar-cropper]')) setOpen(false);
+    };
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
     document.addEventListener('pointerdown', onDown);
     window.addEventListener('keydown', onKey);

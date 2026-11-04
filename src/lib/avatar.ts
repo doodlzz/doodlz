@@ -17,28 +17,15 @@ export function limitAvatar(a: Avatar, parts: number): Avatar {
   return { color: a.color, eyes: ok(a.eyes), mouth: ok(a.mouth), accessory: ok(a.accessory) };
 }
 
-/** Shrink a picture from the computer to a small square (center-cropped) data URL for uploading. */
-export async function imageToAvatarData(file: File, size = 160): Promise<string> {
-  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') throw new Error('not an image');
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = reject;
-      el.src = url;
-    });
-    const side = Math.min(img.naturalWidth, img.naturalHeight);
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
-    const webp = canvas.toDataURL('image/webp', 0.85);
-    return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.88);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+/** Cut a square (sx, sy, side in image pixels) out of a picture and shrink it to a small data URL for uploading. */
+export function cropPicture(img: HTMLImageElement, sx: number, sy: number, side: number, size = 160): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+  const webp = canvas.toDataURL('image/webp', 0.85);
+  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.88);
 }
 
 const PROFILE_KEY = 'doodlz:profile';

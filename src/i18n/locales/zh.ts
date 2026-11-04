@@ -302,4 +302,10 @@ export const zh: Dict = {
   "avatar.edit": "更换头像",
   "avatar.colorShort": "颜色",
   "auth.err.image": "无法使用该图片——请尝试 PNG 或 JPG",
+  "crop.title": "调整你的图片",
+  "crop.hint": "拖动以移动 · 滚轮或双指缩放",
+  "crop.zoom": "缩放",
+  "crop.zoomIn": "放大",
+  "crop.zoomOut": "缩小",
+  "crop.save": "保存",
 };

@@ -302,4 +302,10 @@ export const fr: Dict = {
   "avatar.edit": "Changer d'avatar",
   "avatar.colorShort": "Couleur",
   "auth.err.image": "Impossible d'utiliser cette image — essaie un PNG ou JPG",
+  "crop.title": "Ajuste ton image",
+  "crop.hint": "Glisse pour déplacer · molette ou pince pour zoomer",
+  "crop.zoom": "Zoom",
+  "crop.zoomIn": "Zoomer",
+  "crop.zoomOut": "Dézoomer",
+  "crop.save": "Enregistrer",
 };

@@ -319,6 +319,12 @@ export const en = {
   "avatar.edit": "Change avatar",
   "avatar.colorShort": "Color",
   "auth.err.image": "That picture couldn't be used — try a PNG or JPG",
+  "crop.title": "Adjust your picture",
+  "crop.hint": "Drag to move · scroll or pinch to zoom",
+  "crop.zoom": "Zoom",
+  "crop.zoomIn": "Zoom in",
+  "crop.zoomOut": "Zoom out",
+  "crop.save": "Save",
 } as const;
 
 export type TKey = keyof typeof en;

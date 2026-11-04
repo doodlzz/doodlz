@@ -302,4 +302,10 @@ export const ru: Dict = {
   "avatar.edit": "Изменить аватар",
   "avatar.colorShort": "Цвет",
   "auth.err.image": "Эту картинку нельзя использовать — попробуй PNG или JPG",
+  "crop.title": "Настрой картинку",
+  "crop.hint": "Перетаскивай, чтобы двигать · колёсико или щипок для масштаба",
+  "crop.zoom": "Масштаб",
+  "crop.zoomIn": "Приблизить",
+  "crop.zoomOut": "Отдалить",
+  "crop.save": "Сохранить",
 };

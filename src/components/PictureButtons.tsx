@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useT } from '../i18n';
-import { imageToAvatarData } from '../lib/avatar';
+import PictureCropper from './PictureCropper';
 
 /** Upload a picture from the computer as your avatar, or remove it (signed-in players only). */
 export default function PictureButtons({ className = '' }: { className?: string }) {
@@ -11,6 +11,7 @@ export default function PictureButtons({ className = '' }: { className?: string 
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<File | null>(null); // picture being adjusted in the crop window
   if (!account) return null;
   const hasImage = !!account.avatar?.image;
 
@@ -35,7 +36,10 @@ export default function PictureButtons({ className = '' }: { className?: string 
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = '';
-          if (file) run(async () => setImage(await imageToAvatarData(file)));
+          if (file) {
+            setError(null);
+            setPicked(file);
+          }
         }}
       />
       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -48,6 +52,16 @@ export default function PictureButtons({ className = '' }: { className?: string 
           </button>
         )}
       </div>
+      {picked && (
+        <PictureCropper
+          file={picked}
+          onCancel={() => setPicked(null)}
+          onSave={async (dataUrl) => {
+            await run(() => setImage(dataUrl));
+            setPicked(null);
+          }}
+        />
+      )}
       {error && (
         <p className="mt-1.5 text-center text-xs font-bold text-rose-500" role="alert">
           {t(error)}
