@@ -4,6 +4,7 @@ import { useGameSounds } from './audio/useGameSounds';
 import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
+import MouseTrail from './components/MouseTrail';
 import { useGame } from './hooks/useGame';
 import { useQuestTracker } from './hooks/useQuestTracker';
 import { useT } from './i18n';
@@ -25,6 +26,7 @@ function Shell() {
   const phase = game.state?.phase;
   return (
     <>
+      <MouseTrail />
       {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}
 
       {game.toast && (
