@@ -42,8 +42,11 @@ export default function MouseTrail() {
         const b = points[i];
         if (b.start) continue;
         const life = 1 - (now - b.t) / LIFETIME_MS; // 1 = fresh, 0 = gone
-        ctx.strokeStyle = `rgba(209, 213, 219, ${0.7 * life})`;
-        ctx.lineWidth = 2 + 4 * life;
+        // Near-white with a soft glow so it reads on every part of the gradient.
+        ctx.strokeStyle = `rgba(241, 245, 249, ${0.95 * life})`;
+        ctx.shadowColor = `rgba(255, 255, 255, ${0.6 * life})`;
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 3 + 5 * life;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
