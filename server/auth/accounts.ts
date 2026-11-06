@@ -21,8 +21,18 @@ interface Account {
   createdAt: number;
   avatar?: Avatar; // saved face (no image)
   image?: { ext: ImageExt; version: number }; // uploaded picture, stored as a file
-  points?: number; // account points from ranked games and quests
+  points?: number; // point balance: earned from ranked games and quests, plus bought
+  boughtPoints?: number; // lifetime points bought (so earned points can be told apart later)
+  purchases?: Purchase[];
   daily?: DailyProgress; // today's game points and quest progress
+}
+
+interface Purchase {
+  id: string; // Stripe Checkout session id; each one is credited once
+  pack: string;
+  points: number;
+  cents: number;
+  at: number;
 }
 
 type ImageExt = 'png' | 'jpg' | 'webp';
@@ -185,6 +195,20 @@ export class AccountStore {
   /** Today's progress (a fresh one once the UTC day changes). */
   private dailyOf(a: Account): DailyProgress {
     return a.daily?.day === utcDay() ? a.daily : emptyDaily();
+  }
+
+  /**
+   * Add bought points once per paid Stripe session. Returns the new balance,
+   * or null if the account is gone or this session was already credited.
+   */
+  creditPurchase(accountId: string, p: Purchase): number | null {
+    const a = this.store.accounts.find((x) => x.id === accountId);
+    if (!a || a.purchases?.some((x) => x.id === p.id)) return null;
+    a.purchases = [...(a.purchases ?? []), p];
+    a.boughtPoints = (a.boughtPoints ?? 0) + p.points;
+    a.points = (a.points ?? 0) + p.points;
+    this.save();
+    return a.points;
   }
 
   /** Account id for a session token (used to tag players in rooms). */

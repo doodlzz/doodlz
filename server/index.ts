@@ -12,6 +12,7 @@ import { registerCanvasHandlers, registerGameHandlers, registerModerationHandler
 import { registerLobbyHandlers } from './handlers/lobbyHandlers.js';
 import { gameOverRewards } from './progress/rewards.js';
 import { RoomManager } from './rooms/RoomManager.js';
+import { shopRoutes } from './shop/routes.js';
 
 const app = express();
 if (config.trustProxy) app.set('trust proxy', true);
@@ -23,6 +24,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, Record<string,
 const accounts = new AccountStore(path.join(config.dataDir, 'accounts.json'));
 const manager = new RoomManager(io, (room, complete) => gameOverRewards(io, accounts, room, complete));
 app.use('/api/auth', authRoutes(accounts));
+app.use('/api/shop', shopRoutes(accounts));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, online: io.engine.clientsCount, ...manager.stats() }));
 

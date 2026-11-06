@@ -54,6 +54,8 @@ interface Ctx {
   requireAccount: (action: (account: Account | null) => void) => void;
   /** A ranked game paid out: update the shown points and quests. */
   applyReward: (r: RewardSummary) => void;
+  /** Re-read the account from the server (e.g. after buying points). */
+  refresh: () => Promise<Account | null>;
 }
 
 const AuthCtx = createContext<Ctx | null>(null);
@@ -63,15 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<AuthMode | null>(null);
   const pending = useRef<((account: Account | null) => void) | null>(null);
 
+  const refresh = useCallback(async (): Promise<Account | null> => {
+    const token = readToken();
+    if (!token) return null;
+    try {
+      const r = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 401) writeToken(null);
+      const data = r.ok ? ((await r.json()) as { account?: Account }) : null;
+      if (data?.account) setAccount(data.account);
+      return data?.account ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   // Restore a saved sign-in.
   useEffect(() => {
-    const token = readToken();
-    if (!token) return;
-    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : r.status === 401 ? (writeToken(null), null) : null))
-      .then((data) => data?.account && setAccount(data.account))
-      .catch(() => {});
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const finish = useCallback((acc: Account | null) => {
     setMode(null);
@@ -125,11 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pending.current = action;
         setMode('gate');
       },
+      refresh,
       applyReward: (r) => {
         if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily! });
       },
     }),
-    [account, signedIn],
+    [account, signedIn, refresh],
   );
 
   return (

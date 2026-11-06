@@ -1,6 +1,8 @@
-import { LogIn, LogOut, Star, UserCircle2, UserPlus } from 'lucide-react';
+import { useState } from 'react';
+import { LogIn, LogOut, Plus, Star, UserCircle2, UserPlus } from 'lucide-react';
 import type { Avatar } from '../../shared/types';
 import AvatarMenu from '../components/AvatarMenu';
+import PointsShop from '../components/PointsShop';
 import TaggedName from '../components/TaggedName';
 import { useT } from '../i18n';
 import { useAuth } from './AuthContext';
@@ -16,17 +18,25 @@ interface Props {
 export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Props) {
   const t = useT();
   const { account, open } = useAuth();
+  const [shopOpen, setShopOpen] = useState(false);
 
   if (account) {
     return (
       <div className="flex items-center gap-2">
-        <span
-          className="flex items-center gap-1 rounded-2xl bg-amber-400 px-3 py-2 font-display text-sm font-semibold text-amber-950 shadow-[0_3px_0_#b45309]"
-          title={t('points.title')}
-          aria-label={`${t('points.title')}: ${account.points}`}
+        {/* Points balance; clicking it opens the shop. */}
+        <button
+          type="button"
+          onClick={() => setShopOpen(true)}
+          className="flex cursor-pointer items-center gap-1 rounded-2xl bg-amber-400 py-2 pr-1.5 pl-3 font-display text-sm font-semibold text-amber-950 shadow-[0_3px_0_#b45309] transition hover:bg-amber-300 active:translate-y-[2px] active:shadow-[0_1px_0_#b45309]"
+          title={t('shop.title')}
+          aria-label={`${t('points.title')}: ${account.points}. ${t('shop.title')}`}
         >
           <Star className="size-4 fill-current" /> {account.points.toLocaleString()}
-        </span>
+          <span className="ml-0.5 grid size-5 place-items-center rounded-lg bg-amber-950/15">
+            <Plus className="size-3.5" strokeWidth={3} />
+          </span>
+        </button>
+        {shopOpen && <PointsShop onClose={() => setShopOpen(false)} />}
         {avatar && onAvatarChange && <AvatarMenu avatar={avatar} onChange={onAvatarChange} parts={parts} />}
         <button
           type="button"

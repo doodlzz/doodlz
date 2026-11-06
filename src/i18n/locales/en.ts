@@ -378,6 +378,18 @@ export const en = {
   "reward.finished": "Finished the game",
   "reward.quest": "Quest done: {quest}",
   "reward.capped": "You've reached today's limit of {n} points from games. Quests still pay.",
+  "shop.title": "Buy points",
+  "shop.subtitle": "The bigger the pack, the less you pay per point.",
+  "shop.points": "{n} points",
+  "shop.save": "Save {n}%",
+  "shop.starter": "Starter pack",
+  "shop.best": "Best value",
+  "shop.popular": "Popular",
+  "shop.secure": "Secure payment by Stripe. You'll come back here after paying.",
+  "shop.off": "Buying points isn't available yet.",
+  "shop.error": "Couldn't start the payment. Please try again.",
+  "shop.thanks": "Thanks! Your points will show up in a few seconds.",
+  "shop.cancelled": "Payment cancelled. You weren't charged.",
 } as const;
 
 export type TKey = keyof typeof en;

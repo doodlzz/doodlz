@@ -32,6 +32,12 @@ In dev, several tabs of one browser may join the same room (`ALLOW_SAME_DEVICE=1
 | `RECONNECT_GRACE_MS` | 60000 | How long a dropped player's slot and score are kept |
 | `TRUST_PROXY` | on | Read client IPs from `X-Forwarded-For` (set `0` if not behind a proxy) |
 | `ALLOW_SAME_DEVICE` | off | Dev only: let tabs of one browser share a room |
+| `DATA_DIR` | `data` | Where accounts, points and purchases are saved. **Must be a persistent disk in production.** |
+| `RANKED_MIN_PLAYERS` | 4 | Different signed-in players a public game needs to pay points |
+| `RANKED_UNIQUE_IP` | on | Ranked players must be on different IPs (`npm run dev` turns this off) |
+| `STRIPE_SECRET_KEY` | — | Stripe secret key for selling point packs (shop is off until this and the next are set) |
+| `STRIPE_WEBHOOK_SECRET` | — | Signing secret of a Stripe webhook pointed at `/api/shop/webhook` (events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`) |
+| `PUBLIC_URL` | request host | Site address Stripe sends buyers back to, e.g. `https://doodlz.io` |
 
 Client build variable: `VITE_SUPPORT_URL` points the "Support us" button at a donation page.
 
