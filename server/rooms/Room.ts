@@ -28,7 +28,7 @@ import {
 } from '../../shared/types.js';
 import { config } from '../config.js';
 import { drawerPoints, guessPoints } from '../game/scoring.js';
-import { closeThreshold, compact, isLetter, letterCount, levenshtein, maskWords, normalize } from '../game/text.js';
+import { compact, isCloseGuess, isLetter, letterCount, maskWords } from '../game/text.js';
 import { pickChoices } from '../game/wordPicker.js';
 import { censor } from '../moderation/profanity.js';
 import { isBackground, sanitizeOp, sanitizeSettings } from '../util/sanitize.js';
@@ -645,9 +645,7 @@ export class Room {
 
     if (this.parts?.some((part) => compact(part) === guess)) {
       this.privateMsg(player, 'close', 'chat.partCorrect', { text });
-    } else if (target.length >= 4 && levenshtein(guess, target) <= closeThreshold(target.length)) {
-      this.privateMsg(player, 'close', 'chat.close', { text });
-    } else if (normalize(text).split(' ').some((w) => w.length >= 4 && levenshtein(w, target) <= closeThreshold(target.length))) {
+    } else if (isCloseGuess(text, this.word)) {
       this.privateMsg(player, 'close', 'chat.close', { text });
     }
   }
