@@ -347,6 +347,21 @@ export const en = {
   "chat.correctSecond": "{name} guessed it second! (+{points})",
   "chat.drawerPoints": "✏️ {name} gets +{points} for drawing ({n} guessed)",
   "chat.roundTarget": "Round {round} — first to {target} points wins",
+  "browse.title": "Existing lobbies",
+  "browse.count": "{n} open",
+  "browse.filter": "Filter by category",
+  "browse.all": "All",
+  "browse.refresh": "Refresh",
+  "browse.loading": "Loading lobbies…",
+  "browse.empty": "No open lobbies right now. Hit \"Play with randoms\" to start one!",
+  "browse.emptyFilter": "No lobbies in this category right now.",
+  "browse.by": "Created by",
+  "browse.waiting": "Waiting to start",
+  "browse.round": "Round {round}/{total}",
+  "browse.roundTarget": "Round {round} · first to {n}",
+  "browse.gameOver": "Game over",
+  "browse.picking": "Picking a category…",
+  "browse.full": "Full",
 } as const;
 
 export type TKey = keyof typeof en;

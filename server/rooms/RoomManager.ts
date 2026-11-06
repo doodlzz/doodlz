@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, type Profile, type RoomSettings } from '../../shared/types.js';
+import { DEFAULT_SETTINGS, type LobbyInfo, type Profile, type RoomSettings } from '../../shared/types.js';
 import { Room, type IO, type Player } from './Room.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -50,6 +50,15 @@ export class RoomManager {
       .filter((r) => r.isPublic && r.joinError(profile, ip) === null)
       .sort((a, b) => b.players.size - a.players.size);
     return candidates[0] ?? this.create({ ...DEFAULT_SETTINGS }, true);
+  }
+
+  /** Public rooms for the lobby browser, busiest first. Private rooms are never listed. */
+  listPublic(limit = 50): LobbyInfo[] {
+    return [...this.rooms.values()]
+      .filter((r) => r.isPublic && r.connectedCount > 0)
+      .sort((a, b) => b.players.size - a.players.size)
+      .slice(0, limit)
+      .map((r) => r.summary());
   }
 
   register(room: Room, player: Player): void {

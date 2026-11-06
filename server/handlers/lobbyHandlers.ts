@@ -72,6 +72,13 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
   );
 
   socket.on(
+    'list_lobbies',
+    safe((ack) => {
+      if (typeof ack === 'function') ack(manager.listPublic());
+    }),
+  );
+
+  socket.on(
     'resume_session',
     safe((p, ack) => {
       if (typeof ack !== 'function') return;

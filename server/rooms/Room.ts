@@ -16,6 +16,7 @@ import {
   type Difficulty,
   type DrawOp,
   type Lang,
+  type LobbyInfo,
   type MsgParams,
   type Phase,
   type Profile,
@@ -77,6 +78,8 @@ const pick = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.len
 export class Room {
   readonly players = new Map<string, Player>();
   hostId = '';
+  /** name#tag of the first player in; shown in the lobby browser. */
+  creator = '';
   settings: RoomSettings;
   phase: Phase = 'lobby';
   round = 0;
@@ -129,6 +132,26 @@ export class Room {
     }
   }
 
+  /** What the lobby browser shows about this room. */
+  summary(): LobbyInfo {
+    const cats = this.settings.categories;
+    return {
+      code: this.code,
+      creator: this.creator,
+      category: this.categoryPending || cats.length !== 1 ? null : cats[0],
+      phase: this.phase,
+      round: this.round,
+      rounds: this.settings.rounds,
+      targetScore: this.settings.targetScore,
+      players: this.players.size,
+      maxPlayers: this.settings.maxPlayers,
+    };
+  }
+
+  get connectedCount(): number {
+    return this.connectedPlayers.length;
+  }
+
   // ================= players =================
 
   private get connectedPlayers() {
@@ -171,6 +194,7 @@ export class Room {
     };
     this.players.set(player.id, player);
     if (!this.hostId) this.hostId = player.id;
+    if (!this.creator) this.creator = name;
     this.chat('join', 'chat.joined', { name });
     this.checkAutoStart();
     this.broadcastState();

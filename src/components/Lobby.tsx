@@ -5,6 +5,7 @@ import AuthButtons from '../auth/AuthButtons';
 import { useAuth } from '../auth/AuthContext';
 import CategoryPicker, { CategoryTile } from './CategoryPicker';
 import DailyQuests from './DailyQuests';
+import LobbyBrowser from './LobbyBrowser';
 import Socials from './Socials';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
@@ -199,6 +200,8 @@ function HomeView({ game }: { game: GameApi }) {
             <DoorOpen className="size-5" /> {t('home.join')}
           </button>
         </form>
+
+        <LobbyBrowser game={game} disabled={!ready} onJoin={(c) => run((n) => game.joinRoom(c, n, avatar))} />
       </div>
 
       <div className="mt-6 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">

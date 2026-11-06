@@ -8,6 +8,7 @@ import type {
   ClientRoomState,
   JoinResult,
   Lang,
+  LobbyInfo,
   MsgParams,
   Profile,
   ReportReason,
@@ -163,6 +164,16 @@ export function useGame(lang: Lang) {
     [profile, entered],
   );
 
+  /** Open public lobbies for the home screen's lobby browser. */
+  const listLobbies = useCallback(
+    () =>
+      new Promise<LobbyInfo[]>((resolve) => {
+        if (!socket.connected) return resolve([]);
+        socket.timeout(5000).emit('list_lobbies', (err: Error | null, lobbies: LobbyInfo[]) => resolve(err ? [] : lobbies));
+      }),
+    [],
+  );
+
   const leaveRoom = useCallback(() => {
     socket.emit('leave_room');
     history.replaceState(null, '', '/');
@@ -187,6 +198,7 @@ export function useGame(lang: Lang) {
     createRoom,
     joinRoom,
     quickPlay,
+    listLobbies,
     leaveRoom,
     startGame,
     updateSettings: (s: Partial<RoomSettings>) => socket.emit('update_settings', s),

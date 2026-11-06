@@ -181,6 +181,20 @@ export interface ClientRoomState {
   reported: string[]; // players this client has already reported
 }
 
+/** One row in the home screen's lobby browser (public rooms only). */
+export interface LobbyInfo {
+  code: string;
+  /** "name#1234" of the player who opened the lobby. */
+  creator: string;
+  category: Category | null; // null while the first player is still picking
+  phase: Phase;
+  round: number;
+  rounds: number;
+  targetScore: number;
+  players: number;
+  maxPlayers: number;
+}
+
 // ---------------- drawing ----------------
 
 export type ShapeKind = 'line' | 'rect' | 'ellipse';
@@ -224,6 +238,7 @@ export interface ClientToServerEvents {
   create_room: (p: { profile: Profile; settings?: Partial<RoomSettings> }, ack: Ack<JoinResult>) => void;
   join_room: (p: { code: string; profile: Profile }, ack: Ack<JoinResult>) => void;
   quick_play: (p: { profile: Profile }, ack: Ack<JoinResult>) => void;
+  list_lobbies: (ack: (lobbies: LobbyInfo[]) => void) => void;
   resume_session: (p: { token: string }, ack: Ack<JoinResult>) => void;
   leave_room: () => void;
   update_settings: (s: Partial<RoomSettings>) => void;
