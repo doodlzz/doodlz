@@ -106,3 +106,66 @@ body {
   }
   .chip-on { @apply bg-indigo-500 text-white shadow-[0_3px_0_#3730a3] hover:bg-indigo-500; }
 }
+
+/* ---------------- cosmetics: avatar frames ---------------- */
+.fx-spin, .fx-spin-slow, .fx-spin-reverse { transform-box: view-box; transform-origin: 50px 54px; }
+.fx-spin { animation: fx-spin 3s linear infinite; }
+.fx-spin-slow { animation: fx-spin 14s linear infinite; }
+.fx-spin-reverse { animation: fx-spin 20s linear infinite reverse; }
+.fx-pulse { animation: fx-pulse 1.8s ease-in-out infinite; }
+.fx-twinkle { transform-box: fill-box; transform-origin: center; animation: fx-twinkle 1.8s ease-in-out infinite; }
+.fx-flicker { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-flicker 0.7s ease-in-out infinite alternate; }
+@keyframes fx-spin { to { transform: rotate(360deg); } }
+@keyframes fx-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes fx-twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.6); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes fx-flicker { from { transform: scaleY(0.8) scaleX(1.05); } to { transform: scaleY(1.15) scaleX(0.92); } }
+
+/* ---------------- cosmetics: name effects ---------------- */
+.name-fx { font-weight: 800; }
+.name-rainbow, .name-gold, .name-fire {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.name-rainbow {
+  background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #6366f1, #d946ef, #ef4444);
+  background-size: 200% auto;
+  animation: name-slide 2.5s linear infinite;
+}
+.name-gold {
+  background-image: linear-gradient(100deg, #b45309 0%, #eab308 30%, #fff7cc 45%, #eab308 60%, #b45309 100%);
+  background-size: 250% auto;
+  animation: name-slide 3s linear infinite;
+  filter: drop-shadow(0 1px 0 rgba(120, 53, 15, 0.35));
+}
+.name-fire {
+  background-image: linear-gradient(0deg, #b91c1c, #f97316, #fde047, #f97316, #b91c1c);
+  background-size: auto 300%;
+  animation: name-rise 1.6s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(249, 115, 22, 0.55));
+}
+.name-neon {
+  color: #06b6d4;
+  text-shadow: 0 0 2px #67e8f9, 0 0 8px #22d3ee, 0 0 14px #0891b2;
+  animation: name-neon 3s linear infinite;
+}
+.dark .name-neon { color: #a5f3fc; }
+.name-glitch {
+  text-shadow: 1.5px 0 #ec4899, -1.5px 0 #06b6d4;
+  animation: name-glitch 2.4s steps(1) infinite;
+}
+@keyframes name-slide { to { background-position: -200% center; } }
+@keyframes name-rise { to { background-position: center -300%; } }
+@keyframes name-neon { 0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; } 20%, 63% { opacity: 0.45; } }
+@keyframes name-glitch {
+  0%, 100% { text-shadow: 1.5px 0 #ec4899, -1.5px 0 #06b6d4; transform: none; }
+  30% { text-shadow: -2px 1px #ec4899, 2px -1px #06b6d4; transform: translateX(1px); }
+  32% { text-shadow: 2px -1px #ec4899, -2px 1px #06b6d4; transform: translateX(-1px) skewX(-6deg); }
+  34% { text-shadow: 1.5px 0 #ec4899, -1.5px 0 #06b6d4; transform: none; }
+  70% { text-shadow: 3px 0 #ec4899, -3px 0 #06b6d4; }
+  71% { text-shadow: 1.5px 0 #ec4899, -1.5px 0 #06b6d4; }
+}
+.name-glitch { display: inline-block; }
+@media (prefers-reduced-motion: reduce) {
+  .fx-anim, .fx-anim * { animation: none !important; }
+}

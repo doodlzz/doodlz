@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import AvatarFrame from './AvatarFrame';
 import type { Avatar as AvatarConfig } from '../../shared/types';
 
 const INK = '#1e1b4b';
@@ -267,6 +268,7 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
         <circle cx="50" cy="54" r="42" fill={avatar.color} />
         <image href={avatar.image} x="8" y="12" width="84" height="84" preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip})`} />
         <circle cx="50" cy="54" r="42" fill="none" stroke={INK} strokeWidth="4" />
+        {avatar.frame && <AvatarFrame frame={avatar.frame} />}
       </svg>
     );
   }
@@ -279,6 +281,7 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
       <Eyes type={avatar.eyes} />
       <Mouth type={avatar.mouth} />
       <Accessory type={avatar.accessory} color={avatar.color} />
+      {avatar.frame && <AvatarFrame frame={avatar.frame} />}
     </svg>
   );
 }

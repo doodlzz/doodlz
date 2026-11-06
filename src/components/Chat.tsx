@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Lock, LogIn, LogOut, MessageCircle, SendHorizontal, Sparkles } from 'lucide-react';
-import type { ChatMessage } from '../../shared/types';
+import type { NameFxId } from '../../shared/cosmetics';
+import type { ChatMessage, PlayerPublic } from '../../shared/types';
 import { useT, type TFn } from '../i18n';
 import TaggedName from './TaggedName';
 
@@ -10,11 +11,13 @@ interface Props {
   placeholder: string;
   title: string;
   className?: string;
+  /** Players in the room, so names show their name effects. */
+  players?: PlayerPublic[];
 }
 
 const body = (m: ChatMessage, t: TFn) => (m.key ? t(m.key, m.params) : (m.text ?? ''));
 
-function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
+function Line({ m, odd, t, fx }: { m: ChatMessage; odd: boolean; t: TFn; fx?: NameFxId }) {
   const base = 'flex items-start gap-1.5 px-3 py-1.5 text-sm leading-snug break-words';
   const stripe = odd ? 'bg-indigo-50/60' : '';
   const text = body(m, t);
@@ -67,7 +70,7 @@ function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
           <Lock className="mt-0.5 size-3.5 shrink-0" />
           <span>
             <b>
-              <TaggedName name={m.name ?? ''} />:
+              <TaggedName name={m.name ?? ''} fx={fx} />:
             </b>{' '}
             {text}
           </span>
@@ -78,7 +81,7 @@ function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
         <div className={`${base} text-slate-700 ${stripe}`}>
           <span>
             <b className="text-indigo-950">
-              <TaggedName name={m.name ?? ''} />:
+              <TaggedName name={m.name ?? ''} fx={fx} />:
             </b>{' '}
             {text}
           </span>
@@ -87,7 +90,7 @@ function Line({ m, odd, t }: { m: ChatMessage; odd: boolean; t: TFn }) {
   }
 }
 
-export default function Chat({ messages, onSend, placeholder, title, className = '' }: Props) {
+export default function Chat({ messages, onSend, placeholder, title, className = '', players }: Props) {
   const t = useT();
   const [text, setText] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -124,7 +127,7 @@ export default function Chat({ messages, onSend, placeholder, title, className =
       >
         {messages.length === 0 && <p className="p-4 text-center text-sm font-semibold text-slate-400">{t('chat.empty')}</p>}
         {messages.map((m, i) => (
-          <Line key={m.id} m={m} odd={i % 2 === 1} t={t} />
+          <Line key={m.id} m={m} odd={i % 2 === 1} t={t} fx={m.playerId ? players?.find((p) => p.id === m.playerId)?.avatar.nameFx : undefined} />
         ))}
       </div>
       <form onSubmit={submit} className="flex gap-2 border-t-4 border-indigo-50 p-2.5">

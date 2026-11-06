@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { CosmeticSlot, Equipped } from '../../shared/cosmetics';
 import type { DailyProgress, RewardSummary } from '../../shared/quests';
 import type { Avatar } from '../../shared/types';
 import AuthModal, { type AuthMode } from './AuthModal';
@@ -15,7 +16,12 @@ export interface Account {
   points: number;
   /** Today's game points and quest progress (from ranked games). */
   daily: DailyProgress;
+  /** Cosmetic ids bought with points, and what's being worn. */
+  owned: string[];
+  equipped: Equipped;
 }
+
+export type ShopTab = 'cosmetics' | 'points';
 
 export interface AccountChanges {
   username?: string;
@@ -31,7 +37,7 @@ async function api(path: string, body: unknown, token?: string | null): Promise<
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
-    const res = await fetch(`/api/auth/${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
+    const res = await fetch(path.startsWith('/') ? path : `/api/auth/${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
     return await res.json();
   } catch {
     return { error: 'auth.err.network' };
@@ -56,6 +62,14 @@ interface Ctx {
   applyReward: (r: RewardSummary) => void;
   /** Re-read the account from the server (e.g. after buying points). */
   refresh: () => Promise<Account | null>;
+  /** Open the shop window (signed-in players only). The app shell shows it. */
+  openShop: (tab?: ShopTab) => void;
+  shopTab: ShopTab | null;
+  closeShop: () => void;
+  /** Spend points on a cosmetic. Returns an error key, or null on success. */
+  buyItem: (itemId: string) => Promise<string | null>;
+  /** Wear an owned frame / name effect, or take it off with null. */
+  equip: (slot: Exclude<CosmeticSlot, 'picture'>, itemId: string | null) => Promise<string | null>;
 }
 
 const AuthCtx = createContext<Ctx | null>(null);
@@ -63,6 +77,7 @@ const AuthCtx = createContext<Ctx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [mode, setMode] = useState<AuthMode | null>(null);
+  const [shopTab, setShopTab] = useState<ShopTab | null>(null);
   const pending = useRef<((account: Account | null) => void) | null>(null);
 
   const refresh = useCallback(async (): Promise<Account | null> => {
@@ -137,11 +152,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMode('gate');
       },
       refresh,
+      openShop: (tab = 'cosmetics') => setShopTab(tab),
+      shopTab,
+      closeShop: () => setShopTab(null),
+      buyItem: async (item) => {
+        const res = await api('/api/shop/item', { item }, readToken());
+        if (!res.account) return res.error ?? 'auth.err.network';
+        setAccount(res.account);
+        return null;
+      },
+      equip: async (slot, item) => {
+        const res = await api('/api/shop/equip', { slot, item }, readToken());
+        if (!res.account) return res.error ?? 'auth.err.network';
+        setAccount(res.account);
+        return null;
+      },
       applyReward: (r) => {
         if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily! });
       },
     }),
-    [account, signedIn, refresh],
+    [account, signedIn, refresh, shopTab],
   );
 
   return (

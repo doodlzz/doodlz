@@ -87,7 +87,7 @@ export default function AvatarMenu({ avatar, onChange, parts }: Props) {
                   title={t('auth.accountTitle')}
                 >
                   <UserCog className="size-4 shrink-0" />
-                  <TaggedName name={account.username} tag={account.tag} className="truncate" />
+                  <TaggedName name={account.username} tag={account.tag} fx={account.equipped.nameFx} className="truncate" />
                 </button>
               )}
               <PictureButtons />

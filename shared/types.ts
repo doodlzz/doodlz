@@ -1,4 +1,5 @@
 // Types and constants shared by the client (src/) and the game server (server/).
+import type { FrameId, NameFxId } from './cosmetics.js';
 import type { RewardSummary } from './quests.js';
 
 // ---------------- enums & constants ----------------
@@ -65,8 +66,11 @@ export interface Avatar {
   eyes: number;
   mouth: number;
   accessory: number;
-  /** Uploaded picture URL (signed-in players only; always set by the server). */
+  /** Uploaded or drawn picture URL (signed-in players only; always set by the server). */
   image?: string;
+  /** Bought cosmetics, shown to everyone (always set by the server). */
+  frame?: FrameId;
+  nameFx?: NameFxId;
 }
 
 /** Eyes / mouths / extras everyone gets, and how many signed-in players get. */

@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { LogIn, LogOut, Plus, Star, UserCircle2, UserPlus } from 'lucide-react';
 import type { Avatar } from '../../shared/types';
 import AvatarMenu from '../components/AvatarMenu';
-import PointsShop from '../components/PointsShop';
 import TaggedName from '../components/TaggedName';
 import { useT } from '../i18n';
 import { useAuth } from './AuthContext';
@@ -17,8 +15,7 @@ interface Props {
 /** Register / Sign in buttons for the top bar, or the signed-in avatar, username and sign-out button. */
 export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Props) {
   const t = useT();
-  const { account, open } = useAuth();
-  const [shopOpen, setShopOpen] = useState(false);
+  const { account, open, openShop } = useAuth();
 
   if (account) {
     return (
@@ -26,7 +23,7 @@ export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Prop
         {/* Points balance; clicking it opens the shop. */}
         <button
           type="button"
-          onClick={() => setShopOpen(true)}
+          onClick={() => openShop()}
           className="flex cursor-pointer items-center gap-1 rounded-2xl bg-amber-400 py-2 pr-1.5 pl-3 font-display text-sm font-semibold text-amber-950 shadow-[0_3px_0_#b45309] transition hover:bg-amber-300 active:translate-y-[2px] active:shadow-[0_1px_0_#b45309]"
           title={t('shop.title')}
           aria-label={`${t('points.title')}: ${account.points}. ${t('shop.title')}`}
@@ -36,7 +33,6 @@ export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Prop
             <Plus className="size-3.5" strokeWidth={3} />
           </span>
         </button>
-        {shopOpen && <PointsShop onClose={() => setShopOpen(false)} />}
         {avatar && onAvatarChange && <AvatarMenu avatar={avatar} onChange={onAvatarChange} parts={parts} />}
         <button
           type="button"
@@ -44,7 +40,7 @@ export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Prop
           className={`${avatar ? 'hidden sm:flex' : 'flex'} cursor-pointer items-center gap-1.5 rounded-2xl bg-white/15 px-3 py-2 font-display text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/25`}
           title={t('auth.accountTitle')}
         >
-          {!avatar && <UserCircle2 className="size-5 shrink-0" />} <TaggedName name={account.username} tag={account.tag} className="max-w-[8rem] truncate sm:max-w-[14rem]" />
+          {!avatar && <UserCircle2 className="size-5 shrink-0" />} <TaggedName name={account.username} tag={account.tag} fx={account.equipped.nameFx} className="max-w-[8rem] truncate sm:max-w-[14rem]" />
         </button>
         <button type="button" className="btn btn-ghost px-3 py-2 text-sm" onClick={() => open('logout')} title={t('auth.signOut')} aria-label={t('auth.signOut')}>
           <LogOut className="size-5" />

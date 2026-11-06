@@ -1,3 +1,4 @@
+import type { NameFxId } from '../../shared/cosmetics';
 import { splitTag } from '../../shared/tag';
 
 interface Props {
@@ -6,11 +7,14 @@ interface Props {
   className?: string;
   /** Put the tag on its own line (for narrow cards). */
   stacked?: boolean;
+  /** Bought name effect. */
+  fx?: NameFxId;
 }
 
 /** Shows "name#1234" with the tag a little faded, Discord-style. */
-export default function TaggedName({ name, tag, className = '', stacked = false }: Props) {
+export default function TaggedName({ name, tag, className = '', stacked = false, fx }: Props) {
   const parts = tag === undefined ? splitTag(name) : { name, tag };
+  if (fx) className = `${className} fx-anim name-fx name-${fx}`;
   if (stacked) {
     return (
       <span className={`flex min-w-0 flex-col items-center leading-tight ${className}`}>

@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
+import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
 import { emptyDaily, POINTS, questsFor, utcDay, type DailyProgress, type QuestEvent, type QuestId } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { isProfane } from '../moderation/profanity.js';
@@ -24,6 +25,9 @@ interface Account {
   points?: number; // point balance: earned from ranked games and quests, plus bought
   boughtPoints?: number; // lifetime points bought (so earned points can be told apart later)
   purchases?: Purchase[];
+  earnedPoints?: number; // lifetime points earned from games and quests (for leaderboards)
+  owned?: string[]; // cosmetic ids bought with points
+  equipped?: Equipped;
   daily?: DailyProgress; // today's game points and quest progress
 }
 
@@ -53,7 +57,11 @@ export interface PublicAccount {
   avatar?: Avatar;
   points: number;
   daily: DailyProgress;
+  owned: string[];
+  equipped: Equipped;
 }
+
+export type ShopError = 'shop.notFound' | 'shop.owned' | 'shop.notEnough' | 'shop.notOwned' | 'shop.needUnlock';
 
 /** What one ranked game earned a player, before the daily limits. */
 export interface GameEarnings {
@@ -90,6 +98,11 @@ export class AccountStore {
     // Accounts made before tags existed get one now.
     let changed = false;
     for (const a of this.store.accounts) {
+      // Pictures became a paid unlock; anyone who already uploaded one keeps it.
+      if (a.image && !a.owned?.includes('pic-upload')) {
+        a.owned = [...(a.owned ?? []), 'pic-upload'];
+        changed = true;
+      }
       if (!a.tag || !TAG_RE.test(a.tag)) {
         a.tag = this.freeTag(a.username, a.id) ?? randomTag();
         changed = true;
@@ -119,10 +132,47 @@ export class AccountStore {
     return this.sameName(username).some((a) => a.tag === tag);
   }
 
-  /** Signed-in player's name, tag and picture URL for a session token. */
-  identity(token: unknown): { username: string; tag: string; image?: string } | null {
+  /** Signed-in player's name, tag, picture URL and equipped cosmetics for a session token. */
+  identity(token: unknown): { username: string; tag: string; image?: string; equipped: Equipped } | null {
     const a = typeof token === 'string' ? this.accountFor(token) : null;
-    return a ? { username: a.username, tag: a.tag, image: this.imageUrl(a) } : null;
+    return a ? { username: a.username, tag: a.tag, image: this.imageUrl(a), equipped: { ...a.equipped } } : null;
+  }
+
+  private owns = (a: Account, id: string) => a.owned?.includes(id) ?? false;
+
+  /** Spend points on a cosmetic. Frames and name effects are equipped right away. */
+  buy(token: string | undefined, itemId: unknown): { account: PublicAccount } | { error: AuthError | ShopError } {
+    const a = this.accountFor(token);
+    if (!a) return { error: 'auth.err.session' };
+    const item = findCosmetic(itemId);
+    if (!item) return { error: 'shop.notFound' };
+    if (this.owns(a, item.id)) return { error: 'shop.owned' };
+    if ((a.points ?? 0) < item.price) return { error: 'shop.notEnough' };
+    a.points = (a.points ?? 0) - item.price;
+    a.owned = [...(a.owned ?? []), item.id];
+    if (item.slot === 'frame' || item.slot === 'nameFx') a.equipped = { ...a.equipped, [item.slot]: item.value };
+    this.save();
+    return { account: this.toPublic(a) };
+  }
+
+  /** Put on (or take off, with null) an owned frame or name effect. */
+  equip(token: string | undefined, slot: unknown, itemId: unknown): { account: PublicAccount } | { error: AuthError | ShopError } {
+    const a = this.accountFor(token);
+    if (!a) return { error: 'auth.err.session' };
+    if (slot !== 'frame' && slot !== 'nameFx') return { error: 'shop.notFound' };
+    if (itemId === null) {
+      const next = { ...a.equipped };
+      delete next[slot];
+      a.equipped = next;
+    } else {
+      const item = findCosmetic(itemId);
+      if (!item || item.slot !== slot) return { error: 'shop.notFound' };
+      if (!this.owns(a, item.id)) return { error: 'shop.notOwned' };
+      if ((slot === 'frame' && !isFrame(item.value)) || (slot === 'nameFx' && !isNameFx(item.value))) return { error: 'shop.notFound' };
+      a.equipped = { ...a.equipped, [slot]: item.value };
+    }
+    this.save();
+    return { account: this.toPublic(a) };
   }
 
   private imageUrl(a: Account): string | undefined {
@@ -140,9 +190,11 @@ export class AccountStore {
   }
 
   /** Save an uploaded picture (a data: URL of a PNG, JPEG or WebP), or remove it with null. */
-  setImage(token: string | undefined, dataUrl: unknown): { account: PublicAccount } | { error: AuthError } {
+  setImage(token: string | undefined, dataUrl: unknown): { account: PublicAccount } | { error: AuthError | ShopError } {
     const account = this.accountFor(token);
     if (!account) return { error: 'auth.err.session' };
+    // Setting a picture needs one of the picture unlocks (removing it never does).
+    if (dataUrl !== null && !this.owns(account, 'pic-upload') && !this.owns(account, 'pic-draw')) return { error: 'shop.needUnlock' };
     const old = this.imagePath(account);
     if (dataUrl === null) {
       if (old) rmSync(old, { force: true });
@@ -189,7 +241,17 @@ export class AccountStore {
   }
 
   private toPublic(a: Account): PublicAccount {
-    return { id: a.id, username: a.username, tag: a.tag, email: a.email, avatar: this.avatarOf(a), points: a.points ?? 0, daily: this.dailyOf(a) };
+    return {
+      id: a.id,
+      username: a.username,
+      tag: a.tag,
+      email: a.email,
+      avatar: this.avatarOf(a),
+      points: a.points ?? 0,
+      daily: this.dailyOf(a),
+      owned: a.owned ?? [],
+      equipped: a.equipped ?? {},
+    };
   }
 
   /** Today's progress (a fresh one once the UTC day changes). */
@@ -237,6 +299,7 @@ export class AccountStore {
     }
     const questPoints = questsDone.length * POINTS.quest;
     a.points = (a.points ?? 0) + gamePoints + questPoints;
+    a.earnedPoints = (a.earnedPoints ?? 0) + gamePoints + questPoints;
     a.daily = daily;
     this.save();
     return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily };

@@ -21,7 +21,11 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
    */
   const withTag = (room: Room, profile: Profile): Profile => {
     const id = accounts.identity(profile.authToken);
-    if (id) return { ...profile, name: `${id.username}#${id.tag}`, avatar: { ...profile.avatar, ...(id.image ? { image: id.image } : {}) } };
+    if (id) {
+      // The server decides the picture and cosmetics from the account; the client can't claim them.
+      const extras = { ...(id.image ? { image: id.image } : {}), ...id.equipped };
+      return { ...profile, name: `${id.username}#${id.tag}`, avatar: { ...profile.avatar, ...extras } };
+    }
     profile = { ...profile, avatar: sanitizeAvatar(profile.avatar, AVATAR_PARTS_FREE) };
     const inRoom = new Set([...room.players.values()].map((p) => p.name.toLowerCase()));
     const clashes = (tag: string) => accounts.isRegistered(profile.name, tag) || inRoom.has(`${profile.name}#${tag}`.toLowerCase());

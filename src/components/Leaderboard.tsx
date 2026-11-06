@@ -120,7 +120,7 @@ export default function Leaderboard({ state, game, className = '' }: Props) {
               <Avatar avatar={p.avatar} size={36} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1 font-bold text-indigo-950">
-                  <TaggedName name={p.name} className="truncate" />
+                  <TaggedName name={p.name} fx={p.avatar.nameFx} className="truncate" />
                   {p.id === state.hostId && <Crown className="size-3.5 shrink-0 text-amber-500" aria-label={t('lb.host')} />}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-1.5 text-sm font-bold text-indigo-400">

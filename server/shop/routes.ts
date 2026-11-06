@@ -54,6 +54,18 @@ export function shopRoutes(accounts: AccountStore): Router {
 
   router.use(express.json({ limit: '2kb' }));
 
+  // Spend points on a cosmetic: { item }.
+  router.post('/item', (req, res) => {
+    const result = accounts.buy(bearer(req), req.body?.item);
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
+  // Put on or take off a frame or name effect: { slot, item } (item null = none).
+  router.post('/equip', (req, res) => {
+    const result = accounts.equip(bearer(req), req.body?.slot, req.body?.item ?? null);
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
   router.get('/', (_req, res) => {
     const info: ShopInfo = { enabled: enabled(), currency: SHOP_CURRENCY, packs: [...POINT_PACKS] };
     res.json(info);

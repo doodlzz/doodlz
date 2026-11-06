@@ -115,7 +115,7 @@ function ChoosingOverlay({ state }: { state: ClientRoomState }) {
       <div className="flex animate-pop flex-col items-center gap-2 rounded-3xl bg-surface px-8 py-6 text-center shadow-xl">
         <Avatar avatar={lead.avatar} size={80} className="animate-float" />
         <p className="font-display text-2xl font-bold text-indigo-950">
-          <TaggedName name={lead.name} />
+          <TaggedName name={lead.name} fx={lead.avatar.nameFx} />
         </p>
         <p className="flex items-center gap-1 font-bold text-indigo-400">
           {t('game.isChoosing')}
@@ -155,7 +155,7 @@ function TurnSummary({ state }: { state: ClientRoomState }) {
           return (
             <li key={p.id} className="flex items-center gap-1.5 rounded-full bg-indigo-50 py-1 pr-3 pl-1">
               <Avatar avatar={p.avatar} size={26} />
-              <TaggedName name={p.name} className="max-w-32 truncate text-sm font-bold text-indigo-950" />
+              <TaggedName name={p.name} fx={p.avatar.nameFx} className="max-w-32 truncate text-sm font-bold text-indigo-950" />
               {state.drawerIds.includes(p.id) && <Pencil className="size-3.5 text-amber-500" />}
               <span className={`font-display font-bold ${d > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>+{d}</span>
             </li>
@@ -260,6 +260,7 @@ export default function Game({ game }: { game: GameApi }) {
         <Leaderboard state={state} game={game} className="order-3 max-h-72 sm:order-none sm:h-[320px] sm:max-h-none lg:order-1 lg:h-auto lg:max-h-[calc(100vh-110px)]" />
         <Chat
           messages={game.messages}
+          players={state.players}
           onSend={game.sendGuess}
           placeholder={placeholder}
           title={state.phase === 'drawing' && !isDrawer && !me?.hasGuessed ? t('chat.guessTitle') : t('chat.title')}

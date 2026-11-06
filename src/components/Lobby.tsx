@@ -65,7 +65,7 @@ function HomeView({ game }: { game: GameApi }) {
   // Signed-in players get all 12 of each part and their uploaded picture; guests get the first 6.
   const parts = account ? AVATAR_PARTS_MEMBER : AVATAR_PARTS_FREE;
   const image = account?.avatar?.image;
-  const avatar = { ...limitAvatar(face, parts), ...(image ? { image } : {}) };
+  const avatar = { ...limitAvatar(face, parts), ...(image ? { image } : {}), ...account?.equipped };
 
   // Signing in loads the face saved on the account (so it follows you to other devices)…
   const accountId = account?.id;
@@ -360,7 +360,7 @@ function RoomView({ game }: { game: GameApi }) {
                   </div>
                 )}
                 <Avatar avatar={p.avatar} size={64} />
-                <TaggedName name={p.name} stacked className="mt-1 w-full text-center font-bold text-indigo-950" />
+                <TaggedName name={p.name} fx={p.avatar.nameFx} stacked className="mt-1 w-full text-center font-bold text-indigo-950" />
                 {p.id === state.you && <div className="text-xs font-extrabold text-pink-500">{t('lobby.thatsYou')}</div>}
               </div>
             ))}
@@ -390,7 +390,7 @@ function RoomView({ game }: { game: GameApi }) {
           </div>
         </div>
 
-        <Chat messages={game.messages} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
+        <Chat messages={game.messages} players={state.players} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
       </div>
     </div>
   );
