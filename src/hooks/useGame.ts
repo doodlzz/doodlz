@@ -15,6 +15,7 @@ import type {
   RoomSettings,
   WordChoice,
 } from '../../shared/types';
+import type { RewardSummary } from '../../shared/quests';
 import { readToken } from '../auth/storage';
 import { deviceId, guestTag, loadSession, saveSession } from '../lib/session';
 import { socket } from '../socket';
@@ -38,6 +39,8 @@ export function useGame(lang: Lang) {
   const [wordChoices, setWordChoices] = useState<WordChoiceState | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [online, setOnline] = useState<number | null>(null);
+  /** What the last finished game earned this player (shown on the end screen). */
+  const [reward, setReward] = useState<RewardSummary | null>(null);
   /** True while we hold a session token and are trying to get back into the room. */
   const [resuming, setResuming] = useState(() => loadSession() !== null);
   const clockOffset = useRef(0); // serverTime - localTime
@@ -59,6 +62,7 @@ export function useGame(lang: Lang) {
     setState(null);
     setMessages([]);
     setWordChoices(null);
+    setReward(null);
   }, []);
 
   useEffect(() => {
@@ -86,6 +90,7 @@ export function useGame(lang: Lang) {
       clockOffset.current = s.serverNow - Date.now();
       inRoom.current = true;
       setState(s);
+      if (s.phase !== 'game_over') setReward(null);
       if (s.phase !== 'choosing' || s.drawerIds[0] !== s.you) setWordChoices(null);
     };
     const onChat = (m: ChatMessage) => setMessages((prev) => [...prev.slice(-(MAX_MESSAGES - 1)), m]);
@@ -103,6 +108,7 @@ export function useGame(lang: Lang) {
     socket.on('word_choices', onChoices);
     socket.on('kicked', onKicked);
     socket.on('online_count', setOnline);
+    socket.on('rewards', setReward);
     if (socket.connected) tryResume();
     return () => {
       socket.off('connect', onConnect);
@@ -112,6 +118,7 @@ export function useGame(lang: Lang) {
       socket.off('word_choices', onChoices);
       socket.off('kicked', onKicked);
       socket.off('online_count', setOnline);
+      socket.off('rewards', setReward);
     };
   }, [showToast, resetRoom]);
 
@@ -189,6 +196,7 @@ export function useGame(lang: Lang) {
   return {
     connected,
     online,
+    reward,
     resuming,
     state,
     messages,

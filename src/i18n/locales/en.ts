@@ -362,6 +362,22 @@ export const en = {
   "browse.gameOver": "Game over",
   "browse.picking": "Picking a category…",
   "browse.full": "Full",
+  "points.title": "Points",
+  "quests.rankedNote": "Counts in public games with {n}+ signed-in players.",
+  "quests.signIn": "Sign up to earn points.",
+  "reward.guest": "Guests don't earn points.",
+  "reward.private": "Private rooms don't earn points.",
+  "reward.unfinished": "The game ended early, so it doesn't count for points.",
+  "reward.fewPlayers": "No points this time: ranked games need {n} signed-in players.",
+  "reward.noScore": "Score at least 1 point in a game to earn rewards.",
+  "reward.earned": "+{n} points",
+  "reward.total": "Total: {n}",
+  "reward.place1": "1st place",
+  "reward.place2": "2nd place",
+  "reward.place3": "3rd place",
+  "reward.finished": "Finished the game",
+  "reward.quest": "Quest done: {quest}",
+  "reward.capped": "You've reached today's limit of {n} points from games. Quests still pay.",
 } as const;
 
 export type TKey = keyof typeof en;

@@ -4,6 +4,7 @@ import type { PlayerPublic } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import Avatar from './Avatar';
 import Logo from './Logo';
+import RewardCard from './RewardCard';
 import { AdSlot } from './Promo';
 import { useT } from '../i18n';
 import TaggedName from './TaggedName';
@@ -93,6 +94,7 @@ export default function GameOver({ game }: { game: GameApi }) {
       </div>
 
       <div className="panel w-full max-w-md rounded-t-none p-4">
+        {game.reward && <RewardCard reward={game.reward} />}
         {rest.length > 0 && (
           <ul className="mb-4 flex flex-col gap-1.5">
             {rest.map((p, i) => (

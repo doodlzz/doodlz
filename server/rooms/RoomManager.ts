@@ -13,7 +13,10 @@ export class RoomManager {
   readonly rooms = new Map<string, Room>();
   private readonly sessions = new Map<string, Session>(); // token -> where the player lives
 
-  constructor(private readonly io: IO) {}
+  constructor(
+    private readonly io: IO,
+    private readonly onGameOver?: (room: Room, complete: boolean) => void,
+  ) {}
 
   private newCode(): string {
     for (;;) {
@@ -26,6 +29,7 @@ export class RoomManager {
     const code = this.newCode();
     const room = new Room(this.io, code, settings, isPublic, {
       onPlayerRemoved: (r, p) => this.forget(r, p),
+      onGameOver: this.onGameOver,
       onEmpty: (r) => {
         this.rooms.delete(r.code);
         console.log(`room ${r.code} closed (${this.rooms.size} open)`);

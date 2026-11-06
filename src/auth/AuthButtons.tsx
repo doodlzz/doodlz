@@ -1,4 +1,4 @@
-import { LogIn, LogOut, UserCircle2, UserPlus } from 'lucide-react';
+import { LogIn, LogOut, Star, UserCircle2, UserPlus } from 'lucide-react';
 import type { Avatar } from '../../shared/types';
 import AvatarMenu from '../components/AvatarMenu';
 import TaggedName from '../components/TaggedName';
@@ -20,6 +20,13 @@ export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Prop
   if (account) {
     return (
       <div className="flex items-center gap-2">
+        <span
+          className="flex items-center gap-1 rounded-2xl bg-amber-400 px-3 py-2 font-display text-sm font-semibold text-amber-950 shadow-[0_3px_0_#b45309]"
+          title={t('points.title')}
+          aria-label={`${t('points.title')}: ${account.points}`}
+        >
+          <Star className="size-4 fill-current" /> {account.points.toLocaleString()}
+        </span>
         {avatar && onAvatarChange && <AvatarMenu avatar={avatar} onChange={onAvatarChange} parts={parts} />}
         <button
           type="button"

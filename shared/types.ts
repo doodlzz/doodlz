@@ -1,4 +1,5 @@
 // Types and constants shared by the client (src/) and the game server (server/).
+import type { RewardSummary } from './quests.js';
 
 // ---------------- enums & constants ----------------
 
@@ -266,4 +267,5 @@ export interface ServerToClientEvents {
   chat_message: (m: ChatMessage) => void;
   kicked: (p: { reason: string }) => void;
   online_count: (n: number) => void;
+  rewards: (r: RewardSummary) => void;
 }

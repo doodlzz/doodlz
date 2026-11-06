@@ -16,4 +16,12 @@ export const config = {
   publicAutoStartMs: 15_000,
   publicRestartMs: 12_000,
   categoryPickMs: 25_000, // public rooms: time the first player gets to pick a category
+  /** Ranked games need this many different signed-in players (also on different devices and IPs). */
+  rankedMinPlayers: Number(process.env.RANKED_MIN_PLAYERS ?? 4),
+  /** Testing only: set to 0 to let ranked players share an IP address. */
+  rankedUniqueIp: process.env.RANKED_UNIQUE_IP !== '0',
+  /** A correct guess only counts toward quests once the drawing has been going this long… */
+  questGuessMinMs: 3_000,
+  /** …and has at least this many drawing ops (so a word told outside the game doesn't count). */
+  questMinOps: 15,
 };

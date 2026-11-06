@@ -1,26 +1,11 @@
-// Daily quests, tracked in this browser. Three quests a day; "play 3 games" is always one of them.
+// Daily quests for guests, tracked in this browser. Signed-in players' quests are tracked by the server
+// (ranked games only) and come with their account. Three quests a day; "play 3 games" is always one of them.
+import { questsFor, utcDay, type QuestEvent, type QuestId } from '../../shared/quests';
 import { readJson, writeJson } from './storage';
 
-export type QuestId = 'play3' | 'guess5' | 'draw3' | 'duo' | 'speed' | 'random';
-export type QuestEvent = 'gameFinished' | 'duoFinished' | 'speedFinished' | 'publicFinished' | 'guessed' | 'drew';
+export { msUntilReset, questsFor, QUESTS } from '../../shared/quests';
+export type { QuestDef, QuestEvent, QuestId } from '../../shared/quests';
 
-export interface QuestDef {
-  id: QuestId;
-  target: number;
-  event: QuestEvent;
-  emoji: string;
-}
-
-export const QUESTS: Record<QuestId, QuestDef> = {
-  play3: { id: 'play3', target: 3, event: 'gameFinished', emoji: '🎮' },
-  guess5: { id: 'guess5', target: 5, event: 'guessed', emoji: '💡' },
-  draw3: { id: 'draw3', target: 3, event: 'drew', emoji: '✏️' },
-  duo: { id: 'duo', target: 1, event: 'duoFinished', emoji: '👯' },
-  speed: { id: 'speed', target: 1, event: 'speedFinished', emoji: '⚡' },
-  random: { id: 'random', target: 1, event: 'publicFinished', emoji: '🌍' },
-};
-
-const ROTATING: QuestId[] = ['guess5', 'draw3', 'duo', 'speed', 'random'];
 const KEY = 'doodlz:quests';
 
 interface Stored {
@@ -28,19 +13,7 @@ interface Stored {
   progress: Partial<Record<QuestId, number>>;
 }
 
-export function today(d = new Date()): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-/** Same three quests for everyone on a given day, picked from a hash of the date. */
-export function questsFor(day: string): QuestDef[] {
-  let h = 0;
-  for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const a = ROTATING[h % ROTATING.length];
-  const rest = ROTATING.filter((q) => q !== a);
-  const b = rest[Math.floor(h / ROTATING.length) % rest.length];
-  return [QUESTS.play3, QUESTS[a], QUESTS[b]];
-}
+const today = () => utcDay();
 
 export function loadProgress(): Stored {
   const s = readJson<Stored>(KEY, { day: today(), progress: {} });
@@ -103,10 +76,4 @@ export function commitHeldQuestEvents(code: string): void {
 /** Left early or a new game started: drop anything held. */
 export function dropHeldQuestEvents(): void {
   writePending(null);
-}
-
-export function msUntilReset(now = new Date()): number {
-  const next = new Date(now);
-  next.setHours(24, 0, 0, 0);
-  return next.getTime() - now.getTime();
 }

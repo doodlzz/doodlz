@@ -57,6 +57,11 @@ export interface Player {
   hintIdx: Set<number>; // letters revealed to this player via the hint button
   hintsUsed: number;
   warnings: number;
+  /** Signed-in players' account id (set by the server from their session, never by the client). */
+  accountId: string | null;
+  /** This game: correct guesses made after real drawing, and turns they actually drew. */
+  gameGuesses: number;
+  gameDrawings: number;
   chatTimes: number[];
 }
 
@@ -69,6 +74,8 @@ export interface RoomHooks {
   /** A player left for good (left, kicked, or reconnect grace expired). */
   onPlayerRemoved(room: Room, player: Player): void;
   onEmpty(room: Room): void;
+  /** A game reached the end screen. `complete` is false when it stopped early (players left). */
+  onGameOver?(room: Room, complete: boolean): void;
 }
 
 let msgCounter = 0;
@@ -103,6 +110,7 @@ export class Room {
   private rerollsLeft = 0;
   private usedWords = new Set<string>();
   private autoStartAt: number | null = null;
+  private drawingStartedAt = 0;
   private categoryPending = false;
   private categoryPickEndsAt: number | null = null;
   private categoryTimer: NodeJS.Timeout | null = null;
@@ -168,7 +176,7 @@ export class Room {
     return null;
   }
 
-  addPlayer(socketId: string, profile: Profile, ip: string): Player {
+  addPlayer(socketId: string, profile: Profile, ip: string, accountId: string | null = null): Player {
     // Names already carry a #tag; the rare exact clash (same account twice) gets a suffix.
     let name = profile.name;
     const taken = new Set([...this.players.values()].map((p) => p.name.toLowerCase()));
@@ -191,6 +199,9 @@ export class Room {
       hintsUsed: 0,
       warnings: 0,
       chatTimes: [],
+      accountId,
+      gameGuesses: 0,
+      gameDrawings: 0,
     };
     this.players.set(player.id, player);
     if (!this.hostId) this.hostId = player.id;
@@ -267,7 +278,7 @@ export class Room {
     const inGame = this.phase === 'choosing' || this.phase === 'drawing' || this.phase === 'turn_end';
     if (inGame && this.players.size < 2) {
       this.chat('system', 'chat.notEnoughPlayers');
-      this.endGame();
+      this.endGame(false);
       return;
     }
     if (this.drawerIds.includes(playerId) && (this.phase === 'choosing' || this.phase === 'drawing')) {
@@ -332,6 +343,8 @@ export class Room {
     for (const p of this.players.values()) {
       p.score = 0;
       p.hasGuessed = false;
+      p.gameGuesses = 0;
+      p.gameDrawings = 0;
     }
     this.round = 0;
     this.drawQueue = [];
@@ -386,7 +399,7 @@ export class Room {
   private nextTurn(): void {
     this.clearTimers();
     const connectedIds = () => this.connectedPlayers.map((p) => p.id);
-    if (this.players.size < 2 || connectedIds().length === 0) return this.endGame();
+    if (this.players.size < 2 || connectedIds().length === 0) return this.endGame(false);
 
     // "First to X points": the game ends after the turn in which someone gets there.
     const target = this.settings.targetScore;
@@ -469,6 +482,7 @@ export class Room {
     this.usedWords.add(choice.word);
     this.phase = 'drawing';
     const now = Date.now();
+    this.drawingStartedAt = now;
     this.turnMs = this.turnSeconds() * 1000;
     this.phaseEndsAt = now + this.turnMs;
 
@@ -513,6 +527,14 @@ export class Room {
     if (this.phase !== 'choosing' && this.phase !== 'drawing') return;
     this.clearTimers();
 
+    // Quests: a turn counts as "drew" only if that drawer really drew something.
+    if (this.phase === 'drawing') {
+      for (const id of this.drawerIds) {
+        const p = this.players.get(id);
+        if (p && this.history.filter((h) => h.by === id).length >= config.questMinOps) p.gameDrawings++;
+      }
+    }
+
     // Drawers are paid at the end of the turn: 10 for every player who guessed, up to 50.
     const correct = this.guessScores.length;
     const pts = drawerPoints(correct);
@@ -536,7 +558,7 @@ export class Room {
     this.broadcastState();
   }
 
-  private endGame(): void {
+  private endGame(complete = true): void {
     this.clearTimers();
     this.phase = 'game_over';
     this.drawerIds = [];
@@ -548,6 +570,7 @@ export class Room {
     if (winner) this.chat('system', 'chat.winner', { name: winner.name, points: winner.score });
     if (this.isPublic) this.timer = setTimeout(() => this.backToLobby(null), config.publicRestartMs);
     this.broadcastState();
+    this.hooks.onGameOver?.(this, complete && this.round > 0);
   }
 
   private everyoneGuessed(): boolean {
@@ -655,6 +678,8 @@ export class Room {
     const points = guessPoints({ difficulty: this.difficulty ?? 'easy', order, hintsUsed: player.hintsUsed });
     player.score += points;
     player.hasGuessed = true;
+    // Only guesses made after some real drawing count toward quests.
+    if (Date.now() - this.drawingStartedAt >= config.questGuessMinMs && this.history.length >= config.questMinOps) player.gameGuesses++;
     this.guessScores.push(points);
     this.deltas[player.id] = (this.deltas[player.id] ?? 0) + points;
 

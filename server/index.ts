@@ -10,6 +10,7 @@ import { config } from './config.js';
 import { createContext, type SocketData } from './handlers/context.js';
 import { registerCanvasHandlers, registerGameHandlers, registerModerationHandlers } from './handlers/gameHandlers.js';
 import { registerLobbyHandlers } from './handlers/lobbyHandlers.js';
+import { gameOverRewards } from './progress/rewards.js';
 import { RoomManager } from './rooms/RoomManager.js';
 
 const app = express();
@@ -19,9 +20,8 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, Record<string,
   cors: { origin: true },
   maxHttpBufferSize: 1e6,
 });
-const manager = new RoomManager(io);
-
 const accounts = new AccountStore(path.join(config.dataDir, 'accounts.json'));
+const manager = new RoomManager(io, (room, complete) => gameOverRewards(io, accounts, room, complete));
 app.use('/api/auth', authRoutes(accounts));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, online: io.engine.clientsCount, ...manager.stats() }));

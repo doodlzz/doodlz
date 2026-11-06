@@ -37,7 +37,7 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
     if (error) return ack({ ok: false, error });
     leaveCurrent();
     socket.join(room.code);
-    const player = room.addPlayer(socket.id, profile, ctx.ip);
+    const player = room.addPlayer(socket.id, profile, ctx.ip, accounts.accountId(profile.authToken));
     socket.data.roomCode = room.code;
     socket.data.playerId = player.id;
     manager.register(room, player);

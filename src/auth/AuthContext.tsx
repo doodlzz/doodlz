@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { DailyProgress, RewardSummary } from '../../shared/quests';
 import type { Avatar } from '../../shared/types';
 import AuthModal, { type AuthMode } from './AuthModal';
 import { readGuest, readToken, writeGuest, writeToken } from './storage';
@@ -10,6 +11,10 @@ export interface Account {
   email: string;
   /** Saved face; `avatar.image` is their uploaded picture, if any. */
   avatar?: Avatar;
+  /** Account points from ranked games and quests. */
+  points: number;
+  /** Today's game points and quest progress (from ranked games). */
+  daily: DailyProgress;
 }
 
 export interface AccountChanges {
@@ -47,6 +52,8 @@ interface Ctx {
   logout: () => void;
   /** Run `action` now if signed in or already chose guest; otherwise ask first, then run it. */
   requireAccount: (action: (account: Account | null) => void) => void;
+  /** A ranked game paid out: update the shown points and quests. */
+  applyReward: (r: RewardSummary) => void;
 }
 
 const AuthCtx = createContext<Ctx | null>(null);
@@ -117,6 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (account || readGuest()) return action(account);
         pending.current = action;
         setMode('gate');
+      },
+      applyReward: (r) => {
+        if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily! });
       },
     }),
     [account, signedIn],

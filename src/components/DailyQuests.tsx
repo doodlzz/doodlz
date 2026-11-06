@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { CalendarCheck, Check } from 'lucide-react';
+import { CalendarCheck, Check, Star } from 'lucide-react';
+import { POINTS, utcDay } from '../../shared/quests';
+import { useAuth } from '../auth/AuthContext';
 import { useT } from '../i18n';
 import { loadProgress, msUntilReset, questsFor } from '../lib/quests';
 
@@ -11,12 +13,13 @@ function formatLeft(ms: number) {
 
 export default function DailyQuests({ className = '' }: { className?: string }) {
   const t = useT();
-  const [progress, setProgress] = useState(loadProgress);
+  const { account, open } = useAuth();
+  const [local, setLocal] = useState(loadProgress);
   const [left, setLeft] = useState(msUntilReset);
 
   useEffect(() => {
     const refresh = () => {
-      setProgress(loadProgress());
+      setLocal(loadProgress());
       setLeft(msUntilReset());
     };
     const id = setInterval(refresh, 30_000);
@@ -29,7 +32,10 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
     };
   }, []);
 
-  const quests = questsFor(progress.day);
+  // Signed-in players see the server's count (ranked games only); guests see this browser's.
+  const day = utcDay();
+  const progress = account ? (account.daily.day === day ? account.daily.progress : {}) : local.day === day ? local.progress : {};
+  const quests = questsFor(day);
 
   return (
     <div className={`panel p-4 ${className}`}>
@@ -39,10 +45,21 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
         </h2>
         <span className="text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(left) })}</span>
       </div>
-      <p className="-mt-1.5 mb-2.5 text-xs font-bold text-indigo-400">{t('quests.note')}</p>
+      <p className="-mt-1.5 mb-2.5 text-xs font-bold text-indigo-400">
+        {account ? (
+          t('quests.rankedNote', { n: POINTS.rankedMinPlayers })
+        ) : (
+          <>
+            {t('quests.note')}{' '}
+            <button type="button" className="cursor-pointer text-pink-500 underline underline-offset-2 hover:text-pink-400" onClick={() => open('register')}>
+              {t('quests.signIn')}
+            </button>
+          </>
+        )}
+      </p>
       <ul className="flex flex-col gap-2">
         {quests.map((q) => {
-          const n = progress.progress[q.id] ?? 0;
+          const n = progress[q.id] ?? 0;
           const done = n >= q.target;
           return (
             <li key={q.id} className={`rounded-2xl px-3 py-2 ${done ? 'bg-emerald-100' : 'bg-indigo-50/70'}`}>
@@ -51,6 +68,11 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
                   {q.emoji}
                 </span>
                 <span className={`flex-1 text-sm font-bold ${done ? 'text-emerald-700' : 'text-indigo-900'}`}>{t(`quest.${q.id}`)}</span>
+                {account && (
+                  <span className="flex items-center gap-0.5 text-xs font-extrabold text-amber-500" title={t('points.title')}>
+                    +{POINTS.quest} <Star className="size-3 fill-current" />
+                  </span>
+                )}
                 {done ? (
                   <span className="flex items-center gap-1 text-xs font-extrabold text-emerald-700">
                     <Check className="size-4" strokeWidth={3} /> {t('quests.done')}

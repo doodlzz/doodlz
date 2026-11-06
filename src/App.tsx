@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
-import { AuthProvider } from './auth/AuthContext';
+import { AuthProvider, useAuth } from './auth/AuthContext';
 import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
@@ -18,6 +18,12 @@ function Shell() {
   useGameSounds(game);
   useQuestTracker(game);
   const code = game.state?.code;
+  const { applyReward } = useAuth();
+
+  // A ranked game paid out: update the account's points and quests on screen.
+  useEffect(() => {
+    if (game.reward) applyReward(game.reward);
+  }, [game.reward]);
 
   // Keep the room code in the URL so it can be shared.
   useEffect(() => {

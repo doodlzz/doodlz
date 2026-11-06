@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
+import { emptyDaily, POINTS, questsFor, utcDay, type DailyProgress, type QuestEvent, type QuestId } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { isProfane } from '../moderation/profanity.js';
 import { sanitizeAvatar } from '../util/sanitize.js';
@@ -20,6 +21,8 @@ interface Account {
   createdAt: number;
   avatar?: Avatar; // saved face (no image)
   image?: { ext: ImageExt; version: number }; // uploaded picture, stored as a file
+  points?: number; // account points from ranked games and quests
+  daily?: DailyProgress; // today's game points and quest progress
 }
 
 type ImageExt = 'png' | 'jpg' | 'webp';
@@ -38,6 +41,14 @@ export interface PublicAccount {
   email: string;
   /** Saved face; `image` is set when they uploaded a picture. */
   avatar?: Avatar;
+  points: number;
+  daily: DailyProgress;
+}
+
+/** What one ranked game earned a player, before the daily limits. */
+export interface GameEarnings {
+  points: number;
+  events: Partial<Record<QuestEvent, number>>;
 }
 
 export type AuthError =
@@ -168,7 +179,43 @@ export class AccountStore {
   }
 
   private toPublic(a: Account): PublicAccount {
-    return { id: a.id, username: a.username, tag: a.tag, email: a.email, avatar: this.avatarOf(a) };
+    return { id: a.id, username: a.username, tag: a.tag, email: a.email, avatar: this.avatarOf(a), points: a.points ?? 0, daily: this.dailyOf(a) };
+  }
+
+  /** Today's progress (a fresh one once the UTC day changes). */
+  private dailyOf(a: Account): DailyProgress {
+    return a.daily?.day === utcDay() ? a.daily : emptyDaily();
+  }
+
+  /** Account id for a session token (used to tag players in rooms). */
+  accountId(token: unknown): string | null {
+    return typeof token === 'string' ? (this.accountFor(token)?.id ?? null) : null;
+  }
+
+  /**
+   * Add a ranked game's earnings: game points up to the daily cap, then quest progress
+   * (each finished quest pays POINTS.quest once a day).
+   */
+  award(accountId: string, earned: GameEarnings) {
+    const a = this.store.accounts.find((x) => x.id === accountId);
+    if (!a) return null;
+    const daily = this.dailyOf(a);
+    const gamePoints = Math.max(0, Math.min(earned.points, POINTS.dailyGameCap - daily.gamePoints));
+    daily.gamePoints += gamePoints;
+
+    const questsDone: QuestId[] = [];
+    for (const q of questsFor(daily.day)) {
+      const n = earned.events[q.event] ?? 0;
+      const before = daily.progress[q.id] ?? 0;
+      if (!n || before >= q.target) continue;
+      daily.progress[q.id] = Math.min(q.target, before + n);
+      if (daily.progress[q.id]! >= q.target) questsDone.push(q.id);
+    }
+    const questPoints = questsDone.length * POINTS.quest;
+    a.points = (a.points ?? 0) + gamePoints + questPoints;
+    a.daily = daily;
+    this.save();
+    return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily };
   }
 
   private newSession(accountId: string): string {
