@@ -239,7 +239,7 @@ export default function Canvas({ isDrawer, canDraw, blindfolded, lockedColor, ba
               <div className="flex flex-col items-center gap-2 px-6">
                 <EyeOff className="size-12 text-pink-400" />
                 <p className="font-display text-2xl font-bold">{t('game.blindfolded')}</p>
-                <p className="font-bold text-white/70">{t('game.blindfoldedText')}</p>
+                <p className="font-bold text-white/90">{t('game.blindfoldedText')}</p>
               </div>
             </div>
           )}

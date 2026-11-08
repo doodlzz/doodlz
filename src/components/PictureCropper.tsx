@@ -185,7 +185,7 @@ export default function PictureCropper({ file, onCancel, onSave }: Props) {
                   style={{ width: w, height: h, left: size / 2 - w / 2 + pos.x, top: size / 2 - h / 2 + pos.y }}
                 />
               ) : (
-                <Loader2 className="absolute top-1/2 left-1/2 size-8 -translate-1/2 animate-spin text-white/60" />
+                <Loader2 className="absolute top-1/2 left-1/2 size-8 -translate-1/2 animate-spin text-white/90" />
               )}
               {/* Darken everything outside the round frame. */}
               <div className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgba(30,27,75,0.65)] ring-4 ring-white/90" />

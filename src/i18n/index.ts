@@ -11,7 +11,7 @@ import { zh } from './locales/zh';
 
 export type { TKey };
 
-const DICTS: Record<Lang, Dict> = { en, es, pt, fr, de, ru, zh };
+const DICTS: Record<Lang, Partial<Dict>> = { en, es, pt, fr, de, ru, zh };
 
 export const LANGUAGE_NAMES: Record<Lang, string> = {
   en: 'English',

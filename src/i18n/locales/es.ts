@@ -1,4 +1,4 @@
-import type { Dict } from './en';
+import type { PartialDict as Dict } from './en';
 
 export const es: Dict = {
   'app.tagline': 'Dibújalo. Adivínalo. Gánalo. ✏️',

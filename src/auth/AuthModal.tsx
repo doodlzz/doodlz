@@ -24,6 +24,7 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [remember, setRemember] = useState(true);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -39,7 +40,7 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
     e.preventDefault();
     if (mode === 'register' && password !== password2) return setError('auth.err.mismatch');
     setBusy(true);
-    const err = mode === 'register' ? await register(username, email, password, remember) : await login(username, password, remember);
+    const err = mode === 'register' ? await register(username, email, password, remember, agreed) : await login(username, password, remember);
     setBusy(false);
     setError(err);
   };
@@ -156,11 +157,28 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
                 />
               </>
             )}
-            <div className="mb-4">
+            <div className="mb-4 flex flex-col gap-2">
               <Checkbox checked={remember} onChange={setRemember} label={t('auth.remember')} />
+              {mode === 'register' && (
+                <>
+                  {/* Not pre-ticked, and required: consent has to be an active choice. */}
+                  <Checkbox
+                    checked={agreed}
+                    onChange={setAgreed}
+                    required
+                    label={
+                      <span className="text-sm font-semibold">
+                        {t('auth.agreePre')} <a href="/terms" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.terms')}</a> {t('auth.agreeAnd')}{' '}
+                        <a href="/privacy" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.privacy')}</a>
+                        {t('auth.agreeAge')}
+                      </span>
+                    }
+                  />
+                </>
+              )}
             </div>
             <ErrorNote error={error} />
-            <button type="submit" className={`btn ${mode === 'register' ? 'btn-pink' : 'btn-violet'} py-3`} disabled={busy}>
+            <button type="submit" className={`btn ${mode === 'register' ? 'btn-pink' : 'btn-violet'} py-3`} disabled={busy || (mode === 'register' && !agreed)}>
               {busy ? <Loader2 className="size-5 animate-spin" /> : mode === 'register' ? <UserPlus className="size-5" /> : <LogIn className="size-5" />}
               {mode === 'register' ? t('auth.createAccount') : t('auth.signIn')}
             </button>

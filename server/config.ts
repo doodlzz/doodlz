@@ -9,6 +9,9 @@ export const config = {
   trustProxy: process.env.TRUST_PROXY !== '0',
   /** Folder where player accounts are saved. Must be on a persistent disk in production. */
   dataDir: process.env.DATA_DIR ?? 'data',
+  /** Supabase project URL and service-role key. When both are set, accounts are saved there instead of in DATA_DIR. */
+  supabaseUrl: process.env.SUPABASE_URL ?? '',
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? '',
   reconnectGraceMs: Number(process.env.RECONNECT_GRACE_MS ?? 60_000),
   chooseMs: 15_000,
   speedChooseMs: 8_000,

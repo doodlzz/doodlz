@@ -293,6 +293,25 @@ export const en = {
   "auth.err.network": "Couldn't reach the server, try again",
   "auth.err.session": "Please sign in again",
   "auth.remember": "Remember me",
+  "auth.agreePre": "I agree to the",
+  "auth.terms": "Terms of Service",
+  "auth.agreeAnd": "and",
+  "auth.privacy": "Privacy Policy",
+  "auth.agreeAge": ", and I am 13 or older.",
+  "auth.err.consent": "Please accept the Terms and Privacy Policy and confirm you are 13 or older.",
+  "auth.deleteLink": "Delete my account and data",
+  "shop.terms": "Digital items, delivered right away. The price shown is what you pay; Stripe shows any tax before you confirm. Under 18? Ask a parent first.",
+  "shop.refundLink": "Refund Policy",
+  "footer.privacy": "Privacy",
+  "footer.terms": "Terms",
+  "footer.refunds": "Refunds",
+  "footer.cookies": "Cookies",
+  "footer.delete": "Delete my data",
+  "footer.contact": "Contact",
+  "consent.text": "doodlz.io only stores what the game needs to work (your sign-in and settings). No ads, no tracking.",
+  "consent.ok": "OK",
+  "consent.more": "Cookie Policy",
+  "a11y.skip": "Skip to main content",
   "auth.confirmPassword": "Confirm password",
   "auth.showPassword": "Show password",
   "auth.hidePassword": "Hide password",
@@ -441,3 +460,5 @@ export const en = {
 
 export type TKey = keyof typeof en;
 export type Dict = Record<TKey, string>;
+/** Other languages may leave a key out; the English text is shown instead. */
+export type PartialDict = Partial<Dict>;

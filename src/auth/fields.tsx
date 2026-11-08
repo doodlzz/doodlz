@@ -1,4 +1,4 @@
-import { useState, type InputHTMLAttributes } from 'react';
+import { useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Check, Eye, EyeOff } from 'lucide-react';
 import { useT } from '../i18n';
 
@@ -23,11 +23,11 @@ export function PasswordInput({ className = '', ...props }: Omit<InputHTMLAttrib
   );
 }
 
-export function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+export function Checkbox({ checked, onChange, label, required }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode; required?: boolean }) {
   return (
-    <label className="flex w-fit cursor-pointer items-center gap-2 font-bold text-indigo-900 select-none">
-      <input type="checkbox" className="peer sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span className="grid size-6 place-items-center rounded-lg border-4 border-indigo-100 bg-indigo-50/60 text-white transition peer-checked:border-pink-500 peer-checked:bg-pink-500 peer-focus-visible:ring-4 peer-focus-visible:ring-pink-200">
+    <label className="flex w-fit cursor-pointer items-start gap-2 font-bold text-indigo-900 select-none">
+      <input type="checkbox" className="peer sr-only" checked={checked} required={required} onChange={(e) => onChange(e.target.checked)} />
+      <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border-4 border-indigo-100 bg-indigo-50/60 text-white transition peer-checked:border-pink-500 peer-checked:bg-pink-500 peer-focus-visible:ring-4 peer-focus-visible:ring-pink-200">
         {checked && <Check className="size-4" strokeWidth={4} />}
       </span>
       {label}

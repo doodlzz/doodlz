@@ -48,7 +48,9 @@ interface Ctx {
   account: Account | null;
   /** Show a dialog: register, sign in, account settings or the sign-out confirmation. */
   open: (mode: AuthMode) => void;
-  register: (username: string, email: string, password: string, remember: boolean) => Promise<string | null>;
+  register: (username: string, email: string, password: string, remember: boolean, consent: boolean) => Promise<string | null>;
+  /** Permanently delete the signed-in account (needs the password). Returns an error key, or null on success. */
+  deleteAccount: (password: string) => Promise<string | null>;
   login: (login: string, password: string, remember: boolean) => Promise<string | null>;
   /** Returns an error key, or null on success. */
   updateAccount: (changes: AccountChanges) => Promise<string | null>;
@@ -124,7 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pending.current = null;
         setMode(m);
       },
-      register: async (username, email, password, remember) => signedIn(await api('register', { username, email, password }), remember),
+      register: async (username, email, password, remember, consent) => signedIn(await api('register', { username, email, password, consent }), remember),
+      deleteAccount: async (password) => {
+        const res = (await api('delete', { password }, readToken())) as ApiResult & { ok?: boolean };
+        if (!res.ok) return res.error ?? 'auth.err.network';
+        writeToken(null);
+        writeGuest(false);
+        setAccount(null);
+        return null;
+      },
       login: async (login, password, remember) => signedIn(await api('login', { login, password }), remember),
       updateAccount: async (changes) => {
         const res = await api('account', changes, readToken());

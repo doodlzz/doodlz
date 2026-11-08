@@ -27,7 +27,7 @@ export function authRoutes(accounts: AccountStore): Router {
 
   router.post('/register', async (req, res) => {
     if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
-    const result = await accounts.register(req.body?.username, req.body?.email, req.body?.password);
+    const result = await accounts.register(req.body?.username, req.body?.email, req.body?.password, req.body?.consent);
     res.status('error' in result ? 400 : 200).json(result);
   });
 
@@ -57,17 +57,24 @@ export function authRoutes(accounts: AccountStore): Router {
   });
 
   // Upload ({ image: "data:image/…" }) or remove ({ image: null }) your picture.
-  router.post('/avatar', (req, res) => {
+  router.post('/avatar', async (req, res) => {
     if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
-    const result = accounts.setImage(bearer(req), req.body?.image);
+    const result = await accounts.setImage(bearer(req), req.body?.image);
     res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
   });
 
-  router.get('/avatar/:id', (req, res) => {
-    const found = /^[a-f0-9]{24}$/.test(req.params.id) ? accounts.imageFile(req.params.id) : null;
+  router.get('/avatar/:id', async (req, res) => {
+    const found = /^[a-f0-9]{24}$/.test(req.params.id) ? await accounts.imageData(req.params.id).catch(() => null) : null;
     if (!found) return res.status(404).end();
     res.set({ 'Content-Type': found.type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=31536000, immutable' });
-    res.sendFile(found.file);
+    res.send(found.bytes);
+  });
+
+  // Delete the account for good. Needs the password: { password }.
+  router.post('/delete', async (req, res) => {
+    if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
+    const result = await accounts.deleteAccount(bearer(req), req.body?.password);
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
   });
 
   router.post('/logout', (req, res) => {

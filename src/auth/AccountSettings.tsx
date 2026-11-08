@@ -109,6 +109,12 @@ export default function AccountSettings() {
         </label>
         <PasswordInput id="acc-new-pw2" className="mb-3" value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" maxLength={128} required />
       </Section>
+
+      <p className="px-1 text-sm font-bold text-indigo-400">
+        <a href="/delete-account" className="text-rose-600 underline underline-offset-2">
+          {t('auth.deleteLink')}
+        </a>
+      </p>
     </div>
   );
 }

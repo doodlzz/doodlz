@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import CookieNotice from './components/CookieNotice';
 import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
@@ -10,6 +11,7 @@ import MouseTrail from './components/MouseTrail';
 import { useGame } from './hooks/useGame';
 import { useQuestTracker } from './hooks/useQuestTracker';
 import { useT } from './i18n';
+import { isLegalPath, LegalPage } from './legal/LegalPages';
 import { SettingsProvider, useSettings } from './settings/SettingsContext';
 
 function Shell() {
@@ -47,9 +49,15 @@ function Shell() {
   const phase = game.state?.phase;
   return (
     <>
+      <a href="#main" className="skip-link">
+        {t('a11y.skip')}
+      </a>
       <MouseTrail />
-      {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}
+      <div id="main" tabIndex={-1}>
+        {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}
+      </div>
 
+      <CookieNotice />
       {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
       {shopNote && !game.toast && (
         <div
@@ -73,11 +81,25 @@ function Shell() {
   );
 }
 
+/** Policy pages live at their own addresses (/privacy, /terms, …); everything else is the game. */
+function Routes() {
+  const path = location.pathname.replace(/\/$/, '') || '/';
+  if (isLegalPath(path)) {
+    return (
+      <>
+        <LegalPage path={path} />
+        <CookieNotice />
+      </>
+    );
+  }
+  return <Shell />;
+}
+
 export default function App() {
   return (
     <SettingsProvider>
       <AuthProvider>
-        <Shell />
+        <Routes />
       </AuthProvider>
     </SettingsProvider>
   );

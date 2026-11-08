@@ -1,4 +1,4 @@
-import type { Dict } from './en';
+import type { PartialDict as Dict } from './en';
 
 export const zh: Dict = {
   'app.tagline': '画出来。猜出来。赢下来。✏️',

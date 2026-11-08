@@ -11,3 +11,15 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 24.22.2
+      # Accounts are saved in Supabase (run supabase/schema.sql once). Set these in the Render dashboard.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      # Shown in the footer, Contact page and policies.
+      - key: VITE_BUSINESS_NAME
+        sync: false
+      - key: VITE_BUSINESS_ADDRESS
+        sync: false
+      - key: VITE_CONTACT_EMAIL
+        sync: false

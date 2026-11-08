@@ -55,7 +55,7 @@ export default function Socials({ className = '' }: { className?: string }) {
   if (!links.length) return null;
   return (
     <div className={`flex flex-col items-center gap-2 xl:items-end ${className}`}>
-      <span className="text-xs font-extrabold tracking-widest text-white/70 uppercase">{t('socials.title')}</span>
+      <span className="text-xs font-extrabold tracking-widest text-white/90 uppercase">{t('socials.title')}</span>
       <div className="flex gap-2">
         {links.map((k) => (
           <a

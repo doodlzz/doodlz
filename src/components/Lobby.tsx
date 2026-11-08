@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import CategoryPicker, { CategoryTile } from './CategoryPicker';
 import DailyQuests from './DailyQuests';
 import LobbyBrowser from './LobbyBrowser';
+import Footer from './Footer';
 import Socials from './Socials';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
@@ -215,7 +216,7 @@ function HomeView({ game }: { game: GameApi }) {
           <div key={title} className="rounded-3xl bg-white/15 p-4 text-white backdrop-blur-sm">
             <div className="text-2xl">{emoji}</div>
             <div className="font-display text-lg font-semibold">{t(title)}</div>
-            <div className="text-sm font-semibold text-white/80">{t(text)}</div>
+            <div className="text-sm font-semibold text-white/95">{t(text)}</div>
           </div>
         ))}
       </div>
@@ -224,6 +225,7 @@ function HomeView({ game }: { game: GameApi }) {
       {/* Pinned to the bottom corners on wide screens; stacked at the end on smaller ones. */}
       <DailyQuests className="mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:w-80" />
       <Socials className="mt-6 xl:fixed xl:right-4 xl:bottom-4 xl:z-10 xl:mt-0" />
+      <Footer className="mt-8 pb-14" />
     </div>
   );
 }

@@ -119,7 +119,7 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
         <Avatar avatar={{ ...me, frame: showFrame }} size={96} className="animate-float" />
         <div className="min-w-0 flex-1">
           <TaggedName name={account.username} tag={account.tag} fx={showFx} className="block truncate font-display text-2xl text-white" />
-          <p className="mt-1 text-xs font-bold text-white/60">{trying ? t('shop.tryingOn', { item: t(`cos.${trying.id}`) }) : t('shop.tryHint')}</p>
+          <p className="mt-1 text-xs font-bold text-white/90">{trying ? t('shop.tryingOn', { item: t(`cos.${trying.id}`) }) : t('shop.tryHint')}</p>
         </div>
       </div>
       {error && (
@@ -220,6 +220,12 @@ function PointsTab() {
       )}
       <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-bold text-indigo-300">
         <Lock className="size-3.5 shrink-0" /> {shop.enabled ? t('shop.secure') : t('shop.off')}
+      </p>
+      <p className="mt-1 text-center text-xs font-bold text-indigo-400">
+        {t('shop.terms')}{' '}
+        <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+          {t('shop.refundLink')}
+        </a>
       </p>
     </>
   );

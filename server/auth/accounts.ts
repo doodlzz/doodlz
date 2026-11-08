@@ -1,8 +1,6 @@
 // Player accounts: username + email + password, stored in a JSON file on disk.
 // Passwords are hashed with scrypt; sign-ins get a random session token.
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
@@ -10,6 +8,7 @@ import { emptyDaily, POINTS, questsFor, utcDay, type DailyProgress, type QuestEv
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { isProfane } from '../moderation/profanity.js';
 import { sanitizeAvatar } from '../util/sanitize.js';
+import type { Persistence } from './persistence.js';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 
@@ -20,6 +19,7 @@ interface Account {
   email: string;
   passHash: string; // "salt:hash", both hex
   createdAt: number;
+  consentAt?: number; // when they accepted the Terms and Privacy Policy and confirmed they are 13 or older
   avatar?: Avatar; // saved face (no image)
   image?: { ext: ImageExt; version: number }; // uploaded picture, stored as a file
   points?: number; // point balance: earned from ranked games and quests, plus bought
@@ -73,6 +73,7 @@ export type AuthError =
   | 'auth.err.username'
   | 'auth.err.usernameTaken'
   | 'auth.err.email'
+  | 'auth.err.consent'
   | 'auth.err.emailTaken'
   | 'auth.err.password'
   | 'auth.err.badLogin'
@@ -88,13 +89,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export class AccountStore {
   private store: Store;
 
-  constructor(private file: string) {
+  constructor(private persistence: Persistence) {
     this.store = { accounts: [], sessions: {} };
-    try {
-      if (existsSync(file)) this.store = { ...this.store, ...JSON.parse(readFileSync(file, 'utf8')) };
-    } catch (err) {
-      console.error('Could not read accounts file, starting empty:', err);
-    }
+  }
+
+  /** Load saved accounts. Call once at startup, before serving requests. */
+  async init() {
+    this.store = { ...this.store, ...(await this.persistence.load<Account>()) };
     // Accounts made before tags existed get one now.
     let changed = false;
     for (const a of this.store.accounts) {
@@ -185,19 +186,15 @@ export class AccountStore {
     return { ...(a.avatar ?? { color: '#f472b6', eyes: 0, mouth: 0, accessory: 0 }), ...(image ? { image } : {}) };
   }
 
-  private imagePath(a: Account): string | null {
-    return a.image ? path.join(path.dirname(this.file), 'avatars', `${a.id}.${a.image.ext}`) : null;
-  }
-
   /** Save an uploaded picture (a data: URL of a PNG, JPEG or WebP), or remove it with null. */
-  setImage(token: string | undefined, dataUrl: unknown): { account: PublicAccount } | { error: AuthError | ShopError } {
+  async setImage(token: string | undefined, dataUrl: unknown): Promise<{ account: PublicAccount } | { error: AuthError | ShopError }> {
     const account = this.accountFor(token);
     if (!account) return { error: 'auth.err.session' };
     // Setting a picture needs one of the picture unlocks (removing it never does).
     if (dataUrl !== null && !this.owns(account, 'pic-upload') && !this.owns(account, 'pic-draw')) return { error: 'shop.needUnlock' };
-    const old = this.imagePath(account);
+    const old = account.image;
     if (dataUrl === null) {
-      if (old) rmSync(old, { force: true });
+      if (old) await this.persistence.deleteImage(account.id, old.ext);
       account.image = undefined;
       this.save();
       return { account: this.toPublic(account) };
@@ -215,29 +212,30 @@ export class AccountStore {
           : bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP';
     if (!magic || bytes.length > MAX_IMAGE_BYTES) return { error: 'auth.err.image' };
 
-    if (old) rmSync(old, { force: true });
+    // Write the picture first; only then point the account at it.
+    await this.persistence.saveImage(account.id, ext, bytes);
+    if (old && old.ext !== ext) await this.persistence.deleteImage(account.id, old.ext);
     // A fresh version each upload, so browsers never show a cached older picture.
     account.image = { ext, version: Date.now() };
-    const file = this.imagePath(account)!;
-    mkdirSync(path.dirname(file), { recursive: true });
-    writeFileSync(file, bytes);
     this.save();
     return { account: this.toPublic(account) };
   }
 
-  /** File and content type of an account's picture, for serving it. */
-  imageFile(id: string): { file: string; type: string } | null {
+  /** An account's picture and its content type, for serving it. */
+  async imageData(id: string): Promise<{ bytes: Buffer; type: string } | null> {
     const a = this.store.accounts.find((x) => x.id === id);
-    const file = a ? this.imagePath(a) : null;
-    return a?.image && file && existsSync(file) ? { file: path.resolve(file), type: IMAGE_TYPES[a.image.ext] } : null;
+    if (!a?.image) return null;
+    const found = await this.persistence.loadImage(a.id, a.image.ext);
+    return found ? { bytes: found.bytes, type: IMAGE_TYPES[a.image.ext] } : null;
+  }
+
+  /** Wait for everything to be written (on shutdown). */
+  flush() {
+    return this.persistence.flush();
   }
 
   private save() {
-    mkdirSync(path.dirname(this.file), { recursive: true });
-    // Write to a temp file first so a crash mid-write can't corrupt the store.
-    const tmp = `${this.file}.tmp`;
-    writeFileSync(tmp, JSON.stringify(this.store));
-    renameSync(tmp, this.file);
+    this.persistence.save(this.store);
   }
 
   private toPublic(a: Account): PublicAccount {
@@ -330,7 +328,9 @@ export class AccountStore {
     return `${salt.toString('hex')}:${hash.toString('hex')}`;
   }
 
-  async register(rawUsername: unknown, rawEmail: unknown, rawPassword: unknown): Promise<{ token: string; account: PublicAccount } | { error: AuthError }> {
+  async register(rawUsername: unknown, rawEmail: unknown, rawPassword: unknown, consent: unknown): Promise<{ token: string; account: PublicAccount } | { error: AuthError }> {
+    // Terms, Privacy Policy and "I am 13 or older" must be accepted, and that is checked here, not just in the form.
+    if (consent !== true) return { error: 'auth.err.consent' };
     const username = String(rawUsername ?? '').trim();
     const email = String(rawEmail ?? '').trim().toLowerCase();
     const password = String(rawPassword ?? '');
@@ -339,7 +339,7 @@ export class AccountStore {
     const tag = this.freeTag(username);
     if (!tag) return { error: 'auth.err.usernameTaken' };
 
-    const account: Account = { id: randomBytes(12).toString('hex'), username, tag, email, passHash: await this.hashPassword(password), createdAt: Date.now() };
+    const account: Account = { id: randomBytes(12).toString('hex'), username, tag, email, passHash: await this.hashPassword(password), createdAt: Date.now(), consentAt: Date.now() };
     this.store.accounts.push(account);
     const token = this.newSession(account.id);
     this.save();
@@ -428,6 +428,18 @@ export class AccountStore {
     }
     this.save();
     return { account: this.toPublic(account) };
+  }
+
+  /** Permanently delete the account after checking the password: profile, picture, purchases record and all sign-ins. */
+  async deleteAccount(token: string | undefined, password: unknown): Promise<{ ok: true } | { error: AuthError }> {
+    const account = this.accountFor(token);
+    if (!account) return { error: 'auth.err.session' };
+    if (!(await this.checkPassword(account, String(password ?? '')))) return { error: 'auth.err.wrongPassword' };
+    if (account.image) await this.persistence.deleteImage(account.id, account.image.ext);
+    for (const [t, s] of Object.entries(this.store.sessions)) if (s.accountId === account.id) delete this.store.sessions[t];
+    this.store.accounts = this.store.accounts.filter((a) => a.id !== account.id);
+    this.save();
+    return { ok: true };
   }
 
   logout(token: string | undefined) {
