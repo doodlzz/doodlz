@@ -245,6 +245,7 @@ export const ru: Dict = {
   'pick.subtitle': "Все слова в этой игре будут из неё",
   'pick.subtitlePublic': "Ты здесь первый! Твой выбор закреплён за этим лобби",
   'pick.autoPick': "Случайный выбор через {s} с",
+  'pick.random': "Выбрать случайно",
   'pick.back': "Назад",
   'lobby.category': "Категория",
   'lobby.change': "Сменить",

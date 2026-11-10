@@ -245,6 +245,7 @@ export const fr: Dict = {
   'pick.subtitle': "Tous les mots de la partie en viendront",
   'pick.subtitlePublic': "Tu es le premier ! Ton choix est verrouillé pour ce salon",
   'pick.autoPick': "Choix au hasard dans {s}s",
+  'pick.random': "Choisir au hasard",
   'pick.back': "Retour",
   'lobby.category': "Catégorie",
   'lobby.change': "Changer",

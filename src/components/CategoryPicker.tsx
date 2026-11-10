@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Timer, X } from 'lucide-react';
+import { ArrowLeft, Check, Dices, Timer, X } from 'lucide-react';
 import { CATEGORIES, type Category } from '../../shared/types';
 import { useCountdown } from '../hooks/useCountdown';
 import { useT } from '../i18n';
@@ -77,6 +77,15 @@ export default function CategoryPicker({ onPick, onClose, closeKind = 'back', se
                 <Timer className="size-4" /> {t('pick.autoPick', { s: left })}
               </p>
             )}
+            <div className="mt-3">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => onPick(CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)])}
+              >
+                <Dices className="size-5" /> {t('pick.random')}
+              </button>
+            </div>
           </div>
           {onClose &&
             (closeKind === 'close' ? (

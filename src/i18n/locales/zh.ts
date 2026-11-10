@@ -245,6 +245,7 @@ export const zh: Dict = {
   'pick.subtitle': "本局所有词语都来自这个类别",
   'pick.subtitlePublic': "你是第一个！你的选择将锁定这个房间",
   'pick.autoPick': "{s} 秒后随机选择",
+  'pick.random': "随机选择",
   'pick.back': "返回",
   'lobby.category': "类别",
   'lobby.change': "更换",

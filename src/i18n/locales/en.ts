@@ -262,6 +262,7 @@ export const en = {
   'pick.subtitle': "Every word in this game comes from it",
   'pick.subtitlePublic': "You're first in! Your pick is locked for this lobby",
   'pick.autoPick': "Random pick in {s}s",
+  'pick.random': "Pick random",
   'pick.back': "Back",
   'lobby.category': "Category",
   'lobby.change': "Change",
