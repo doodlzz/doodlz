@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import AvatarFrame from './AvatarFrame';
+import { FRAMED_VIEWBOX, FrameBack, FrameFront } from './AvatarFrame';
 import type { Avatar as AvatarConfig } from '../../shared/types';
 
 const INK = '#1e1b4b';
@@ -259,7 +259,8 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
   if (avatar.image) {
     // Uploaded picture, cropped to the same round head.
     return (
-      <svg viewBox="0 -14 100 118" width={size} height={size} className={`shrink-0 overflow-visible ${className}`} aria-hidden>
+      <svg viewBox={avatar.frame ? FRAMED_VIEWBOX : '0 -14 100 118'} width={size} height={size} className={`shrink-0 overflow-visible ${className}`} aria-hidden>
+        {avatar.frame && <FrameBack frame={avatar.frame} />}
         <defs>
           <clipPath id={clip}>
             <circle cx="50" cy="54" r="42" />
@@ -268,20 +269,22 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
         <circle cx="50" cy="54" r="42" fill={avatar.color} />
         <image href={avatar.image} x="8" y="12" width="84" height="84" preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip})`} />
         <circle cx="50" cy="54" r="42" fill="none" stroke={INK} strokeWidth="4" />
-        {avatar.frame && <AvatarFrame frame={avatar.frame} />}
+        {avatar.frame && <FrameFront frame={avatar.frame} />}
       </svg>
     );
   }
   return (
-    <svg viewBox="0 -14 100 118" width={size} height={size} className={`shrink-0 overflow-visible ${className}`} aria-hidden>
+    <svg viewBox={avatar.frame ? FRAMED_VIEWBOX : '0 -14 100 118'} width={size} height={size} className={`shrink-0 overflow-visible ${className}`} aria-hidden>
+      {avatar.frame && <FrameBack frame={avatar.frame} />}
       <circle cx="50" cy="54" r="42" fill={avatar.color} stroke={INK} strokeWidth="4" />
       <ellipse cx="34" cy="28" rx="12" ry="7" fill="#fff" opacity="0.35" transform="rotate(-25 34 28)" />
       <circle cx="24" cy="63" r="6" fill="#fb7185" opacity="0.35" />
       <circle cx="76" cy="63" r="6" fill="#fb7185" opacity="0.35" />
       <Eyes type={avatar.eyes} />
       <Mouth type={avatar.mouth} />
-      <Accessory type={avatar.accessory} color={avatar.color} />
-      {avatar.frame && <AvatarFrame frame={avatar.frame} />}
+      {/* A frame owns the top of the head, so only face accessories (glasses) are kept under it. */}
+      <Accessory type={avatar.frame && ![4, 10].includes(avatar.accessory) ? 0 : avatar.accessory} color={avatar.color} />
+      {avatar.frame && <FrameFront frame={avatar.frame} />}
     </svg>
   );
 }

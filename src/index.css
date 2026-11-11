@@ -144,17 +144,16 @@ body {
 }
 
 /* ---------------- cosmetics: avatar frames ---------------- */
-.fx-spin, .fx-spin-slow, .fx-spin-reverse { transform-box: view-box; transform-origin: 50px 54px; }
-.fx-spin { animation: fx-spin 3s linear infinite; }
-.fx-spin-slow { animation: fx-spin 14s linear infinite; }
-.fx-spin-reverse { animation: fx-spin 20s linear infinite reverse; }
 .fx-pulse { animation: fx-pulse 1.8s ease-in-out infinite; }
 .fx-twinkle { transform-box: fill-box; transform-origin: center; animation: fx-twinkle 1.8s ease-in-out infinite; }
 .fx-flicker { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-flicker 0.7s ease-in-out infinite alternate; }
-@keyframes fx-spin { to { transform: rotate(360deg); } }
+.fx-bob { animation: fx-bob 2.4s ease-in-out infinite; }
+.fx-ember { animation: fx-ember 2.2s ease-out infinite; }
 @keyframes fx-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes fx-twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.6); } 50% { opacity: 1; transform: scale(1.15); } }
 @keyframes fx-flicker { from { transform: scaleY(0.8) scaleX(1.05); } to { transform: scaleY(1.15) scaleX(0.92); } }
+@keyframes fx-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+@keyframes fx-ember { 0% { transform: translateY(6px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-14px); opacity: 0; } }
 
 /* ---------------- cosmetics: name effects ---------------- */
 .name-fx { font-weight: 800; }
@@ -190,6 +189,20 @@ body {
   text-shadow: 1.5px 0 #ec4899, -1.5px 0 #06b6d4;
   animation: name-glitch 2.4s steps(1) infinite;
 }
+/* Little animated trinkets after the name (a separate element, so the text-clip gradient doesn't swallow it). */
+.name-trinket { display: inline-block; margin-left: 0.2em; transform-origin: center; }
+.name-trinket-gold { color: #fde047; animation: name-twinkle 1.6s ease-in-out infinite; }
+.name-trinket-rainbow { color: #f472b6; animation: name-twinkle 1.2s ease-in-out infinite 0.3s; }
+.name-trinket-fire { color: #fb923c; font-size: 0.7em; transform-origin: 50% 100%; animation: name-flame 0.5s ease-in-out infinite alternate; }
+.name-trinket-glitch { color: #67e8f9; font-size: 0.8em; animation: name-blink 0.9s steps(1) infinite; }
+.name-neon { animation: name-neon 3s linear infinite, name-glow 2s ease-in-out infinite alternate; }
+.name-rainbow { filter: drop-shadow(0 0 3px rgba(217, 70, 239, 0.45)); }
+.name-gold { animation: name-slide 3s linear infinite, name-shine 2.4s ease-in-out infinite alternate; }
+@keyframes name-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.6) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(40deg); } }
+@keyframes name-flame { from { transform: scaleY(0.8) scaleX(1.1); } to { transform: scaleY(1.3) scaleX(0.8); } }
+@keyframes name-blink { 50% { opacity: 0; } }
+@keyframes name-glow { from { text-shadow: 0 0 2px #67e8f9, 0 0 6px #22d3ee, 0 0 10px #0891b2; } to { text-shadow: 0 0 3px #a5f3fc, 0 0 12px #22d3ee, 0 0 24px #0891b2, 0 0 34px #ec4899; } }
+@keyframes name-shine { from { filter: drop-shadow(0 1px 0 rgba(120, 53, 15, 0.35)); } to { filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.8)); } }
 @keyframes name-slide { to { background-position: -200% center; } }
 @keyframes name-rise { to { background-position: center -300%; } }
 @keyframes name-neon { 0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; } 20%, 63% { opacity: 0.45; } }
@@ -203,7 +216,7 @@ body {
 }
 .name-glitch { display: inline-block; }
 @media (prefers-reduced-motion: reduce) {
-  .fx-anim, .fx-anim * { animation: none !important; }
+  .fx-anim, .fx-anim *, .name-trinket { animation: none !important; }
 }
 .dark .legal a { color: #f9a8d4; }
 .dark .legal .meta { color: #a5b4fc; }
