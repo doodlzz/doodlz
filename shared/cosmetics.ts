@@ -1,10 +1,10 @@
 // Cosmetics bought with points. Frames and name effects are seen by everyone in a game;
 // picture unlocks let a player upload or draw their own avatar picture.
 
-export const FRAMES = ['neon', 'ice', 'gold', 'rainbow', 'fire', 'galaxy'] as const;
+export const FRAMES = ['neon', 'ice', 'gold', 'rainbow', 'fire', 'galaxy', 'angel', 'devil', 'bunny', 'cyber'] as const;
 export type FrameId = (typeof FRAMES)[number];
 
-export const NAME_FX = ['neon', 'gold', 'rainbow', 'fire', 'glitch'] as const;
+export const NAME_FX = ['neon', 'gold', 'rainbow', 'fire', 'glitch', 'ice', 'toxic', 'electric'] as const;
 export type NameFxId = (typeof NAME_FX)[number];
 
 export type Rarity = 'rare' | 'epic' | 'legendary';
@@ -30,11 +30,19 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'frame-fire', slot: 'frame', value: 'fire', price: 500, rarity: 'legendary' },
   { id: 'frame-galaxy', slot: 'frame', value: 'galaxy', price: 500, rarity: 'legendary' },
 
+  { id: 'frame-bunny', slot: 'frame', value: 'bunny', price: 350, rarity: 'epic' },
+  { id: 'frame-cyber', slot: 'frame', value: 'cyber', price: 350, rarity: 'epic' },
+  { id: 'frame-angel', slot: 'frame', value: 'angel', price: 500, rarity: 'legendary' },
+  { id: 'frame-devil', slot: 'frame', value: 'devil', price: 500, rarity: 'legendary' },
+
   { id: 'name-neon', slot: 'nameFx', value: 'neon', price: 150, rarity: 'rare' },
   { id: 'name-gold', slot: 'nameFx', value: 'gold', price: 250, rarity: 'epic' },
   { id: 'name-rainbow', slot: 'nameFx', value: 'rainbow', price: 300, rarity: 'epic' },
   { id: 'name-fire', slot: 'nameFx', value: 'fire', price: 400, rarity: 'legendary' },
+  { id: 'name-ice', slot: 'nameFx', value: 'ice', price: 250, rarity: 'epic' },
+  { id: 'name-toxic', slot: 'nameFx', value: 'toxic', price: 300, rarity: 'epic' },
   { id: 'name-glitch', slot: 'nameFx', value: 'glitch', price: 400, rarity: 'legendary' },
+  { id: 'name-electric', slot: 'nameFx', value: 'electric', price: 400, rarity: 'legendary' },
 ];
 
 export const findCosmetic = (id: unknown): Cosmetic | undefined => COSMETICS.find((c) => c.id === id);

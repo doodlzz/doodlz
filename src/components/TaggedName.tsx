@@ -14,7 +14,7 @@ interface Props {
 /** Shows "name#1234" with the tag a little faded, Discord-style. */
 export default function TaggedName({ name, tag, className = '', stacked = false, fx }: Props) {
   const parts = tag === undefined ? splitTag(name) : { name, tag };
-  const TRINKET = { gold: '✦', rainbow: '★', fire: '▲', glitch: '▮' } as const;
+  const TRINKET = { gold: '✦', rainbow: '★', fire: '▲', glitch: '▮', ice: '❄', toxic: '●', electric: '↯' } as const;
   if (fx && !stacked) {
     // The effect goes on an inner span; the trinket sits beside it so the text-clip gradient can't hide it.
     return (

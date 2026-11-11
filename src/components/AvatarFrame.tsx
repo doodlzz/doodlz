@@ -223,6 +223,88 @@ export function FrameBack({ frame }: { frame: FrameId }) {
         </g>
       );
 
+    case 'bunny':
+      return (
+        <g>
+          {[-1, 1].map((side) => (
+            <g key={side} transform={`translate(${50 + side * 20} 18)`}>
+              <g className="fx-anim fx-wobble" style={{ animationDelay: side > 0 ? '0.5s' : '0s' }}>
+                <g transform={`rotate(${side * 14})`}>
+                  <ellipse cx="0" cy="-14" rx="10.5" ry="27" fill="#fff" stroke="#1e1b4b" strokeWidth="2.8" />
+                  <ellipse cx="0" cy="-12" rx="5.2" ry="20" fill="#fda4af" />
+                </g>
+              </g>
+            </g>
+          ))}
+        </g>
+      );
+
+    case 'cyber':
+      return (
+        <g>
+          <path d={`M${CX} 12 L${CX} -14`} stroke="#475569" strokeWidth="3.2" strokeLinecap="round" />
+          <circle className="fx-anim fx-blink" cx={CX} cy="-17" r="5" fill="#ef4444" stroke="#1e1b4b" strokeWidth="2.2" />
+          {[-1, 1].map((side) => (
+            <g key={side} transform={`translate(${50 + side * 49} 54)`}>
+              <rect x="-8" y="-15" width="16" height="30" rx="6" fill="#64748b" stroke="#1e1b4b" strokeWidth="2.6" />
+              <rect x="-3" y="-8" width="6" height="16" rx="2" fill="#22d3ee" className="fx-anim fx-pulse" />
+            </g>
+          ))}
+        </g>
+      );
+
+    case 'angel': {
+      const wing = 'M18 62 Q-20 66 -18 22 Q-8 30 -5 18 Q4 30 10 22 Q10 38 26 44 Z';
+      return (
+        <g>
+          <defs>
+            <Glow id={glow} blur={3} />
+          </defs>
+          <circle cx={CX} cy={CY} r={R + 2} fill="none" stroke="#fef08a" strokeWidth="9" opacity="0.7" filter={`url(#${glow})`} className="fx-anim fx-pulse" />
+          <g className="fx-anim fx-flap-l">
+            <path d={wing} fill="#fff" stroke="#1e1b4b" strokeWidth="2.6" strokeLinejoin="round" />
+            <path d="M12 50 Q-8 52 -10 30 M16 56 Q-2 60 -12 44" fill="none" stroke="#c7d2fe" strokeWidth="1.6" strokeLinecap="round" />
+          </g>
+          <g className="fx-anim fx-flap-r">
+            <path d={wing} transform="translate(100 0) scale(-1 1)" fill="#fff" stroke="#1e1b4b" strokeWidth="2.6" strokeLinejoin="round" />
+            <path d="M88 50 Q108 52 110 30 M84 56 Q102 60 112 44" fill="none" stroke="#c7d2fe" strokeWidth="1.6" strokeLinecap="round" />
+          </g>
+        </g>
+      );
+    }
+
+    case 'devil':
+      return (
+        <g>
+          <defs>
+            <Glow id={glow} blur={3} />
+          </defs>
+          <circle cx={CX} cy={CY} r={R + 2} fill="none" stroke="#dc2626" strokeWidth="9" opacity="0.7" filter={`url(#${glow})`} className="fx-anim fx-pulse" />
+          {[-1, 1].map((side) => (
+            <g key={side}>
+              {/* little bat wings */}
+              <path
+                className="fx-anim fx-flap-l"
+                d="M12 66 Q-14 62 -16 38 Q-8 44 -6 36 Q0 46 6 40 Q6 52 16 56 Z"
+                transform={side > 0 ? 'translate(100 0) scale(-1 1)' : undefined}
+                fill="#7f1d1d"
+                stroke="#1e1b4b"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M27 26 Q14 12 22 -8 Q28 8 42 14 Z"
+                transform={side > 0 ? 'translate(100 0) scale(-1 1)' : undefined}
+                fill="#ef4444"
+                stroke="#1e1b4b"
+                strokeWidth="2.6"
+                strokeLinejoin="round"
+              />
+            </g>
+          ))}
+        </g>
+      );
+
     case 'galaxy':
       return (
         <g>
@@ -406,6 +488,109 @@ export function FrameFront({ frame }: { frame: FrameId }) {
             [64, -8, 1],
           ].map(([x, y, d]) => (
             <circle key={`${x}${y}`} className="fx-anim fx-ember" style={{ animationDelay: `${d}s` }} cx={x} cy={y} r="2" fill="#fde047" stroke="#ea580c" strokeWidth="0.8" />
+          ))}
+        </g>
+      );
+
+    case 'bunny':
+      return (
+        <g>
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#1e1b4b" strokeWidth="8" />
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#fbcfe8" strokeWidth="5" />
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#fff" strokeWidth="1.5" strokeDasharray="2 9" strokeLinecap="round" />
+          {/* bow tie */}
+          <g transform="translate(50 100)">
+            <path d="M0 0 L-12 -7 L-12 7 Z M0 0 L12 -7 L12 7 Z" fill="#f472b6" stroke="#1e1b4b" strokeWidth="2.4" strokeLinejoin="round" />
+            <circle r="3.8" fill="#fb7185" stroke="#1e1b4b" strokeWidth="2" />
+          </g>
+          {[
+            [100, 20, 0],
+            [2, 14, 0.9],
+            [104, 84, 1.5],
+          ].map(([x, y, d]) => (
+            <g key={`${x}${y}`} className="fx-anim fx-bob" style={{ animationDelay: `${d}s` }}>
+              <path d="M0 3 C-9 -3 -6 -9 0 -5 C6 -9 9 -3 0 3 Z" transform={`translate(${x} ${y})`} fill="#f43f5e" stroke="#1e1b4b" strokeWidth="1.6" strokeLinejoin="round" />
+            </g>
+          ))}
+        </g>
+      );
+
+    case 'cyber': {
+      const hex = Array.from({ length: 6 }, (_, i) => {
+        const a = ((60 * i - 30) * Math.PI) / 180;
+        return `${CX + (R + 1) * Math.cos(a)},${CY + (R + 1) * Math.sin(a)}`;
+      }).join(' ');
+      return (
+        <g>
+          <defs>
+            <Glow id={glow} blur={1.8} />
+          </defs>
+          <polygon points={hex} fill="none" stroke="#1e1b4b" strokeWidth="8" strokeLinejoin="round" />
+          <polygon points={hex} fill="none" stroke="#94a3b8" strokeWidth="5" strokeLinejoin="round" />
+          <polygon points={hex} fill="none" stroke="#22d3ee" strokeWidth="1.6" strokeLinejoin="round" strokeDasharray="6 8" />
+          {/* corner bolts */}
+          {Array.from({ length: 6 }, (_, i) => {
+            const a = ((60 * i - 30) * Math.PI) / 180;
+            return <circle key={i} cx={CX + (R + 1) * Math.cos(a)} cy={CY + (R + 1) * Math.sin(a)} r="2.6" fill="#e2e8f0" stroke="#1e1b4b" strokeWidth="1.3" />;
+          })}
+          <Spin dur={4}>
+            <circle cx={CX} cy={CY} r={R + 8} fill="none" stroke="#22d3ee" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="14 285" filter={`url(#${glow})`} />
+          </Spin>
+          <Spin dur={4} reverse>
+            <circle cx={CX} cy={CY} r={R + 8} fill="none" stroke="#a78bfa" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="14 285" strokeDashoffset="-150" filter={`url(#${glow})`} />
+          </Spin>
+          <path className="fx-anim fx-blink" d="M82 6 L90 6 L90 14" fill="none" stroke="#22d3ee" strokeWidth="2" />
+        </g>
+      );
+    }
+
+    case 'angel':
+      return (
+        <g>
+          <defs>
+            <linearGradient id={grad} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#fff" />
+              <stop offset="0.5" stopColor="#fef08a" />
+              <stop offset="1" stopColor="#f59e0b" />
+            </linearGradient>
+            <Glow id={glow} blur={2} />
+          </defs>
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#a16207" strokeWidth="7.5" />
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke={`url(#${grad})`} strokeWidth="5" />
+          <g className="fx-anim fx-bob">
+            <ellipse cx={CX} cy="-8" rx="21" ry="6.5" fill="none" stroke="#fde047" strokeWidth="7" filter={`url(#${glow})`} opacity="0.8" />
+            <ellipse cx={CX} cy="-8" rx="21" ry="6.5" fill="none" stroke="#92400e" strokeWidth="6.5" />
+            <ellipse cx={CX} cy="-8" rx="21" ry="6.5" fill="none" stroke="#fef08a" strokeWidth="3.6" />
+          </g>
+          <Sparkle x={12} y={4} delay={0.2} fill="#fff" stroke="#fbbf24" />
+          <Sparkle x={90} y={2} delay={0.9} fill="#fff" stroke="#fbbf24" scale={0.8} />
+          <Sparkle x={52} y={108} delay={1.4} fill="#fff" stroke="#fbbf24" scale={0.7} />
+        </g>
+      );
+
+    case 'devil':
+      return (
+        <g>
+          <defs>
+            <linearGradient id={grad} x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0" stopColor="#450a0a" />
+              <stop offset="1" stopColor="#dc2626" />
+            </linearGradient>
+          </defs>
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#1e1b4b" strokeWidth="8" />
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke={`url(#${grad})`} strokeWidth="5.2" />
+          {/* pointy tail */}
+          <g className="fx-anim fx-bob">
+            <path d="M82 88 Q104 90 100 108 Q98 100 90 100" fill="none" stroke="#1e1b4b" strokeWidth="5.5" strokeLinecap="round" />
+            <path d="M82 88 Q104 90 100 108 Q98 100 90 100" fill="none" stroke="#ef4444" strokeWidth="2.6" strokeLinecap="round" />
+            <path d="M92 98 L88 108 L102 104 Z" fill="#ef4444" stroke="#1e1b4b" strokeWidth="2" strokeLinejoin="round" transform="translate(8 -2)" />
+          </g>
+          {[
+            [20, 6, 0],
+            [82, 4, 0.8],
+            [6, 70, 1.4],
+          ].map(([x, y, d]) => (
+            <circle key={`${x}${y}`} className="fx-anim fx-ember" style={{ animationDelay: `${d}s` }} cx={x} cy={y} r="2" fill="#fca5a5" stroke="#b91c1c" strokeWidth="0.8" />
           ))}
         </g>
       );
