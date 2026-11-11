@@ -13,7 +13,7 @@ export const BUSINESS = {
   /** Postal address (required for paid services in many countries). */
   address: opt(env.VITE_BUSINESS_ADDRESS),
   /** Where people send privacy, refund and deletion requests. */
-  email: val(env.VITE_CONTACT_EMAIL, '[Set VITE_CONTACT_EMAIL]'),
+  email: val(env.VITE_CONTACT_EMAIL, 'support@doodlz.io'),
   /** Business registration / tax number, if you have one. Hidden when empty. */
   registration: typeof env.VITE_BUSINESS_REG === 'string' ? env.VITE_BUSINESS_REG.trim() : '',
   /** Update when you change the policies. */
