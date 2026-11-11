@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import DeleteAccountPage from '../auth/DeleteAccountPage';
-import { BUSINESS } from '../config/business';
+import { BUSINESS, OPERATOR } from '../config/business';
 
 export type LegalPath = '/privacy' | '/terms' | '/refunds' | '/cookies' | '/contact' | '/delete-account';
 export const LEGAL_PATHS: { path: LegalPath; label: string }[] = [
@@ -36,7 +36,7 @@ function Page({ title, children }: { title: string; children: ReactNode }) {
 const Privacy = () => (
   <Page title="Privacy Policy">
     <p>
-      This policy explains what {BUSINESS.siteName} (“we”, “us”) collects, why, and the choices you have. The site is run by {BUSINESS.legalName}, {BUSINESS.address}. Contact: {mail('Privacy')}.
+      This policy explains what {BUSINESS.siteName} (“we”, “us”) collects, why, and the choices you have. The site is run by {OPERATOR}. Contact: {mail('Privacy')}.
     </p>
     <h2>What we collect</h2>
     <ul>
@@ -88,7 +88,7 @@ const Privacy = () => (
 const Terms = () => (
   <Page title="Terms of Service">
     <p>
-      By using {BUSINESS.siteName} you agree to these terms. The service is operated by {BUSINESS.legalName}, {BUSINESS.address}.
+      By using {BUSINESS.siteName} you agree to these terms. The service is operated by {OPERATOR}.
     </p>
     <h2>Who can use it</h2>
     <p>You must be at least 13 to create an account. If you are under 18 you need a parent or guardian’s permission to buy anything. Guests can play without an account.</p>
@@ -158,10 +158,18 @@ const Contact = () => (
     <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[10rem_1fr]">
       <dt>Service</dt>
       <dd>{BUSINESS.siteName}</dd>
-      <dt>Operated by</dt>
-      <dd>{BUSINESS.legalName}</dd>
-      <dt>Address</dt>
-      <dd>{BUSINESS.address}</dd>
+      {BUSINESS.legalName && (
+        <>
+          <dt>Operated by</dt>
+          <dd>{BUSINESS.legalName}</dd>
+        </>
+      )}
+      {BUSINESS.address && (
+        <>
+          <dt>Address</dt>
+          <dd>{BUSINESS.address}</dd>
+        </>
+      )}
       <dt>Email</dt>
       <dd>{mail('Hello')}</dd>
       {BUSINESS.registration && (
