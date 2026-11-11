@@ -26,6 +26,20 @@ export const config = {
   /** Stripe keys for selling point packs. The shop stays off until both are set. */
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? '',
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
+  /**
+   * Paddle (preferred over Stripe when set). The shop stays off until the API key and webhook secret are set.
+   * PADDLE_ENV is "sandbox" or "production"; PADDLE_PRICES maps packs to Paddle price ids, e.g. "p50=pri_x,p100=pri_y".
+   */
+  paddleApiKey: process.env.PADDLE_API_KEY ?? '',
+  paddleWebhookSecret: process.env.PADDLE_WEBHOOK_SECRET ?? '',
+  paddleClientToken: process.env.PADDLE_CLIENT_TOKEN ?? '',
+  paddleEnv: process.env.PADDLE_ENV === 'production' ? ('production' as const) : ('sandbox' as const),
+  paddlePrices: Object.fromEntries(
+    (process.env.PADDLE_PRICES ?? '')
+      .split(',')
+      .map((kv) => kv.split('=').map((x) => x.trim()))
+      .filter(([k, v]) => k && v),
+  ) as Record<string, string>,
   /** Site address for Stripe's return links, e.g. https://doodlz.io (defaults to the request's own address). */
   publicUrl: process.env.PUBLIC_URL?.replace(/\/$/, '') ?? '',
   /** A correct guess only counts toward quests once the drawing has been going this long… */

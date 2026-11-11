@@ -7,7 +7,9 @@ import type { AccountStore } from '../auth/accounts.js';
 import { config } from '../config.js';
 
 const bearer = (req: Request) => req.get('authorization')?.replace(/^Bearer\s+/i, '') || undefined;
-const enabled = () => Boolean(config.stripeSecretKey && config.stripeWebhookSecret);
+const paddleOn = () => Boolean(config.paddleApiKey && config.paddleWebhookSecret && config.paddleClientToken);
+const enabled = () => paddleOn() || Boolean(config.stripeSecretKey && config.stripeWebhookSecret);
+const paddleApi = () => (config.paddleEnv === 'production' ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com');
 const SIGNATURE_TOLERANCE_S = 300;
 
 /** Check the Stripe-Signature header: HMAC-SHA256 of "timestamp.body" with the webhook secret. */
@@ -18,6 +20,20 @@ export function verifyStripeSignature(body: Buffer, header: string | undefined, 
   const sigs = parts.filter(([k]) => k === 'v1').map(([, v]) => v);
   if (!t || !sigs.length || Math.abs(now / 1000 - Number(t)) > SIGNATURE_TOLERANCE_S) return false;
   const expected = createHmac('sha256', secret).update(`${t}.`).update(body).digest();
+  return sigs.some((s) => {
+    const got = Buffer.from(s, 'hex');
+    return got.length === expected.length && timingSafeEqual(got, expected);
+  });
+}
+
+/** Check the Paddle-Signature header ("ts=...;h1=..."): HMAC-SHA256 of "ts:body" with the endpoint secret. */
+export function verifyPaddleSignature(body: Buffer, header: string | undefined, secret: string, now = Date.now()): boolean {
+  if (!header || !secret) return false;
+  const parts = header.split(';').map((kv) => kv.split('='));
+  const ts = parts.find(([k]) => k === 'ts')?.[1];
+  const sigs = parts.filter(([k]) => k === 'h1').map(([, v]) => v);
+  if (!ts || !sigs.length || Math.abs(now / 1000 - Number(ts)) > SIGNATURE_TOLERANCE_S) return false;
+  const expected = createHmac('sha256', secret).update(`${ts}:`).update(body).digest();
   return sigs.some((s) => {
     const got = Buffer.from(s, 'hex');
     return got.length === expected.length && timingSafeEqual(got, expected);
@@ -52,6 +68,32 @@ export function shopRoutes(accounts: AccountStore): Router {
     res.json({ received: true });
   });
 
+  // Paddle: points are credited only when Paddle says the transaction is completed.
+  router.post('/paddle-webhook', express.raw({ type: '*/*', limit: '1mb' }), (req, res) => {
+    if (!verifyPaddleSignature(req.body, req.get('paddle-signature'), config.paddleWebhookSecret)) return res.status(400).end();
+    let event: { event_type?: string; data?: Record<string, any> };
+    try {
+      event = JSON.parse(req.body.toString('utf8'));
+    } catch {
+      return res.status(400).end();
+    }
+    const tx = event.data;
+    if (event.event_type === 'transaction.completed' && tx) {
+      const pack = findPack(tx.custom_data?.pack);
+      const accountId = typeof tx.custom_data?.accountId === 'string' ? tx.custom_data.accountId : null;
+      const items: any[] = Array.isArray(tx.items) ? tx.items : [];
+      // Buyers may pay in their own currency, so check the price id (set by us) rather than the amount.
+      const priceOk = pack && items.length === 1 && items[0]?.price?.id === config.paddlePrices[pack.id] && items[0]?.quantity === 1;
+      if (pack && accountId && priceOk) {
+        const balance = accounts.creditPurchase(accountId, { id: String(tx.id), pack: pack.id, points: pack.points, cents: pack.cents, at: Date.now() });
+        if (balance !== null) console.log(`shop: +${pack.points} points for ${accountId} (balance ${balance})`);
+      } else {
+        console.warn('shop: completed transaction did not match a pack', tx.id);
+      }
+    }
+    res.json({ received: true });
+  });
+
   router.use(express.json({ limit: '2kb' }));
 
   // Spend points on a cosmetic: { item }.
@@ -67,7 +109,12 @@ export function shopRoutes(accounts: AccountStore): Router {
   });
 
   router.get('/', (_req, res) => {
-    const info: ShopInfo = { enabled: enabled(), currency: SHOP_CURRENCY, packs: [...POINT_PACKS] };
+    const info: ShopInfo = {
+      enabled: enabled(),
+      currency: SHOP_CURRENCY,
+      packs: [...POINT_PACKS],
+      ...(paddleOn() ? { paddle: { token: config.paddleClientToken, env: config.paddleEnv } } : {}),
+    };
     res.json(info);
   });
 
@@ -77,6 +124,30 @@ export function shopRoutes(accounts: AccountStore): Router {
     if (!accountId) return res.status(401).json({ error: 'auth.err.session' });
     const pack = findPack(req.body?.pack);
     if (!pack) return res.status(400).json({ error: 'shop.error' });
+
+    if (paddleOn()) {
+      const priceId = config.paddlePrices[pack.id];
+      if (!priceId) {
+        console.error('shop: no Paddle price configured for', pack.id);
+        return res.status(503).json({ error: 'shop.error' });
+      }
+      try {
+        const r = await fetch(`${paddleApi()}/transactions`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${config.paddleApiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: [{ price_id: priceId, quantity: 1 }], custom_data: { accountId, pack: pack.id } }),
+        });
+        const data = (await r.json()) as { data?: { id?: string }; error?: { detail?: string } };
+        if (!r.ok || !data.data?.id) {
+          console.error('shop: Paddle transaction failed:', data.error?.detail ?? r.status);
+          return res.status(502).json({ error: 'shop.error' });
+        }
+        return res.json({ transactionId: data.data.id });
+      } catch (err) {
+        console.error('shop: Paddle request failed:', err);
+        return res.status(502).json({ error: 'shop.error' });
+      }
+    }
 
     const base = config.publicUrl || `${req.protocol}://${req.get('host')}`;
     const form = new URLSearchParams({

@@ -30,4 +30,6 @@ export interface ShopInfo {
   enabled: boolean;
   currency: string;
   packs: PointPack[];
+  /** Set when payments go through Paddle: the browser opens Paddle.js with this public client token. */
+  paddle?: { token: string; env: 'sandbox' | 'production' };
 }

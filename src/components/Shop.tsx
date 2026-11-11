@@ -137,6 +137,27 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
 // ---------------- get points (real money) ----------------
 
 const POPULAR: PackId = 'p200';
+/** Load Paddle.js once and set it up with the public client token. */
+let paddleReady: Promise<any> | null = null;
+function loadPaddle(token: string, env: 'sandbox' | 'production'): Promise<any> {
+  paddleReady ??= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+    script.onload = () => {
+      const paddle = (window as any).Paddle;
+      if (env === 'sandbox') paddle.Environment.set('sandbox');
+      paddle.Initialize({ token });
+      resolve(paddle);
+    };
+    script.onerror = () => {
+      paddleReady = null;
+      reject(new Error('paddle'));
+    };
+    document.head.appendChild(script);
+  });
+  return paddleReady;
+}
+
 const BEST: PackId = 'p1000';
 
 function PointsTab() {
@@ -165,8 +186,14 @@ function PointsTab() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${readToken() ?? ''}` },
         body: JSON.stringify({ pack }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json()) as { url?: string; transactionId?: string; error?: string };
       if (data.url) return void (window.location.href = data.url);
+      if (data.transactionId && shop?.paddle) {
+        const paddle = await loadPaddle(shop.paddle.token, shop.paddle.env);
+        paddle.Checkout.open({ transactionId: data.transactionId, settings: { successUrl: `${window.location.origin}/?points=success` } });
+        setBuying(null);
+        return;
+      }
       setError(data.error ?? 'shop.error');
     } catch {
       setError('shop.error');

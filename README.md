@@ -37,6 +37,11 @@ In dev, several tabs of one browser may join the same room (`ALLOW_SAME_DEVICE=1
 | `RANKED_UNIQUE_IP` | on | Ranked players must be on different IPs (`npm run dev` turns this off) |
 | `STRIPE_SECRET_KEY` | — | Stripe secret key for selling point packs (shop is off until this and the next are set) |
 | `STRIPE_WEBHOOK_SECRET` | — | Signing secret of a Stripe webhook pointed at `/api/shop/webhook` (events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`) |
+| `PADDLE_API_KEY` | — | Paddle API key. When the Paddle variables are set, Paddle is used instead of Stripe |
+| `PADDLE_CLIENT_TOKEN` | — | Paddle client-side token (public; `test_…` in sandbox) |
+| `PADDLE_WEBHOOK_SECRET` | — | Secret of a Paddle notification destination pointed at `/api/shop/paddle-webhook` (event: `transaction.completed`) |
+| `PADDLE_ENV` | `sandbox` | `sandbox` or `production` |
+| `PADDLE_PRICES` | — | Pack → Paddle price id, e.g. `p50=pri_…,p100=pri_…,p200=pri_…,p400=pri_…,p1000=pri_…` |
 | `PUBLIC_URL` | request host | Site address Stripe sends buyers back to, e.g. `https://doodlz.io` |
 
 Client build variable: `VITE_SUPPORT_URL` points the "Support us" button at a donation page.
