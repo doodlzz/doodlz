@@ -163,15 +163,15 @@ function Accessory({ type, color }: { type: number; color: string }) {
           <circle cx="50" cy="-7" r="5" fill="#f43f5e" stroke={INK} strokeWidth="2.5" />
         </g>
       );
-    case 2: // crown
+    case 2: // chef hat
       return (
-        <path
-          d="M30 20 L30 2 L40 12 L50 -2 L60 12 L70 2 L70 20 Z"
-          fill="#fbbf24"
-          stroke={INK}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
+        <g transform="translate(0 5)" stroke={INK} strokeWidth="3" strokeLinejoin="round">
+          <circle cx="35" cy="2" r="11" fill="#fff" />
+          <circle cx="65" cy="2" r="11" fill="#fff" />
+          <circle cx="50" cy="-5" r="13" fill="#fff" />
+          <rect x="31" y="6" width="38" height="14" rx="3" fill="#fff" />
+          <path d="M42 9 L42 17 M50 9 L50 17 M58 9 L58 17" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+        </g>
       );
     case 3: // bow
       return (
@@ -195,19 +195,25 @@ function Accessory({ type, color }: { type: number; color: string }) {
           <circle cx="54" cy="-5" r="6" fill="#a3e635" stroke={INK} strokeWidth="3" />
         </g>
       );
-    case 6: // halo
+    case 6: // daisy
       return (
-        <g fill="none">
-          <ellipse cx="50" cy="2" rx="22" ry="6.5" stroke={INK} strokeWidth="8" />
-          <ellipse cx="50" cy="2" rx="22" ry="6.5" stroke="#fde047" strokeWidth="4" />
+        <g transform="translate(72 16) rotate(15)" stroke={INK} strokeWidth="2.5">
+          {[0, 60, 120, 180, 240, 300].map((a) => (
+            <ellipse key={a} cx="0" cy="-8" rx="5" ry="8" transform={`rotate(${a})`} fill="#fff" />
+          ))}
+          <circle r="5.5" fill="#facc15" />
         </g>
       );
-    case 7: // devil horns
+    case 7: // mustache
       return (
-        <g fill="#ef4444" stroke={INK} strokeWidth="3" strokeLinejoin="round">
-          <path d="M27 24 Q18 10 24 -2 Q30 12 40 16 Z" />
-          <path d="M73 24 Q82 10 76 -2 Q70 12 60 16 Z" />
-        </g>
+        <path
+          d="M50 57 C44 52 35 53 29 59 C34 63 41 64 46 61 C48 60 49 59 50 59 C51 59 52 60 54 61 C59 64 66 63 71 59 C65 53 56 52 50 57 Z"
+          transform="translate(50 56) scale(0.85) translate(-50 -58)"
+          fill="#6b4423"
+          stroke={INK}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
       );
     case 8: // cat ears
       return (
@@ -235,12 +241,13 @@ function Accessory({ type, color }: { type: number; color: string }) {
           <path d="M27 43 L33 43" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
         </g>
       );
-    case 11: // wizard hat
+    case 11: // baseball cap
       return (
         <g stroke={INK} strokeWidth="3" strokeLinejoin="round">
-          <path d="M30 18 Q42 2 60 -12 Q60 4 70 18 Z" fill="#7c3aed" />
-          <path d="M51 4 L53 8.5 L58 9 L54.5 12 L55.5 17 L51 14.5 L46.5 17 L47.5 12 L44 9 L49 8.5 Z" fill="#facc15" strokeWidth="1.5" />
-          <ellipse cx="50" cy="19" rx="29" ry="6" fill="#6d28d9" />
+          <path d="M58 26 Q86 20 100 29 Q92 37 60 34 Z" fill="#2563eb" />
+          <path d="M14 32 Q14 2 50 2 Q86 2 86 32 Q50 24 14 32 Z" fill="#3b82f6" />
+          <path d="M50 3 L50 27" stroke="#1d4ed8" strokeWidth="2" />
+          <circle cx="50" cy="2" r="3.5" fill="#1d4ed8" strokeWidth="2" />
         </g>
       );
     default:
@@ -283,7 +290,7 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
       <Eyes type={avatar.eyes} />
       <Mouth type={avatar.mouth} />
       {/* A frame owns the top of the head, so only face accessories (glasses) are kept under it. */}
-      <Accessory type={avatar.frame && ![4, 10].includes(avatar.accessory) ? 0 : avatar.accessory} color={avatar.color} />
+      <Accessory type={avatar.frame && ![4, 7, 10].includes(avatar.accessory) ? 0 : avatar.accessory} color={avatar.color} />
       {avatar.frame && <FrameFront frame={avatar.frame} />}
     </svg>
   );
