@@ -153,6 +153,9 @@ body {
 .fx-flap-r { transform-box: fill-box; transform-origin: 0% 80%; animation: fx-flap-r 2.6s ease-in-out infinite; }
 .fx-twitch { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-twitch 4.5s ease-in-out infinite; }
 .fx-sway { transform-box: fill-box; transform-origin: 0% 0%; animation: fx-sway 2.8s ease-in-out infinite; }
+.fx-inferno-cw { transform-box: fill-box; transform-origin: center; animation: fx-inferno-cw 14s linear infinite; }
+.fx-inferno-ccw { transform-box: fill-box; transform-origin: center; animation: fx-inferno-ccw 10s linear infinite; }
+.fx-inferno-glow { transform-box: fill-box; transform-origin: center; animation: fx-inferno-glow 2.4s ease-in-out infinite; }
 .fx-dash { animation: fx-dash 3.2s linear infinite; }
 @keyframes fx-breathe { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.45; } }
 @keyframes fx-neon { 0%, 100% { opacity: 1; } 91% { opacity: 1; } 92% { opacity: 0.35; } 93% { opacity: 1; } 95% { opacity: 0.5; } 96% { opacity: 1; } }
@@ -258,3 +261,6 @@ body {
 .fx-rise { transform-box: fill-box; transform-origin: center; animation: fx-rise 2.7s ease-in infinite; }
 @keyframes fx-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
 @keyframes fx-rise { 0% { transform: translateY(6px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-8px); opacity: 0; } }
+@keyframes fx-inferno-cw { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.025); } 100% { transform: rotate(360deg) scale(1); } }
+@keyframes fx-inferno-ccw { 0% { transform: rotate(0deg) scale(1.015); } 50% { transform: rotate(-180deg) scale(0.99); } 100% { transform: rotate(-360deg) scale(1.015); } }
+@keyframes fx-inferno-glow { 0%, 100% { transform: scale(0.97); opacity: 0.85; } 50% { transform: scale(1.04); opacity: 1; } }

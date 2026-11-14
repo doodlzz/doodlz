@@ -118,6 +118,42 @@ const starPath = (cx: number, cy: number, ro: number, ri: number) =>
     return `${i ? 'L' : 'M'}${(cx + r * Math.cos(ang)).toFixed(2)} ${(cy + r * Math.sin(ang)).toFixed(2)}`;
   }).join(' ') + ' Z';
 
+// Inferno: swirling flame wisps, designed on a 120x120 board centred on (60, 60) and fitted to the head.
+const INFERNO_TRANSFORM = 'translate(-19 -15) scale(1.15)';
+const OUTER_HEIGHTS = [7.2, 5.1, 8.4, 6.0, 7.8, 4.8, 8.1, 5.6, 7.5, 6.3, 8.6, 5.3];
+const INNER_HEIGHTS = [4.8, 6.2, 4.1, 5.7, 6.5, 4.4, 5.9, 5.0, 6.4, 4.3, 5.5, 6.0];
+const SWEEP_BIAS = [0.16, 0.21, 0.14, 0.19, 0.23, 0.15, 0.2, 0.17, 0.22, 0.13, 0.18, 0.21];
+
+/** One flame tongue rooted on the circle at `angle`, its tip swept sideways by `sweep` radians. */
+function flameWisp(angle: number, rBase: number, height: number, half: number, sweep: number) {
+  const pt = (r: number, a: number) => `${(60 + r * Math.cos(a)).toFixed(2)} ${(60 + r * Math.sin(a)).toFixed(2)}`;
+  return (
+    `M ${pt(rBase, angle - half)} ` +
+    `Q ${pt(rBase + height * 0.58, angle - half * 0.15 + sweep * 0.45)} ${pt(rBase + height, angle + sweep)} ` +
+    `Q ${pt(rBase + height * 0.44, angle + half * 0.35 + sweep * 0.72)} ${pt(rBase, angle + half)} Z`
+  );
+}
+
+const INFERNO_OUTER = Array.from({ length: 44 }, (_, i) => {
+  const step = (Math.PI * 2) / 44;
+  return flameWisp(i * step - Math.PI / 2, 42.1, OUTER_HEIGHTS[i % 12], step * 0.72, SWEEP_BIAS[i % 12]);
+});
+const INFERNO_INNER = Array.from({ length: 36 }, (_, i) => {
+  const step = (Math.PI * 2) / 36;
+  return flameWisp(i * step - Math.PI / 2 + step * 0.45, 42, INNER_HEIGHTS[i % 12], step * 0.68, SWEEP_BIAS[(i + 3) % 12] * 0.9);
+});
+const INFERNO_EMBERS = Array.from({ length: 26 }, (_, i) => {
+  const angle = i * ((Math.PI * 2) / 26) + (i % 3) * 0.06;
+  const radius = 49.4 + (i % 4) * 1.15;
+  return {
+    x: +(60 + radius * Math.cos(angle)).toFixed(2),
+    y: +(60 + radius * Math.sin(angle)).toFixed(2),
+    rx: i % 2 === 0 ? 1.15 : 0.85,
+    rot: +((angle * 180) / Math.PI + 98).toFixed(1),
+    opacity: i % 3 === 0 ? 0.9 : 0.65,
+  };
+});
+
 /** The part drawn behind the head. */
 export function FrameBack({ frame }: { frame: FrameId }) {
   const { a, b, c, glow } = useIds();
@@ -175,26 +211,50 @@ export function FrameBack({ frame }: { frame: FrameId }) {
     case 'mushroom':
       return null;
 
-    // A ring of fire: the edge is roughened by a displacement filter so it frays into wispy flames.
+    // Swirling fire: an orange heat haze, outer flame wisps with embers turning one way, golden licks the other.
     case 'fire':
       return (
-        <g>
+        <g transform={INFERNO_TRANSFORM}>
           <defs>
-            <Glow id={glow} blur={3.6} />
-            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#ea580c'], [0.55, '#fb923c'], [1, '#fde047']]} />
-            <filter id={c} x="-30%" y="-30%" width="160%" height="160%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.1 0.1" numOctaves="3" seed="4" result="n">
-                {!reduceMotion && <animate attributeName="baseFrequency" values="0.1 0.1;0.1 0.12;0.12 0.1;0.1 0.1" dur="4s" repeatCount="indefinite" />}
-              </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" in2="n" scale="20" xChannelSelector="R" yChannelSelector="G" />
+            <radialGradient id={c} cx="60" cy="60" r="58" gradientUnits="userSpaceOnUse">
+              <stop offset="0.68" stopColor="#f97316" stopOpacity="0.7" />
+              <stop offset="0.86" stopColor="#ea580c" stopOpacity="0.28" />
+              <stop offset="1" stopColor="#ea580c" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={a} cx="60" cy="60" r="51.5" gradientUnits="userSpaceOnUse">
+              <stop offset="0.81" stopColor="#fef08a" />
+              <stop offset="0.87" stopColor="#f97316" />
+              <stop offset="0.95" stopColor="#ea580c" />
+              <stop offset="1" stopColor="#c2410c" stopOpacity="0.85" />
+            </radialGradient>
+            <radialGradient id={b} cx="60" cy="60" r="49" gradientUnits="userSpaceOnUse">
+              <stop offset="0.84" stopColor="#fef9c3" />
+              <stop offset="0.91" stopColor="#fde047" />
+              <stop offset="1" stopColor="#fb923c" />
+            </radialGradient>
+            <filter id={glow} x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="soft" />
+              <feMerge>
+                <feMergeNode in="soft" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
             </filter>
           </defs>
-          <circle cx={CX} cy={CY} r={R + 4} fill="none" stroke="#f97316" strokeWidth="9" filter={`url(#${glow})`} opacity="0.7" />
-          <g fill="none" filter={`url(#${c})`}>
-            <circle cx={CX} cy={CY} r={R + 2} stroke="#ea580c" strokeWidth="5" />
-            <circle cx={CX} cy={CY} r={R + 3} stroke={`url(#${a})`} strokeWidth="3" />
-            <circle cx={CX} cy={CY} r={R + 9} stroke="#fb923c" strokeWidth="2.2" strokeDasharray="7 4 3 6" />
-            <circle cx={CX} cy={CY} r={R + 12} stroke="#fde047" strokeWidth="1.4" strokeDasharray="3 9" />
+          <circle className="fx-anim fx-inferno-glow" cx="60" cy="60" r="58" fill={`url(#${c})`} />
+          <g filter={`url(#${glow})`}>
+            <g className="fx-anim fx-inferno-cw">
+              {INFERNO_OUTER.map((d, i) => (
+                <path key={i} d={d} fill={`url(#${a})`} />
+              ))}
+              {INFERNO_EMBERS.map((e, i) => (
+                <ellipse key={i} cx={e.x} cy={e.y} rx={e.rx} ry="0.55" transform={`rotate(${e.rot} ${e.x} ${e.y})`} fill="#fdba74" opacity={e.opacity} />
+              ))}
+            </g>
+          </g>
+          <g className="fx-anim fx-inferno-ccw">
+            {INFERNO_INNER.map((d, i) => (
+              <path key={i} d={d} fill={`url(#${b})`} />
+            ))}
           </g>
         </g>
       );
@@ -270,7 +330,7 @@ export function FrameBack({ frame }: { frame: FrameId }) {
 
 /** The part drawn over the head. */
 export function FrameFront({ frame }: { frame: FrameId }) {
-  const { a, b, c, clip } = useIds();
+  const { a, b, c, clip, glow } = useIds();
 
   switch (frame) {
     case 'ice':
@@ -328,17 +388,26 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
 
+    // White-hot rim, copper band, gold accent and a dark slate bevel around the face.
     case 'fire':
       return (
-        <g fill="none">
+        <g transform={INFERNO_TRANSFORM} fill="none">
           <defs>
-            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#b45309'], [0.5, '#f97316'], [1, '#fbbf24']]} />
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#f97316'], [0.45, '#d95b16'], [1, '#7c2d12']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#3b3659'], [0.5, '#26223b'], [1, '#191629']]} />
+            <filter id={glow} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="rim" />
+              <feMerge>
+                <feMergeNode in="rim" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
-          <circle cx={CX} cy={CY} r="44.6" stroke="#1e1b3a" strokeWidth="4.4" />
-          <circle cx={CX} cy={CY} r="42.6" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.8" />
-          <circle cx={CX} cy={CY} r="48.4" stroke="#7c2d12" strokeWidth="5.4" />
-          <circle cx={CX} cy={CY} r="48.4" stroke={`url(#${a})`} strokeWidth="3.6" />
-          <circle cx={CX} cy={CY} r="47.4" stroke="#fef3c7" strokeOpacity="0.6" strokeWidth="0.7" />
+          <circle cx="60" cy="60" r="42.5" stroke="#fef9c3" strokeWidth="1.6" filter={`url(#${glow})`} />
+          <circle cx="60" cy="60" r="40.3" stroke={`url(#${a})`} strokeWidth="3.8" />
+          <circle cx="60" cy="60" r="38.1" stroke="#fbbf24" strokeWidth="1.05" opacity="0.95" />
+          <circle cx="60" cy="60" r="36" stroke={`url(#${b})`} strokeWidth="3.2" />
+          <circle cx="60" cy="60" r="33.7" stroke="#130f26" strokeWidth="1.7" />
         </g>
       );
 
