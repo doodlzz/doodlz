@@ -66,20 +66,8 @@ function Crystal({ w, h, rot = 0 }: { w: number; h: number; rot?: number }) {
   );
 }
 
-const FLAME = 'M0 2 C-9 2 -11 -8 -6 -15 C-5 -10 -2 -11 -2 -15 C-2 -22 2 -27 3 -31 C5 -24 11 -16 10 -7 C10 -1 6 2 0 2 Z';
-
-/** A three-tone flame that always burns upward. */
-function Flame({ scale, lean, delay, a, b }: { scale: number; lean: number; delay: number; a: string; b: string }) {
-  return (
-    <g transform={`rotate(${lean}) scale(${scale})`}>
-      <g className="fx-anim fx-flicker" style={{ animationDelay: `${delay}s` }}>
-        <path d={FLAME} fill={`url(#${a})`} />
-        <path d={FLAME} transform="translate(0.6 0) scale(0.62)" fill={`url(#${b})`} />
-        <path d={FLAME} transform="translate(0.8 0) scale(0.3)" fill="#fff7c2" />
-      </g>
-    </g>
-  );
-}
+/** A thin flame tongue pointing outward (local -y). */
+const TONGUE = 'M-3.2 1 C-3.6 -4 -1.6 -6 -1 -10 C-0.4 -8 0.4 -9 0.6 -13 C1.8 -9 3.8 -5 3.2 1 Z';
 
 /** One side of a feathered wing, fanning out from the shoulder. `flip` mirrors it to the right side. */
 function Wing({ flip, light, dark }: { flip?: boolean; light: string; dark: string }) {
@@ -190,21 +178,25 @@ export function FrameBack({ frame }: { frame: FrameId }) {
     case 'mushroom':
       return null;
 
-    // A crown of fire: flames rise from behind the head, tallest on top.
+    // A ring of fire: a warm bloom and a fringe of small flames licking outward.
     case 'fire':
       return (
         <g>
           <defs>
-            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#dc2626'], [0.6, '#f97316'], [1, '#fb923c']]} />
-            <Grad id={b} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#f97316'], [1, '#fde047']]} />
+            <Glow id={glow} blur={3.6} />
+            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#dc2626'], [0.55, '#f97316'], [1, '#fde047']]} />
           </defs>
-          {[-112, 112, -84, 84, -58, 58, -34, 34, -12, 14].map((ang, i) => {
-            const t = 1 - Math.abs(ang) / 112;
-            const rad = (ang * Math.PI) / 180;
+          <circle cx={CX} cy={CY} r={R + 4} fill="none" stroke="#f97316" strokeWidth="9" filter={`url(#${glow})`} opacity="0.75" />
+          {Array.from({ length: 44 }, (_, i) => {
+            const k = 0.75 + 0.5 * Math.abs(Math.sin(i * 2.3) * Math.cos(i * 0.7));
             return (
-              <g key={ang} transform={`translate(${CX + (R - 6) * Math.sin(rad)} ${CY - (R - 6) * Math.cos(rad) + 4})`}>
-                <Flame scale={0.8 + t * 0.75} lean={ang * 0.16} delay={(i % 4) * 0.22} a={a} b={b} />
-              </g>
+              <OnRing key={i} angle={(i * 360) / 44} r={R + 2}>
+                <g transform={`scale(${(0.8 * k).toFixed(2)} ${(1.05 * k).toFixed(2)})`}>
+                  <g className="fx-anim fx-flicker" style={{ animationDelay: `${-((i * 0.37) % 1).toFixed(2)}s` }}>
+                    <path d={TONGUE} fill={`url(#${a})`} />
+                  </g>
+                </g>
+              </OnRing>
             );
           })}
         </g>
@@ -341,11 +333,15 @@ export function FrameFront({ frame }: { frame: FrameId }) {
 
     case 'fire':
       return (
-        <g>
+        <g fill="none">
           <defs>
-            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#7f1d1d'], [0.55, '#ea580c'], [1, '#fbbf24']]} />
+            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#b45309'], [0.5, '#f97316'], [1, '#fbbf24']]} />
           </defs>
-          <Ring fill={a} />
+          <circle cx={CX} cy={CY} r="44.6" stroke="#1e1b3a" strokeWidth="4.4" />
+          <circle cx={CX} cy={CY} r="42.6" stroke="#fff" strokeOpacity="0.12" strokeWidth="0.8" />
+          <circle cx={CX} cy={CY} r="48.4" stroke="#7c2d12" strokeWidth="5.4" />
+          <circle cx={CX} cy={CY} r="48.4" stroke={`url(#${a})`} strokeWidth="3.6" />
+          <circle cx={CX} cy={CY} r="47.4" stroke="#fef3c7" strokeOpacity="0.6" strokeWidth="0.7" />
         </g>
       );
 
