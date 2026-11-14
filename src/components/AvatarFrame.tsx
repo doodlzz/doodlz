@@ -17,16 +17,6 @@ const R = 47.5;
 
 const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/** Rotates its children around the head. */
-function Spin({ dur, children }: { dur: number; children: React.ReactNode }) {
-  return (
-    <g>
-      {!reduceMotion && <animateTransform attributeName="transform" type="rotate" from={`0 ${CX} ${CY}`} to={`360 ${CX} ${CY}`} dur={`${dur}s`} repeatCount="indefinite" />}
-      {children}
-    </g>
-  );
-}
-
 /** Something placed on the ring at `angle` degrees (0 = top); local -y points outward. */
 function OnRing({ angle, r = R, children }: { angle: number; r?: number; children: React.ReactNode }) {
   return <g transform={`rotate(${angle} ${CX} ${CY}) translate(${CX} ${CY - r})`}>{children}</g>;
@@ -136,25 +126,18 @@ const hexPoints = (r: number) =>
     return [CX + r * Math.cos(ang), CY + r * Math.sin(ang)];
   });
 
+const starPath = (cx: number, cy: number, ro: number, ri: number) =>
+  Array.from({ length: 10 }, (_, i) => {
+    const ang = (Math.PI / 5) * i - Math.PI / 2;
+    const r = i % 2 ? ri : ro;
+    return `${i ? 'L' : 'M'}${(cx + r * Math.cos(ang)).toFixed(2)} ${(cy + r * Math.sin(ang)).toFixed(2)}`;
+  }).join(' ') + ' Z';
+
 /** The part drawn behind the head. */
 export function FrameBack({ frame }: { frame: FrameId }) {
   const { a, b, glow } = useIds();
 
   switch (frame) {
-    // Two neon tubes; the bloom lives back here.
-    case 'neon':
-      return (
-        <g>
-          <defs>
-            <Glow id={glow} blur={3} />
-          </defs>
-          <g filter={`url(#${glow})`} fill="none" opacity="0.9">
-            <circle cx={CX} cy={CY} r={R - 0.5} stroke="#22d3ee" strokeWidth="7" />
-            <circle className="fx-anim fx-neon" cx={CX} cy={CY} r={R + 6} stroke="#ec4899" strokeWidth="6" />
-          </g>
-        </g>
-      );
-
     // Crystals growing out from behind the ring: a big cluster lower-left, a small echo upper-right.
     case 'ice':
       return (
@@ -172,8 +155,58 @@ export function FrameBack({ frame }: { frame: FrameId }) {
       );
 
     case 'gold':
-    case 'rainbow':
-    case 'cyber':
+      return null;
+
+    case 'cyber': {
+      const hexBack = hexPoints(R + 4).map((p) => p.join(',')).join(' ');
+      return (
+        <g>
+          <defs>
+            <Glow id={glow} blur={3.4} />
+          </defs>
+          <polygon points={hexBack} filter={`url(#${glow})`} fill="none" stroke="#22d3ee" strokeWidth="6" opacity="0.7" />
+        </g>
+      );
+    }
+
+    // Big green hood and a pair of webbed feet.
+    case 'frog':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#86efac'], [1, '#22c55e']]} />
+          </defs>
+          {[24, 76].map((x) => (
+            <ellipse key={x} cx={x} cy="103" rx="13" ry="6.5" fill={`url(#${a})`} stroke="#15803d" strokeWidth="1.3" />
+          ))}
+          <circle cx={CX} cy={CY} r={R + 1} fill={`url(#${a})`} stroke="#15803d" strokeWidth="1.3" />
+        </g>
+      );
+
+    // Translucent wings, beating.
+    case 'bee':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={1} y2={1} stops={[[0, '#ffffff'], [1, '#e0f2fe']]} />
+          </defs>
+          <g className="fx-anim fx-flap-l">
+            <ellipse cx="2" cy="42" rx="19" ry="12" transform="rotate(-24 2 42)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
+            <ellipse cx="4" cy="66" rx="13" ry="8" transform="rotate(16 4 66)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
+          </g>
+          <g className="fx-anim fx-flap-r">
+            <ellipse cx="98" cy="42" rx="19" ry="12" transform="rotate(24 98 42)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
+            <ellipse cx="96" cy="66" rx="13" ry="8" transform="rotate(-16 96 66)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
+          </g>
+        </g>
+      );
+
+    case 'pirate':
+    case 'astronaut':
+    case 'wizard':
+    case 'ninja':
+    case 'mushroom':
+    case 'diver':
       return null;
 
     // A crown of fire: flames rise from behind the head, tallest on top.
@@ -270,19 +303,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
   const { a, b, c, clip } = useIds();
 
   switch (frame) {
-    case 'neon':
-      return (
-        <g fill="none">
-          <circle cx={CX} cy={CY} r={R - 0.5} stroke="#22d3ee" strokeWidth="3.2" />
-          <circle cx={CX} cy={CY} r={R - 0.5} stroke="#ecfeff" strokeWidth="1.1" />
-          {/* the outer tube has two gaps, like a real sign */}
-          <g className="fx-anim fx-neon" strokeLinecap="round" strokeDasharray="150 18" transform={`rotate(-62 ${CX} ${CY})`}>
-            <circle cx={CX} cy={CY} r={R + 6} stroke="#f472b6" strokeWidth="2.8" />
-            <circle cx={CX} cy={CY} r={R + 6} stroke="#fdf2f8" strokeWidth="1" />
-          </g>
-        </g>
-      );
-
     case 'ice':
       return (
         <g>
@@ -338,36 +358,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
 
-    // A slowly turning rainbow band resting on two clouds.
-    case 'rainbow':
-      return (
-        <g>
-          <defs>
-            <Grad id={a} stops={[[0, '#f87171'], [0.2, '#fb923c'], [0.4, '#facc15'], [0.6, '#4ade80'], [0.8, '#38bdf8'], [1, '#a78bfa']]} />
-            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#ffffff'], [0.6, '#ffffff'], [1, '#dbeafe']]} />
-          </defs>
-          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#000" strokeOpacity="0.25" strokeWidth="7.4" />
-          <Spin dur={8}>
-            <circle cx={CX} cy={CY} r={R} fill="none" stroke={`url(#${a})`} strokeWidth="5.4" />
-          </Spin>
-          <circle cx={CX} cy={CY} r={R - 1.3} fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
-          {[
-            [13, 92, 1],
-            [88, 93, 0.82],
-          ].map(([x, y, s]) => (
-            <path
-              key={x}
-              transform={`translate(${x} ${y}) scale(${s})`}
-              d="M-12 7 C-19 7 -19 -2 -12 -3 C-12 -11 -1 -13 2 -7 C6 -11 14 -8 13 -2 C19 -1 18 7 12 7 Z"
-              fill={`url(#${b})`}
-              stroke="#93c5fd"
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-            />
-          ))}
-        </g>
-      );
-
     case 'fire':
       return (
         <g>
@@ -418,25 +408,221 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
 
-    // A brushed-metal hexagon with one light running its edge.
+    // A brushed-metal hexagon helmet frame: glow, ear modules, antenna and a light running the edge.
     case 'cyber': {
-      const pts = hexPoints(R + 4);
-      const hex = pts.map((p) => p.join(',')).join(' ');
+      const hex = hexPoints(R + 4).map((p) => p.join(',')).join(' ');
+      const inner = hexPoints(R - 2).map((p) => p.join(',')).join(' ');
       return (
         <g fill="none" strokeLinejoin="round">
           <defs>
-            <Grad id={a} stops={[[0, '#f1f5f9'], [0.5, '#94a3b8'], [1, '#475569']]} />
+            <Grad id={a} stops={[[0, '#f1f5f9'], [0.45, '#94a3b8'], [1, '#334155']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#64748b'], [1, '#1e293b']]} />
           </defs>
-          <polygon points={hex} stroke="#000" strokeOpacity="0.25" strokeWidth="6.6" />
-          <polygon points={hex} stroke={`url(#${a})`} strokeWidth="4.6" />
-          <polygon points={hexPoints(R + 2.9).map((p) => p.join(',')).join(' ')} stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
-          <polygon className="fx-anim fx-dash" points={hex} stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" strokeDasharray="38 271" />
-          {pts.map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r="2.1" fill="#cffafe" stroke="#0e7490" strokeWidth="0.9" />
+          <polygon points={hex} stroke="#000" strokeOpacity="0.3" strokeWidth="7.4" />
+          <polygon points={hex} stroke={`url(#${a})`} strokeWidth="5.4" />
+          <polygon points={hexPoints(R + 2).map((p) => p.join(',')).join(' ')} stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
+          <polygon points={inner} stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1" strokeDasharray="6 3" />
+          <polygon className="fx-anim fx-dash" points={hex} stroke="#67e8f9" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="38 271" />
+          {/* ear modules */}
+          {[-1, 1].map((s) => (
+            <g key={s} transform={`translate(${CX + s * 45} ${CY})`}>
+              <rect x="-6" y="-13" width="12" height="26" rx="4" fill={`url(#${b})`} stroke="#0f172a" strokeWidth="1.3" />
+              <rect x="-2.2" y="-8" width="4.4" height="16" rx="2" fill="#22d3ee" />
+              <rect x="-0.8" y="-8" width="1.6" height="16" rx="0.8" fill="#ecfeff" />
+            </g>
           ))}
+          {/* circuit nodes on the vertices */}
+          {hexPoints(R + 4).map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="2.2" fill="#cffafe" stroke="#0e7490" strokeWidth="0.9" />
+          ))}
+          {/* antenna with a blinking light */}
+          <path d={`M${CX} 2 L${CX} -13`} stroke="#334155" strokeWidth="2.4" strokeLinecap="round" />
+          <circle className="fx-anim fx-breathe" cx={CX} cy="-16" r="3.6" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1" />
+          <circle cx={CX - 1} cy="-17.2" r="1" fill="#fff" fillOpacity="0.8" />
         </g>
       );
     }
+
+    // Tricorn hat, red bandana and a gold hoop earring.
+    case 'pirate':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#5b2a6e'], [1, '#2e1442']]} />
+          </defs>
+          <path d="M72 28 C84 30 90 40 87 52 C84 46 80 40 76 38 Z" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1.2" />
+          <path d="M8 30 C4 18 12 12 22 12 C28 -6 40 -12 50 -12 C60 -12 72 -6 78 12 C88 12 96 18 92 30 C70 20 30 20 8 30 Z" fill={`url(#${a})`} stroke="#1e1030" strokeWidth="1.4" />
+          <path d="M8 30 C30 20 70 20 92 30" fill="none" stroke="#fbbf24" strokeWidth="2.6" />
+          <path d="M10 36 Q50 26 90 36 L90 42 Q50 32 10 42 Z" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1.2" />
+          <circle cx="50" cy="3" r="6.2" fill="#fde68a" stroke="#b45309" strokeWidth="1.1" />
+          <circle cx="47.5" cy="2.5" r="1.5" fill="#3b1f4d" />
+          <circle cx="52.5" cy="2.5" r="1.5" fill="#3b1f4d" />
+          <rect x="47.8" y="6.5" width="4.4" height="3.4" rx="1" fill="#fde68a" stroke="#b45309" strokeWidth="0.8" />
+          <g className="fx-anim fx-sway">
+            <circle cx="8" cy="68" r="5" fill="none" stroke="#b45309" strokeWidth="3.4" />
+            <circle cx="8" cy="68" r="5" fill="none" stroke="#fbbf24" strokeWidth="1.8" />
+          </g>
+        </g>
+      );
+
+    // Eyes on the hood, one slow blink.
+    case 'frog':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#bbf7d0'], [0.5, '#4ade80'], [1, '#16a34a']]} />
+          </defs>
+          <Ring fill={a} w={5} />
+          {[26, 74].map((x) => (
+            <g key={x} transform={`translate(${x} 6)`}>
+              <circle r="13" fill="#4ade80" stroke="#15803d" strokeWidth="1.4" />
+              <circle r="9.4" fill="#fff" stroke="#15803d" strokeWidth="1" />
+              <g className="fx-anim fx-blink">
+                <circle cx="1" cy="1" r="5.4" fill="#0f172a" />
+                <circle cx="-0.8" cy="-1" r="1.8" fill="#fff" />
+              </g>
+            </g>
+          ))}
+        </g>
+      );
+
+    // Glass helmet with ear pieces and an antenna light.
+    case 'astronaut':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#f8fafc'], [0.5, '#bae6fd'], [1, '#60a5fa']]} />
+          </defs>
+          <circle cx={CX} cy={CY} r={R - 3} fill="#38bdf8" fillOpacity="0.14" />
+          <Ring fill={a} w={6} />
+          <path d={`M${CX - 30} ${CY - 26} A38 38 0 0 1 ${CX - 8} ${CY - 38}`} fill="none" stroke="#fff" strokeOpacity="0.85" strokeWidth="3.2" />
+          <circle cx={CX - 36} cy={CY - 16} r="1.8" fill="#fff" fillOpacity="0.85" />
+          {[-1, 1].map((s) => (
+            <rect key={s} x={CX + s * 47 - 5} y={CY - 13} width="10" height="26" rx="4.5" fill="#38bdf8" stroke="#0369a1" strokeWidth="1.3" />
+          ))}
+          <path d="M78 12 L88 -8" stroke="#64748b" strokeWidth="2.2" />
+          <circle className="fx-anim fx-breathe" cx="89" cy="-10" r="4.4" fill="#fde047" stroke="#a16207" strokeWidth="1.1" />
+          <path d={`M${CX - 20} ${CY + 46} Q${CX} ${CY + 52} ${CX + 20} ${CY + 46}`} fill="none" stroke="#475569" strokeWidth="3.4" />
+        </g>
+      );
+
+    // Pointed hat that bends over, with a gold star.
+    case 'wizard': {
+      const star = starPath(52, 4, 7.5, 3.3);
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={1} y2={1} stops={[[0, '#8b5cf6'], [1, '#4c1d95']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#c4b5fd'], [1, '#8b5cf6']]} />
+          </defs>
+          <path d="M24 22 C32 6 38 -14 54 -28 C60 -22 68 -22 78 -26 C72 -14 70 6 76 22 Z" fill={`url(#${a})`} stroke="#2e1065" strokeWidth="1.4" />
+          <path d="M24 22 Q50 30 76 22 L75.5 13 Q50 21 24.5 13 Z" fill={`url(#${b})`} stroke="#2e1065" strokeWidth="1.1" />
+          <path d="M3 25 C3 12 98 12 98 25 C98 35 3 35 3 25 Z" fill={`url(#${a})`} stroke="#2e1065" strokeWidth="1.4" />
+          <path d="M3 25 C3 12 98 12 98 25 C80 20 20 20 3 25 Z" fill="#fff" fillOpacity="0.18" />
+          <path className="fx-anim fx-breathe" d={star} fill="#fde047" stroke="#b45309" strokeWidth="1" />
+        </g>
+      );
+    }
+
+    // Striped headband, wings behind, springy antennae.
+    case 'bee':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#fef08a'], [0.5, '#facc15'], [1, '#d97706']]} />
+          </defs>
+          <Ring fill={a} w={3.4} />
+          <path d="M14 34 Q50 8 86 34 L83 44 Q50 20 17 44 Z" fill="#facc15" stroke="#92400e" strokeWidth="1.3" />
+          {[0, 1, 2].map((i) => (
+            <path key={i} d={`M${34 + i * 15} 17 L${33 + i * 15} 28`} stroke="#1c1917" strokeWidth="4.6" />
+          ))}
+          <g className="fx-anim fx-sway">
+            <path d="M38 17 C34 4 30 -4 26 -9" fill="none" stroke="#1c1917" strokeWidth="2.4" />
+            <circle cx="25" cy="-11" r="5" fill="#fde047" stroke="#a16207" strokeWidth="1.2" />
+            <circle cx="23.6" cy="-12.4" r="1.4" fill="#fff" fillOpacity="0.8" />
+          </g>
+          <g className="fx-anim fx-sway" style={{ animationDelay: '-1.4s' }}>
+            <path d="M62 17 C66 4 70 -4 74 -9" fill="none" stroke="#1c1917" strokeWidth="2.4" />
+            <circle cx="75" cy="-11" r="5" fill="#fde047" stroke="#a16207" strokeWidth="1.2" />
+            <circle cx="73.6" cy="-12.4" r="1.4" fill="#fff" fillOpacity="0.8" />
+          </g>
+        </g>
+      );
+
+    // Dark headband with a metal plate and fluttering tails.
+    case 'ninja':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#4c3a6b'], [1, '#1e1b3a']]} />
+            <Grad id={b} stops={[[0, '#f1f5f9'], [1, '#94a3b8']]} />
+          </defs>
+          <g className="fx-anim fx-sway">
+            <path d="M88 42 C98 36 108 38 114 32 C112 42 108 46 114 54 C104 52 98 52 90 50 Z" fill={`url(#${a})`} stroke="#0f0a1f" strokeWidth="1.3" />
+            <path d="M90 46 C98 52 104 62 100 72 C96 66 92 62 88 56 Z" fill={`url(#${a})`} stroke="#0f0a1f" strokeWidth="1.3" />
+          </g>
+          <path d="M6 40 Q50 20 94 40 L94 53 Q50 33 6 53 Z" fill={`url(#${a})`} stroke="#0f0a1f" strokeWidth="1.4" />
+          <path d="M8 43 Q50 24 92 43" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.2" />
+          <rect x="35" y="26" width="30" height="14" rx="3" transform="rotate(-2 50 33)" fill={`url(#${b})`} stroke="#334155" strokeWidth="1.2" />
+          <path d="M44 36 L50 28 L56 36 M44 32 L56 32" transform="rotate(-2 50 33)" fill="none" stroke="#334155" strokeWidth="1.5" />
+        </g>
+      );
+
+    // A spotted toadstool cap.
+    case 'mushroom':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#f87171'], [1, '#b91c1c']]} />
+          </defs>
+          <path d="M2 36 C-4 6 24 -18 50 -18 C76 -18 104 6 98 36 C84 30 16 30 2 36 Z" fill={`url(#${a})`} stroke="#7f1d1d" strokeWidth="1.5" />
+          <path d="M2 36 C16 30 84 30 98 36 C96 42 80 38 50 38 C20 38 4 42 2 36 Z" fill="#fde7c7" stroke="#a16207" strokeWidth="1.2" />
+          <path d="M10 14 C16 2 28 -6 38 -10" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
+          {[
+            [26, 10, 7],
+            [52, -3, 8.5],
+            [76, 14, 6.5],
+            [40, 24, 4.2],
+            [66, 24, 4.4],
+          ].map(([x, y, r], i) => (
+            <circle key={i} className={i === 1 ? 'fx-anim fx-breathe' : undefined} cx={x} cy={y} r={r} fill="#fff7ed" stroke="#fdba74" strokeWidth="1" />
+          ))}
+        </g>
+      );
+
+    // Brass diving helmet: valve on top, side lamps and rising bubbles.
+    case 'diver':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#5eead4'], [0.5, '#0d9488'], [1, '#115e59']]} />
+            <Grad id={b} stops={[[0, '#fef3c7'], [1, '#d97706']]} />
+          </defs>
+          <Ring fill={a} w={7} />
+          {[0, 60, 120, 180, 240, 300].map((ang) => (
+            <OnRing key={ang} angle={ang}>
+              <circle r="1.4" fill="#99f6e4" stroke="#0f766e" strokeWidth="0.6" />
+            </OnRing>
+          ))}
+          <ellipse cx={CX} cy="4" rx="12" ry="6.5" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.3" />
+          {[-5, 0, 5].map((x) => (
+            <path key={x} d={`M${CX + x} 0 L${CX + x} 8`} stroke="#92400e" strokeWidth="1.4" strokeLinecap="round" />
+          ))}
+          {[-1, 1].map((s) => (
+            <g key={s} transform={`translate(${CX + s * 47} ${CY})`}>
+              <circle r="8.6" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.3" />
+              <circle r="4.4" fill="#fffbeb" stroke="#d97706" strokeWidth="0.9" />
+            </g>
+          ))}
+          {[
+            [96, -4, 3.6],
+            [105, -15, 4.6],
+            [98, -25, 3],
+          ].map(([x, y, r], i) => (
+            <circle key={i} className="fx-anim fx-rise" style={{ animationDelay: `${-i * 0.9}s` }} cx={x} cy={y} r={r} fill="#e0f7ff" fillOpacity="0.7" stroke="#38bdf8" strokeWidth="1.1" />
+          ))}
+        </g>
+      );
 
     case 'angel':
       return (
