@@ -10,6 +10,8 @@ export interface Account {
   username: string;
   tag: string;
   email: string;
+  /** False until the 6-digit code emailed to them is entered. */
+  emailVerified: boolean;
   /** Saved face; `avatar.image` is their uploaded picture, if any. */
   avatar?: Avatar;
   /** Account points from ranked games and quests. */
@@ -56,6 +58,10 @@ interface Ctx {
   updateAccount: (changes: AccountChanges) => Promise<string | null>;
   /** Upload a picture (data URL) or remove it with null. Returns an error key, or null on success. */
   setImage: (dataUrl: string | null) => Promise<string | null>;
+  /** Check the 6-digit code from the email. Returns an error key, or null on success. */
+  verifyEmail: (code: string) => Promise<string | null>;
+  /** Email a new code. Returns an error key, or null on success. */
+  resendCode: () => Promise<string | null>;
   /** Sign out right away (the sign-out button asks first via open('logout')). */
   logout: () => void;
   /** Run `action` now if signed in or already chose guest; otherwise ask first, then run it. */
@@ -126,7 +132,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pending.current = null;
         setMode(m);
       },
-      register: async (username, email, password, remember, consent) => signedIn(await api('register', { username, email, password, consent }), remember),
+      register: async (username, email, password, remember, consent) => {
+        const res = await api('register', { username, email, password, consent });
+        const err = signedIn(res, remember);
+        // Straight on to entering the code we just emailed.
+        if (!err && res.account && !res.account.emailVerified) setMode('verify');
+        return err;
+      },
+      verifyEmail: async (code) => {
+        const res = await api('verify', { code }, readToken());
+        if (!res.account) return res.error ?? 'auth.err.network';
+        setAccount(res.account);
+        return null;
+      },
+      resendCode: async () => {
+        const res = (await api('resend', {}, readToken())) as ApiResult & { ok?: boolean };
+        return res.ok ? null : (res.error ?? 'auth.err.network');
+      },
       deleteAccount: async (password) => {
         const res = (await api('delete', { password }, readToken())) as ApiResult & { ok?: boolean };
         if (!res.ok) return res.error ?? 'auth.err.network';

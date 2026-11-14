@@ -16,6 +16,11 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      # Email (verification codes) via Resend. MAIL_FROM must be on a domain verified in Resend, e.g. Doodlz <noreply@doodlz.io>.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
       # Shown in the footer, Contact page and policies.
       - key: VITE_BUSINESS_NAME
         sync: false

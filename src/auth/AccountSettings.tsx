@@ -44,7 +44,7 @@ function Section({ icon, title, onSave, children }: { icon: ReactNode; title: st
 
 export default function AccountSettings() {
   const t = useT();
-  const { account, updateAccount } = useAuth();
+  const { account, updateAccount, open } = useAuth();
   const [username, setUsername] = useState(account?.username ?? '');
   const [email, setEmail] = useState(account?.email ?? '');
   const [emailPw, setEmailPw] = useState('');
@@ -58,6 +58,14 @@ export default function AccountSettings() {
 
   return (
     <div className="flex flex-col gap-3">
+      {!account.emailVerified && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-amber-100 p-3 text-sm font-bold text-amber-800">
+          <span>{t('auth.unverifiedNote')}</span>
+          <button type="button" className="btn btn-violet shrink-0 px-3 py-1.5 text-sm" onClick={() => open('verify')}>
+            {t('auth.verify')}
+          </button>
+        </div>
+      )}
       <Section icon={<User className="size-5 text-pink-500" />} title={t('auth.username')} onSave={() => save({ username })}>
         <div className="relative mb-2">
           <input className="input pr-20" aria-label={t('auth.username')} value={username} onChange={(e) => setUsername(e.target.value)} maxLength={20} autoComplete="username" required />

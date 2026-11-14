@@ -1,11 +1,12 @@
 // Player accounts: username + email + password, stored in a JSON file on disk.
 // Passwords are hashed with scrypt; sign-ins get a random session token.
-import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
 import { emptyDaily, POINTS, questsFor, utcDay, type DailyProgress, type QuestEvent, type QuestId } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
+import { mailEnabled, sendMail, verificationEmail } from '../mail/mailer.js';
 import { isProfane } from '../moderation/profanity.js';
 import { sanitizeAvatar } from '../util/sanitize.js';
 import type { Persistence } from './persistence.js';
@@ -19,6 +20,8 @@ interface Account {
   email: string;
   passHash: string; // "salt:hash", both hex
   createdAt: number;
+  emailVerified?: boolean; // set once they enter the code we emailed (only enforced when email sending is configured)
+  verify?: { hash: string; expires: number; attempts: number; sentAt: number }; // the pending code, hashed
   consentAt?: number; // when they accepted the Terms and Privacy Policy and confirmed they are 13 or older
   avatar?: Avatar; // saved face (no image)
   image?: { ext: ImageExt; version: number }; // uploaded picture, stored as a file
@@ -53,6 +56,8 @@ export interface PublicAccount {
   username: string;
   tag: string;
   email: string;
+  /** False until they confirm the code emailed to them. Always true when email sending isn't configured. */
+  emailVerified: boolean;
   /** Saved face; `image` is set when they uploaded a picture. */
   avatar?: Avatar;
   points: number;
@@ -80,6 +85,11 @@ export type AuthError =
   | 'auth.err.wrongPassword'
   | 'auth.err.needTag'
   | 'auth.err.image'
+  | 'auth.err.code'
+  | 'auth.err.codeExpired'
+  | 'auth.err.wait'
+  | 'auth.err.mailFailed'
+  | 'auth.err.unverified'
   | 'auth.err.session';
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 90; // 90 days
@@ -244,12 +254,65 @@ export class AccountStore {
       username: a.username,
       tag: a.tag,
       email: a.email,
+      emailVerified: this.isVerified(a),
       avatar: this.avatarOf(a),
       points: a.points ?? 0,
       daily: this.dailyOf(a),
       owned: a.owned ?? [],
       equipped: a.equipped ?? {},
     };
+  }
+
+  private isVerified(a: Account) {
+    return !mailEnabled() || a.emailVerified === true;
+  }
+
+  /** True when this sign-in belongs to an account whose email is confirmed (or confirmation isn't required). */
+  verifiedToken(token: string | undefined): boolean {
+    const a = this.accountFor(token);
+    return a ? this.isVerified(a) : false;
+  }
+
+  private static codeHash(accountId: string, code: string) {
+    return createHash('sha256').update(`${accountId}:${code}`).digest('hex');
+  }
+
+  /** Make a fresh 6-digit code and email it. Returns false if the email could not be sent. */
+  private async sendCode(a: Account): Promise<boolean> {
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    a.verify = { hash: AccountStore.codeHash(a.id, code), expires: Date.now() + 15 * 60_000, attempts: 0, sentAt: Date.now() };
+    this.save();
+    const mail = verificationEmail(a.username, code);
+    return sendMail(a.email, mail.subject, mail.html, mail.text);
+  }
+
+  /** Email a new code (at most one a minute). */
+  async resendCode(token: string | undefined): Promise<{ ok: true } | { error: AuthError }> {
+    const a = this.accountFor(token);
+    if (!a) return { error: 'auth.err.session' };
+    if (this.isVerified(a)) return { ok: true };
+    if (a.verify && Date.now() - a.verify.sentAt < 60_000) return { error: 'auth.err.wait' };
+    return (await this.sendCode(a)) ? { ok: true } : { error: 'auth.err.mailFailed' };
+  }
+
+  /** Check the code from the email. Five wrong tries burn the code. */
+  verifyEmail(token: string | undefined, rawCode: unknown): { account: PublicAccount } | { error: AuthError } {
+    const a = this.accountFor(token);
+    if (!a) return { error: 'auth.err.session' };
+    if (this.isVerified(a)) return { account: this.toPublic(a) };
+    const code = String(rawCode ?? '').replace(/\s/g, '');
+    const v = a.verify;
+    if (!v || Date.now() > v.expires || v.attempts >= 5) return { error: 'auth.err.codeExpired' };
+    v.attempts++;
+    const ok = /^\d{6}$/.test(code) && timingSafeEqual(Buffer.from(v.hash), Buffer.from(AccountStore.codeHash(a.id, code)));
+    if (!ok) {
+      this.save();
+      return { error: 'auth.err.code' };
+    }
+    a.emailVerified = true;
+    delete a.verify;
+    this.save();
+    return { account: this.toPublic(a) };
   }
 
   /** Today's progress (a fresh one once the UTC day changes). */
@@ -343,6 +406,7 @@ export class AccountStore {
     this.store.accounts.push(account);
     const token = this.newSession(account.id);
     this.save();
+    if (mailEnabled()) await this.sendCode(account); // if it fails they can ask for another from the verify screen
     return { token, account: this.toPublic(account) };
   }
 
@@ -420,13 +484,17 @@ export class AccountStore {
       account.username = username;
       account.tag = newTag;
     }
-    if (emailChanged) account.email = email;
+    if (emailChanged) {
+      account.email = email;
+      account.emailVerified = false;
+    }
     if (newPassword !== undefined) {
       account.passHash = await this.hashPassword(newPassword);
       // Sign out every other device after a password change.
       for (const [t, s] of Object.entries(this.store.sessions)) if (s.accountId === account.id && t !== token) delete this.store.sessions[t];
     }
     this.save();
+    if (emailChanged && mailEnabled()) await this.sendCode(account);
     return { account: this.toPublic(account) };
   }
 

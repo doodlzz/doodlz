@@ -43,6 +43,20 @@ export function authRoutes(accounts: AccountStore): Router {
     res.json({ account });
   });
 
+  // Confirm the email with the 6-digit code: { code }.
+  router.post('/verify', (req, res) => {
+    if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
+    const result = accounts.verifyEmail(bearer(req), req.body?.code);
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
+  // Email a new code (once a minute).
+  router.post('/resend', async (req, res) => {
+    if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
+    const result = await accounts.resendCode(bearer(req));
+    res.status('error' in result ? (result.error === 'auth.err.session' ? 401 : 400) : 200).json(result);
+  });
+
   router.post('/account', async (req, res) => {
     if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
     const b = req.body ?? {};

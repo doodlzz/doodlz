@@ -122,6 +122,8 @@ export function shopRoutes(accounts: AccountStore): Router {
     if (!enabled()) return res.status(503).json({ error: 'shop.off' });
     const accountId = accounts.accountId(bearer(req));
     if (!accountId) return res.status(401).json({ error: 'auth.err.session' });
+    // Real money only goes through for accounts with a confirmed email.
+    if (!accounts.verifiedToken(bearer(req))) return res.status(403).json({ error: 'auth.err.unverified' });
     const pack = findPack(req.body?.pack);
     if (!pack) return res.status(400).json({ error: 'shop.error' });
 

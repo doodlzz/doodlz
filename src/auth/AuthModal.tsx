@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Gamepad2, Loader2, LogIn, LogOut, UserPlus, X } from 'lucide-react';
+import { Gamepad2, Loader2, LogIn, LogOut, MailCheck, UserPlus, X } from 'lucide-react';
 import { useT } from '../i18n';
 import AccountSettings from './AccountSettings';
 import { useAuth } from './AuthContext';
 import { Checkbox, ErrorNote, PasswordInput } from './fields';
 
-export type AuthMode = 'gate' | 'register' | 'login' | 'logout' | 'account';
+export type AuthMode = 'gate' | 'register' | 'login' | 'logout' | 'account' | 'verify';
 
 interface Props {
   mode: AuthMode;
@@ -18,7 +18,9 @@ const linkCls = 'cursor-pointer text-pink-500 underline underline-offset-2 hover
 
 export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
   const t = useT();
-  const { register, login, logout } = useAuth();
+  const { account, register, login, logout, verifyEmail, resendCode } = useAuth();
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,12 +47,31 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
     setError(err);
   };
 
+  const submitCode = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const err = await verifyEmail(code);
+    setBusy(false);
+    setError(err);
+    if (!err) onClose();
+  };
+
+  const sendAgain = async () => {
+    setBusy(true);
+    setSent(false);
+    const err = await resendCode();
+    setBusy(false);
+    setError(err);
+    setSent(!err);
+  };
+
   const title = {
     gate: t('auth.gateTitle'),
     register: t('auth.register'),
     login: t('auth.signIn'),
     logout: t('auth.signOut'),
     account: t('auth.accountTitle'),
+    verify: t('auth.verifyTitle'),
   }[mode];
 
   return (
@@ -65,7 +86,43 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
           </button>
         </div>
 
-        {mode === 'account' ? (
+        {mode === 'verify' && account ? (
+          <form className="flex flex-col" onSubmit={submitCode}>
+            <p className="-mt-2 mb-3 text-sm font-bold text-indigo-400">{t('auth.verifyText', { email: account.email })}</p>
+            <label className="label" htmlFor="auth-code">
+              {t('auth.code')}
+            </label>
+            <input
+              id="auth-code"
+              className="input mb-3 text-center font-display text-3xl tracking-[0.4em]"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="000000"
+              maxLength={6}
+              autoFocus
+              required
+            />
+            <ErrorNote error={error} />
+            {sent && (
+              <p className="mb-3 rounded-xl bg-emerald-100 px-3 py-2 text-sm font-bold text-emerald-700" role="status">
+                {t('auth.codeSent')}
+              </p>
+            )}
+            <button type="submit" className="btn btn-pink py-3" disabled={busy || code.length !== 6}>
+              {busy ? <Loader2 className="size-5 animate-spin" /> : <MailCheck className="size-5" />} {t('auth.verify')}
+            </button>
+            <p className="mt-3 flex justify-between gap-2 text-sm font-bold text-indigo-400">
+              <button type="button" className={linkCls} onClick={sendAgain} disabled={busy}>
+                {t('auth.resend')}
+              </button>
+              <button type="button" className={linkCls} onClick={onClose}>
+                {t('auth.verifyLater')}
+              </button>
+            </p>
+          </form>
+        ) : mode === 'account' ? (
           <AccountSettings />
         ) : mode === 'logout' ? (
           <div className="flex flex-col gap-3">

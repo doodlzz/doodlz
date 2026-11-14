@@ -12,6 +12,10 @@ export const config = {
   /** Supabase project URL and service-role key. When both are set, accounts are saved there instead of in DATA_DIR. */
   supabaseUrl: process.env.SUPABASE_URL ?? '',
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? '',
+  /** Resend (email). Without an API key nothing is sent and every account counts as verified. MAIL_FROM must be on a domain verified in Resend. */
+  resendApiKey: process.env.RESEND_API_KEY ?? '',
+  resendApiUrl: process.env.RESEND_API_URL ?? 'https://api.resend.com/emails',
+  mailFrom: process.env.MAIL_FROM ?? 'Doodlz <noreply@doodlz.io>',
   reconnectGraceMs: Number(process.env.RECONNECT_GRACE_MS ?? 60_000),
   chooseMs: 15_000,
   speedChooseMs: 8_000,

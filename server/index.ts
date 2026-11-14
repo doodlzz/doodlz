@@ -34,7 +34,7 @@ const manager = new RoomManager(io, (room, complete) => gameOverRewards(io, acco
 app.use('/api/auth', authRoutes(accounts));
 app.use('/api/shop', shopRoutes(accounts));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, online: io.engine.clientsCount, ...manager.stats() }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, accountStorage: useSupabase ? 'supabase' : 'local-file', online: io.engine.clientsCount, ...manager.stats() }));
 
 // In production, serve the built client from ./dist.
 const distDir = path.resolve(process.cwd(), 'dist');
