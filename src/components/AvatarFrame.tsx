@@ -183,30 +183,11 @@ export function FrameBack({ frame }: { frame: FrameId }) {
         </g>
       );
 
-    // Translucent wings, beating.
-    case 'bee':
-      return (
-        <g strokeLinejoin="round">
-          <defs>
-            <Grad id={a} x1={0} y1={0} x2={1} y2={1} stops={[[0, '#ffffff'], [1, '#e0f2fe']]} />
-          </defs>
-          <g className="fx-anim fx-flap-l">
-            <ellipse cx="2" cy="42" rx="19" ry="12" transform="rotate(-24 2 42)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
-            <ellipse cx="4" cy="66" rx="13" ry="8" transform="rotate(16 4 66)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
-          </g>
-          <g className="fx-anim fx-flap-r">
-            <ellipse cx="98" cy="42" rx="19" ry="12" transform="rotate(24 98 42)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
-            <ellipse cx="96" cy="66" rx="13" ry="8" transform="rotate(-16 96 66)" fill={`url(#${a})`} stroke="#7dd3fc" strokeWidth="1.3" />
-          </g>
-        </g>
-      );
-
     case 'pirate':
     case 'astronaut':
     case 'wizard':
     case 'ninja':
     case 'mushroom':
-    case 'diver':
       return null;
 
     // A crown of fire: flames rise from behind the head, tallest on top.
@@ -408,7 +389,7 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
 
-    // A brushed-metal hexagon helmet frame: glow, ear modules, antenna and a light running the edge.
+    // A brushed-metal hexagon helmet frame: glow, ear modules and a light running the edge.
     case 'cyber': {
       const hex = hexPoints(R + 4).map((p) => p.join(',')).join(' ');
       const inner = hexPoints(R - 2).map((p) => p.join(',')).join(' ');
@@ -435,10 +416,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
           {hexPoints(R + 4).map(([x, y], i) => (
             <circle key={i} cx={x} cy={y} r="2.2" fill="#cffafe" stroke="#0e7490" strokeWidth="0.9" />
           ))}
-          {/* antenna with a blinking light */}
-          <path d={`M${CX} 2 L${CX} -13`} stroke="#334155" strokeWidth="2.4" strokeLinecap="round" />
-          <circle className="fx-anim fx-breathe" cx={CX} cy="-16" r="3.6" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1" />
-          <circle cx={CX - 1} cy="-17.2" r="1" fill="#fff" fillOpacity="0.8" />
         </g>
       );
     }
@@ -486,7 +463,7 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
 
-    // Glass helmet with ear pieces and an antenna light.
+    // Glass helmet with ear pieces.
     case 'astronaut':
       return (
         <g strokeLinejoin="round" strokeLinecap="round">
@@ -500,8 +477,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
           {[-1, 1].map((s) => (
             <rect key={s} x={CX + s * 47 - 5} y={CY - 13} width="10" height="26" rx="4.5" fill="#38bdf8" stroke="#0369a1" strokeWidth="1.3" />
           ))}
-          <path d="M78 12 L88 -8" stroke="#64748b" strokeWidth="2.2" />
-          <circle className="fx-anim fx-breathe" cx="89" cy="-10" r="4.4" fill="#fde047" stroke="#a16207" strokeWidth="1.1" />
           <path d={`M${CX - 20} ${CY + 46} Q${CX} ${CY + 52} ${CX + 20} ${CY + 46}`} fill="none" stroke="#475569" strokeWidth="3.4" />
         </g>
       );
@@ -524,31 +499,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
       );
     }
 
-    // Striped headband, wings behind, springy antennae.
-    case 'bee':
-      return (
-        <g strokeLinejoin="round" strokeLinecap="round">
-          <defs>
-            <Grad id={a} stops={[[0, '#fef08a'], [0.5, '#facc15'], [1, '#d97706']]} />
-          </defs>
-          <Ring fill={a} w={3.4} />
-          <path d="M14 34 Q50 8 86 34 L83 44 Q50 20 17 44 Z" fill="#facc15" stroke="#92400e" strokeWidth="1.3" />
-          {[0, 1, 2].map((i) => (
-            <path key={i} d={`M${34 + i * 15} 17 L${33 + i * 15} 28`} stroke="#1c1917" strokeWidth="4.6" />
-          ))}
-          <g className="fx-anim fx-sway">
-            <path d="M38 17 C34 4 30 -4 26 -9" fill="none" stroke="#1c1917" strokeWidth="2.4" />
-            <circle cx="25" cy="-11" r="5" fill="#fde047" stroke="#a16207" strokeWidth="1.2" />
-            <circle cx="23.6" cy="-12.4" r="1.4" fill="#fff" fillOpacity="0.8" />
-          </g>
-          <g className="fx-anim fx-sway" style={{ animationDelay: '-1.4s' }}>
-            <path d="M62 17 C66 4 70 -4 74 -9" fill="none" stroke="#1c1917" strokeWidth="2.4" />
-            <circle cx="75" cy="-11" r="5" fill="#fde047" stroke="#a16207" strokeWidth="1.2" />
-            <circle cx="73.6" cy="-12.4" r="1.4" fill="#fff" fillOpacity="0.8" />
-          </g>
-        </g>
-      );
-
     // Dark headband with a metal plate and fluttering tails.
     case 'ninja':
       return (
@@ -557,6 +507,7 @@ export function FrameFront({ frame }: { frame: FrameId }) {
             <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#4c3a6b'], [1, '#1e1b3a']]} />
             <Grad id={b} stops={[[0, '#f1f5f9'], [1, '#94a3b8']]} />
           </defs>
+          <g transform="translate(0 -5)">
           <g className="fx-anim fx-sway">
             <path d="M88 42 C98 36 108 38 114 32 C112 42 108 46 114 54 C104 52 98 52 90 50 Z" fill={`url(#${a})`} stroke="#0f0a1f" strokeWidth="1.3" />
             <path d="M90 46 C98 52 104 62 100 72 C96 66 92 62 88 56 Z" fill={`url(#${a})`} stroke="#0f0a1f" strokeWidth="1.3" />
@@ -565,6 +516,7 @@ export function FrameFront({ frame }: { frame: FrameId }) {
           <path d="M8 43 Q50 24 92 43" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="1.2" />
           <rect x="35" y="26" width="30" height="14" rx="3" transform="rotate(-2 50 33)" fill={`url(#${b})`} stroke="#334155" strokeWidth="1.2" />
           <path d="M44 36 L50 28 L56 36 M44 32 L56 32" transform="rotate(-2 50 33)" fill="none" stroke="#334155" strokeWidth="1.5" />
+          </g>
         </g>
       );
 
@@ -586,40 +538,6 @@ export function FrameFront({ frame }: { frame: FrameId }) {
             [66, 24, 4.4],
           ].map(([x, y, r], i) => (
             <circle key={i} className={i === 1 ? 'fx-anim fx-breathe' : undefined} cx={x} cy={y} r={r} fill="#fff7ed" stroke="#fdba74" strokeWidth="1" />
-          ))}
-        </g>
-      );
-
-    // Brass diving helmet: valve on top, side lamps and rising bubbles.
-    case 'diver':
-      return (
-        <g strokeLinejoin="round">
-          <defs>
-            <Grad id={a} stops={[[0, '#5eead4'], [0.5, '#0d9488'], [1, '#115e59']]} />
-            <Grad id={b} stops={[[0, '#fef3c7'], [1, '#d97706']]} />
-          </defs>
-          <Ring fill={a} w={7} />
-          {[0, 60, 120, 180, 240, 300].map((ang) => (
-            <OnRing key={ang} angle={ang}>
-              <circle r="1.4" fill="#99f6e4" stroke="#0f766e" strokeWidth="0.6" />
-            </OnRing>
-          ))}
-          <ellipse cx={CX} cy="4" rx="12" ry="6.5" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.3" />
-          {[-5, 0, 5].map((x) => (
-            <path key={x} d={`M${CX + x} 0 L${CX + x} 8`} stroke="#92400e" strokeWidth="1.4" strokeLinecap="round" />
-          ))}
-          {[-1, 1].map((s) => (
-            <g key={s} transform={`translate(${CX + s * 47} ${CY})`}>
-              <circle r="8.6" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.3" />
-              <circle r="4.4" fill="#fffbeb" stroke="#d97706" strokeWidth="0.9" />
-            </g>
-          ))}
-          {[
-            [96, -4, 3.6],
-            [105, -15, 4.6],
-            [98, -25, 3],
-          ].map(([x, y, r], i) => (
-            <circle key={i} className="fx-anim fx-rise" style={{ animationDelay: `${-i * 0.9}s` }} cx={x} cy={y} r={r} fill="#e0f7ff" fillOpacity="0.7" stroke="#38bdf8" strokeWidth="1.1" />
           ))}
         </g>
       );
