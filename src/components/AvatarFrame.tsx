@@ -66,9 +66,6 @@ function Crystal({ w, h, rot = 0 }: { w: number; h: number; rot?: number }) {
   );
 }
 
-/** A thin flame tongue pointing outward (local -y). */
-const TONGUE = 'M-3.2 1 C-3.6 -4 -1.6 -6 -1 -10 C-0.4 -8 0.4 -9 0.6 -13 C1.8 -9 3.8 -5 3.2 1 Z';
-
 /** One side of a feathered wing, fanning out from the shoulder. `flip` mirrors it to the right side. */
 function Wing({ flip, light, dark }: { flip?: boolean; light: string; dark: string }) {
   const rows = [
@@ -123,7 +120,7 @@ const starPath = (cx: number, cy: number, ro: number, ri: number) =>
 
 /** The part drawn behind the head. */
 export function FrameBack({ frame }: { frame: FrameId }) {
-  const { a, b, glow } = useIds();
+  const { a, b, c, glow } = useIds();
 
   switch (frame) {
     // Crystals growing out from behind the ring: a big cluster lower-left, a small echo upper-right.
@@ -178,27 +175,27 @@ export function FrameBack({ frame }: { frame: FrameId }) {
     case 'mushroom':
       return null;
 
-    // A ring of fire: a warm bloom and a fringe of small flames licking outward.
+    // A ring of fire: the edge is roughened by a displacement filter so it frays into wispy flames.
     case 'fire':
       return (
         <g>
           <defs>
             <Glow id={glow} blur={3.6} />
-            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#dc2626'], [0.55, '#f97316'], [1, '#fde047']]} />
+            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#ea580c'], [0.55, '#fb923c'], [1, '#fde047']]} />
+            <filter id={c} x="-30%" y="-30%" width="160%" height="160%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.1 0.1" numOctaves="3" seed="4" result="n">
+                {!reduceMotion && <animate attributeName="baseFrequency" values="0.1 0.1;0.1 0.12;0.12 0.1;0.1 0.1" dur="4s" repeatCount="indefinite" />}
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="20" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
           </defs>
-          <circle cx={CX} cy={CY} r={R + 4} fill="none" stroke="#f97316" strokeWidth="9" filter={`url(#${glow})`} opacity="0.75" />
-          {Array.from({ length: 44 }, (_, i) => {
-            const k = 0.75 + 0.5 * Math.abs(Math.sin(i * 2.3) * Math.cos(i * 0.7));
-            return (
-              <OnRing key={i} angle={(i * 360) / 44} r={R + 2}>
-                <g transform={`scale(${(0.8 * k).toFixed(2)} ${(1.05 * k).toFixed(2)})`}>
-                  <g className="fx-anim fx-flicker" style={{ animationDelay: `${-((i * 0.37) % 1).toFixed(2)}s` }}>
-                    <path d={TONGUE} fill={`url(#${a})`} />
-                  </g>
-                </g>
-              </OnRing>
-            );
-          })}
+          <circle cx={CX} cy={CY} r={R + 4} fill="none" stroke="#f97316" strokeWidth="9" filter={`url(#${glow})`} opacity="0.7" />
+          <g fill="none" filter={`url(#${c})`}>
+            <circle cx={CX} cy={CY} r={R + 2} stroke="#ea580c" strokeWidth="5" />
+            <circle cx={CX} cy={CY} r={R + 3} stroke={`url(#${a})`} strokeWidth="3" />
+            <circle cx={CX} cy={CY} r={R + 9} stroke="#fb923c" strokeWidth="2.2" strokeDasharray="7 4 3 6" />
+            <circle cx={CX} cy={CY} r={R + 12} stroke="#fde047" strokeWidth="1.4" strokeDasharray="3 9" />
+          </g>
         </g>
       );
 
