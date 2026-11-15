@@ -44,7 +44,7 @@ export default function AvatarBuilder({ avatar, onChange, parts }: Props) {
     <div className="flex flex-col items-center gap-3">
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
         <div className="relative">
-          <div className="grid size-36 place-items-center rounded-full bg-indigo-50">
+          <div className="crayon-edge crayon-avatar crayon-grain grid size-36 place-items-center rounded-full bg-indigo-50">
             <Avatar avatar={avatar} size={116} className="animate-float" />
           </div>
           <button

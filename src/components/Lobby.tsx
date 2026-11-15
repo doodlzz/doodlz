@@ -17,6 +17,7 @@ import { guestTag } from '../lib/session';
 import Avatar from './Avatar';
 import AvatarBuilder from './AvatarBuilder';
 import Chat from './Chat';
+import CrayonScene from './CrayonScene';
 import GameSettingsPanel from './GameSettingsPanel';
 import { PlayerMenu } from './Leaderboard';
 import Logo from './Logo';
@@ -105,7 +106,8 @@ function HomeView({ game }: { game: GameApi }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
+    <div className="crayon-home dark mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
+      <CrayonScene />
       {picking && <CategoryPicker onPick={createWith} onClose={() => setPicking(false)} />}
       <div className="absolute top-4 left-4">
         <OnlineBadge online={game.online} />
@@ -118,12 +120,13 @@ function HomeView({ game }: { game: GameApi }) {
       <p className="mt-2 mb-6 text-center font-display text-lg font-medium text-white/90">{t('app.tagline')}</p>
       <ConnectionBadge connected={game.connected} resuming={game.resuming} />
 
-      <div className="panel mt-5 w-full max-w-xl animate-pop p-5 sm:p-7">
+      <div className="panel crayon-edge mt-5 w-full max-w-xl animate-pop p-5 sm:p-7">
         <label className="label" htmlFor="nickname">
           {t('home.nickname')}
         </label>
         {/* Everyone plays as name#1234. Signed-in players use their account name, changed in account settings. */}
-        <div className="relative mb-5">
+        <div className="mb-5">
+          <div className="crayon-edge crayon-field">
           <input
             id="nickname"
             className={`input pr-20 text-lg ${account ? 'cursor-default' : ''}`}
@@ -137,6 +140,7 @@ function HomeView({ game }: { game: GameApi }) {
           <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-display text-lg font-semibold text-indigo-300">
             #{account ? account.tag : myGuestTag}
           </span>
+          </div>
           {account && (
             <p className="mt-1.5 px-1 text-xs font-bold text-indigo-400">
               {t('home.nameFromAccount')}{' '}
@@ -153,7 +157,7 @@ function HomeView({ game }: { game: GameApi }) {
         </div>
 
         {invited ? (
-          <button className="btn btn-green w-full py-4 text-xl" disabled={!ready || !code} onClick={() =>
+          <button className="btn btn-green btn-play crayon-edge crayon-grain w-full py-4 text-xl" disabled={!ready || !code} onClick={() =>
               run(async (n) => {
                 const ok = await game.joinRoom(code, n, avatar);
                 // Dead or full invite: show the normal buttons again instead of trapping the player here.
@@ -169,17 +173,17 @@ function HomeView({ game }: { game: GameApi }) {
           </button>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            <button className="btn btn-green py-4 text-lg" disabled={!ready} onClick={() => run((n) => game.quickPlay(n, avatar))}>
+            <button className="btn btn-green btn-play crayon-edge crayon-grain py-4 text-lg" disabled={!ready} onClick={() => run((n) => game.quickPlay(n, avatar))}>
               <Shuffle className="size-5" /> {t('home.playRandoms')}
             </button>
-            <button className="btn btn-blue py-4 text-lg" disabled={!ready} onClick={() => requireAccount(() => setPicking(true))}>
+            <button className="btn btn-blue crayon-edge crayon-grain py-4 text-lg" disabled={!ready} onClick={() => requireAccount(() => setPicking(true))}>
               <Play className="size-5 fill-current" /> {t('home.createPrivate')}
             </button>
           </div>
         )}
 
         <div className="my-4 flex items-center gap-3 text-xs font-extrabold tracking-widest text-indigo-300 uppercase">
-          <div className="h-1 flex-1 rounded bg-indigo-50" /> {t('home.orJoin')} <div className="h-1 flex-1 rounded bg-indigo-50" />
+          <div className="crayon-rule flex-1" /> {t('home.orJoin')} <div className="crayon-rule flex-1" />
         </div>
 
         <form
@@ -189,6 +193,7 @@ function HomeView({ game }: { game: GameApi }) {
             if (code.trim()) run((n) => game.joinRoom(code.trim(), n, avatar));
           }}
         >
+          <span className="crayon-edge crayon-field flex-1">
           <input
             className="input text-center font-display text-xl tracking-[0.3em] uppercase"
             placeholder={t('home.code')}
@@ -197,7 +202,8 @@ function HomeView({ game }: { game: GameApi }) {
             maxLength={5}
             onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
           />
-          <button type="submit" className="btn btn-violet shrink-0" disabled={!ready || code.length < 5}>
+          </span>
+          <button type="submit" className="btn btn-violet crayon-edge crayon-grain shrink-0" disabled={!ready || code.length < 5}>
             <DoorOpen className="size-5" /> {t('home.join')}
           </button>
         </form>
@@ -223,7 +229,7 @@ function HomeView({ game }: { game: GameApi }) {
       <SupportCard className="mt-4 w-full max-w-xl" />
       <AdSlot className="mt-4 w-full max-w-xl" />
       {/* Pinned to the bottom corners on wide screens; stacked at the end on smaller ones. */}
-      <DailyQuests className="mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:w-80" />
+      <DailyQuests className="crayon-edge mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:w-80" />
       <Socials className="mt-6 xl:fixed xl:right-4 xl:bottom-4 xl:z-10 xl:mt-0" />
       <Footer className="mt-8 pb-14" />
     </div>
