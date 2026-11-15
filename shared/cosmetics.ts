@@ -1,7 +1,7 @@
 // Cosmetics bought with points. Frames and name effects are seen by everyone in a game;
 // picture unlocks let a player upload or draw their own avatar picture.
 
-export const FRAMES = ['ice', 'gold', 'fire', 'galaxy', 'angel', 'devil', 'bunny', 'cyber', 'pirate', 'frog', 'astronaut', 'wizard', 'ninja', 'mushroom', 'painter', 'shark', 'samurai', 'axolotl', 'king'] as const;
+export const FRAMES = ['ice', 'gold', 'fire', 'galaxy', 'angel', 'devil', 'bunny', 'cyber', 'pirate', 'frog', 'astronaut', 'wizard', 'ninja', 'mushroom', 'painter', 'shark', 'samurai', 'axolotl', 'king', 'dragon', 'cactus', 'knight', 'fox', 'viking', 'pharaoh'] as const;
 export type FrameId = (typeof FRAMES)[number];
 
 export const NAME_FX = ['neon', 'gold', 'rainbow', 'fire', 'glitch', 'ice', 'toxic', 'electric'] as const;
@@ -38,6 +38,9 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'frame-mushroom', slot: 'frame', value: 'mushroom', price: 350, rarity: 'epic' },
   { id: 'frame-painter', slot: 'frame', value: 'painter', price: 350, rarity: 'epic' },
   { id: 'frame-shark', slot: 'frame', value: 'shark', price: 350, rarity: 'epic' },
+  { id: 'frame-cactus', slot: 'frame', value: 'cactus', price: 350, rarity: 'epic' },
+  { id: 'frame-fox', slot: 'frame', value: 'fox', price: 350, rarity: 'epic' },
+  { id: 'frame-viking', slot: 'frame', value: 'viking', price: 350, rarity: 'epic' },
 
   { id: 'frame-fire', slot: 'frame', value: 'fire', price: 500, rarity: 'legendary' },
   { id: 'frame-galaxy', slot: 'frame', value: 'galaxy', price: 500, rarity: 'legendary' },
@@ -47,6 +50,9 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'frame-samurai', slot: 'frame', value: 'samurai', price: 500, rarity: 'legendary' },
   { id: 'frame-axolotl', slot: 'frame', value: 'axolotl', price: 500, rarity: 'legendary' },
   { id: 'frame-king', slot: 'frame', value: 'king', price: 500, rarity: 'legendary' },
+  { id: 'frame-dragon', slot: 'frame', value: 'dragon', price: 500, rarity: 'legendary' },
+  { id: 'frame-knight', slot: 'frame', value: 'knight', price: 500, rarity: 'legendary' },
+  { id: 'frame-pharaoh', slot: 'frame', value: 'pharaoh', price: 500, rarity: 'legendary' },
 
   // Name effects, rare to legendary.
   { id: 'name-neon', slot: 'nameFx', value: 'neon', price: 150, rarity: 'rare' },

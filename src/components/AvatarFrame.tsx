@@ -193,9 +193,21 @@ const INFERNO_EMBERS = Array.from({ length: 26 }, (_, i) => {
   };
 });
 
+/** Overlapping scales around a ring: two rows, each scale a small U opening outward. */
+const DRAGON_SCALES = [0, 1].flatMap((row) =>
+  Array.from({ length: 30 }, (_, i) => {
+    const deg = (i + row * 0.5) * (360 / 30);
+    const [x, y] = polar(row ? 50.6 : 45.4, deg);
+    return `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${deg.toFixed(1)})`;
+  }),
+);
+
+/** Where the rivets sit on a helmet's ring (the top is hidden by the brow band). */
+const RIVET_ANGLES = [72, 92, 112, 132, 152, 172, 192, 212, 232, 252, 272, 288];
+
 /** The part drawn behind the head. */
 export function FrameBack({ frame }: { frame: FrameId }) {
-  const { a, b, c, glow } = useIds();
+  const { a, b, c, clip, glow } = useIds();
 
   switch (frame) {
     // Crystals growing out from behind the ring: a big cluster lower-left, a small echo upper-right.
@@ -322,6 +334,128 @@ export function FrameBack({ frame }: { frame: FrameId }) {
           <path d={arc(R + 3, 104, 256)} stroke="#7f1d1d" strokeWidth="20" />
           <path d={arc(R + 3, 104, 256)} stroke="#dc2626" strokeWidth="17" />
           <path d={arc(R + 8, 112, 248)} stroke="#f87171" strokeOpacity="0.55" strokeWidth="1.6" />
+        </g>
+      );
+
+    // Bat wings and golden horns around a scaled ring.
+    case 'dragon':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#c62828'], [1, '#7f1d1d']]} />
+            <Grad id={b} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#b45309'], [0.5, '#f59e0b'], [1, '#fde68a']]} />
+          </defs>
+          {[0, 1].map((m) => (
+            <g key={m} className={`fx-anim ${m ? 'fx-flap-r' : 'fx-flap-l'}`}>
+              <g transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+                <path d="M16 52 C2 34 -8 16 -19 2 C-19 18 -20 34 -19 48 Q-14 49 -11 58 Q-8 62 -6 72 Q0 72 3 80 Q10 80 13 74 Z" fill={`url(#${a})`} stroke="#450a0a" strokeWidth="1.4" />
+                <path d="M16 52 L-19 2 M16 52 L-19 48 M16 52 L-11 58 M16 52 L-6 72" fill="none" stroke="#fca5a5" strokeOpacity="0.45" strokeWidth="1" />
+              </g>
+            </g>
+          ))}
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              <path d="M33 14 C20 4 21 -12 33 -26 C32 -11 38 -1 48 8 Z" fill={`url(#${b})`} stroke="#78350f" strokeWidth="1.4" />
+              <path d="M29 2 C28 -4 29 -10 31 -14" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="1.3" />
+            </g>
+          ))}
+        </g>
+      );
+
+    // A pair of cactus arms.
+    case 'cactus':
+      return (
+        <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+          {['M9 74 Q-10 74 -10 54', 'M91 62 Q110 62 110 40'].map((d) => (
+            <g key={d}>
+              <path d={d} stroke="#14532d" strokeWidth="12" />
+              <path d={d} stroke="#22c55e" strokeWidth="9" />
+              <path d={d} stroke="#4ade80" strokeWidth="3" transform="translate(-1.4 -1.2)" />
+            </g>
+          ))}
+        </g>
+      );
+
+    // Steel shoulder plates.
+    case 'knight':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#94a3b8'], [1, '#475569']]} />
+          </defs>
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              <path d="M14 64 C-2 60 -16 70 -18 92 C-8 100 4 100 14 93 Z" fill={`url(#${a})`} stroke="#1e293b" strokeWidth="1.5" />
+              <path d="M-12 80 Q0 85 13 80" fill="none" stroke="#e2e8f0" strokeOpacity="0.5" strokeWidth="1.2" />
+            </g>
+          ))}
+        </g>
+      );
+
+    // A fox's ears and its big tail curling round the bottom.
+    case 'fox':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#ef4444'], [1, '#b91c1c']]} />
+            <clipPath id={clip}>
+              <path d="M26 74 C4 76 -18 92 -8 106 C2 115 40 115 74 111 C96 108 108 100 113 91 C96 98 84 98 70 94 C50 90 36 84 32 74 Z" />
+            </clipPath>
+          </defs>
+          <path d="M26 74 C4 76 -18 92 -8 106 C2 115 40 115 74 111 C96 108 108 100 113 91 C96 98 84 98 70 94 C50 90 36 84 32 74 Z" fill={`url(#${a})`} stroke="#7f1d1d" strokeWidth="1.5" />
+          <g clipPath={`url(#${clip})`}>
+            <path d="M74 86 C84 98 78 106 72 118 L118 118 L118 86 Z" fill="#fff7ed" />
+            <path d="M-4 96 C0 106 20 110 50 108" fill="none" stroke="#fff" strokeOpacity="0.3" strokeWidth="2" />
+          </g>
+          <path d="M26 74 C4 76 -18 92 -8 106 C2 115 40 115 74 111 C96 108 108 100 113 91 C96 98 84 98 70 94 C50 90 36 84 32 74 Z" fill="none" stroke="#7f1d1d" strokeWidth="1.5" />
+          {[-1, 1].map((side) => (
+            <OnRing key={side} angle={side * 34}>
+              <g className={side > 0 ? 'fx-anim fx-twitch' : undefined}>
+                <path d="M-12 5 C-13 -12 -9 -26 -3 -35 C5 -25 12 -12 13 5 Z" fill={`url(#${a})`} stroke="#7f1d1d" strokeWidth="1.5" />
+                <path d="M-6.5 3 C-7 -9 -5 -19 -2.5 -26 C1 -18 6.5 -9 6.5 3 Z" fill="#fff7ed" stroke="#fecaca" strokeWidth="0.8" />
+              </g>
+            </OnRing>
+          ))}
+        </g>
+      );
+
+    // Curved horns on a steel helmet.
+    case 'viking':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#a8a07f'], [0.5, '#f5efd0'], [1, '#fffbeb']]} />
+          </defs>
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              <path d="M24 38 C4 36 -10 18 -10 -14 C-2 6 10 16 28 24 Z" fill={`url(#${a})`} stroke="#57534e" strokeWidth="1.4" />
+              <path d="M-4 0 C0 8 6 14 14 19" fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="1.3" strokeLinecap="round" />
+              <path d="M15 40 L28 24 L33 29 L22 43 Z" fill="#fbbf24" stroke="#92400e" strokeWidth="1.2" />
+            </g>
+          ))}
+        </g>
+      );
+
+    // Striped royal headcloth hanging down both sides.
+    case 'pharaoh':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <clipPath id={clip}>
+              <path d="M22 28 L6 32 L-16 104 L14 108 L22 98 Z" />
+            </clipPath>
+          </defs>
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              <path d="M22 28 L6 32 L-16 104 L14 108 L22 98 Z" fill="#1e40af" />
+              <g clipPath={`url(#${clip})`}>
+                {Array.from({ length: 8 }, (_, i) => (
+                  <rect key={i} x="-20" y={36 + i * 10} width="50" height="5" fill="#fbbf24" />
+                ))}
+              </g>
+              <path d="M22 28 L6 32 L-16 104 L14 108 L22 98 Z" fill="none" stroke="#92400e" strokeWidth="1.5" />
+            </g>
+          ))}
         </g>
       );
 
@@ -857,6 +991,162 @@ export function FrameFront({ frame }: { frame: FrameId }) {
         </g>
       );
     }
+
+    // A scaled ring with fangs on the inner rim.
+    case 'dragon':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#f05252'], [0.5, '#b91c1c'], [1, '#7f1d1d']]} />
+          </defs>
+          <Ring fill={a} w={11} r={48} edge="#450a0a" />
+          <g fill="none" stroke="#450a0a" strokeOpacity="0.5" strokeWidth="0.9" strokeLinecap="round">
+            {DRAGON_SCALES.map((tf) => (
+              <path key={tf} transform={tf} d="M-2.8 -1.4 A2.8 2.8 0 0 0 2.8 -1.4" />
+            ))}
+          </g>
+          {[38, 142, 218, 322].map((deg) => {
+            const [x, y] = polar(42.6, deg);
+            return <path key={deg} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${deg})`} d="M-2.6 -0.6 L2.6 -0.6 L0 5.2 Z" fill="#fef3c7" stroke="#92400e" strokeWidth="0.9" />;
+          })}
+        </g>
+      );
+
+    // A ribbed green ring with spines and a pink flower on top.
+    case 'cactus':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#bbf7d0'], [0.45, '#4ade80'], [1, '#15803d']]} />
+            <Grad id={b} x1={0} y1={1} x2={0} y2={0} stops={[[0, '#ec4899'], [1, '#fbcfe8']]} />
+            <clipPath id={clip}>
+              <path clipRule="evenodd" d={`M${CX - 53.5} ${CY} a53.5 53.5 0 1 0 107 0 a53.5 53.5 0 1 0 -107 0 Z M${CX - 42.5} ${CY} a42.5 42.5 0 1 1 85 0 a42.5 42.5 0 1 1 -85 0 Z`} />
+            </clipPath>
+          </defs>
+          <Ring fill={a} w={11} r={48} edge="#14532d" />
+          <g clipPath={`url(#${clip})`} fill="none" stroke="#14532d" strokeOpacity="0.5" strokeWidth="1">
+            {[9, 21, 33, 44].map((rx) => (
+              <ellipse key={rx} cx={CX} cy={CY} rx={rx} ry="62" />
+            ))}
+          </g>
+          {Array.from({ length: 12 }, (_, i) => {
+            const [x, y] = polar(48, 15 + i * 30);
+            return <path key={i} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`} d="M-1.7 -1.7 L1.7 1.7 M1.7 -1.7 L-1.7 1.7" stroke="#fefce8" strokeWidth="0.9" />;
+          })}
+          <g transform="translate(50 5)">
+            <Wobble amp={3} dur={3.6}>
+              {[-66, 66, -33, 33, 0].map((rot) => (
+                <path key={rot} transform={`rotate(${rot})`} d="M0 0 C-5.4 -5 -5.4 -13 0 -20 C5.4 -13 5.4 -5 0 0 Z" fill={`url(#${b})`} stroke="#9d174d" strokeWidth="1.2" />
+              ))}
+              <path d="M0 -2 L0 -13" stroke="#fff" strokeOpacity="0.5" strokeWidth="1.2" />
+            </Wobble>
+          </g>
+        </g>
+      );
+
+    // Steel helmet with a gold crown, plus golden scrolls on the shoulders.
+    case 'knight': {
+      const rivets = [0.08, 0.24, 0.4, 0.5, 0.6, 0.76, 0.92].map((t) => [8 + 84 * t, 36 - 40 * t * (1 - t) - 0.4]);
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#94a3b8'], [1, '#475569']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#fef3c7'], [0.5, '#fbbf24'], [1, '#d97706']]} />
+          </defs>
+          <Ring fill={a} w={8} edge="#1e293b" />
+          {/* scrolls */}
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined} fill="none">
+              {['#92400e', '#fbbf24'].map((c, i) => (
+                <path key={c} d="M12 88 C2 98 -10 100 -15 94 C-18 89 -12 84 -9 87 C-7 90 -11 93 -12 91" stroke={c} strokeWidth={i ? 3 : 5.4} />
+              ))}
+            </g>
+          ))}
+          {/* helmet */}
+          <path d="M10 32 C10 8 28 -5 50 -5 C72 -5 90 8 90 32 C70 24 30 24 10 32 Z" fill={`url(#${a})`} stroke="#1e293b" strokeWidth="1.5" />
+          <path d="M18 14 C24 4 34 -1 44 -2" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="2.2" />
+          <path d="M8 35 Q50 15 92 35 L93 43 Q50 23 7 43 Z" fill="#cbd5e1" stroke="#1e293b" strokeWidth="1.4" />
+          {rivets.map(([x, y]) => (
+            <circle key={x} cx={x} cy={y + 4} r="1.9" fill="#fbbf24" stroke="#92400e" strokeWidth="0.8" />
+          ))}
+          {/* crown */}
+          <path d="M36 -4 L33 -21 L43 -13 L50 -27 L57 -13 L67 -21 L64 -4 Q50 0 36 -4 Z" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.4" />
+          <path d="M50 -17 L53.4 -11 L50 -5 L46.6 -11 Z" fill="#fff7ed" stroke="#92400e" strokeWidth="0.9" />
+          <path className="fx-anim fx-twinkle" d="M50 -17 Q50.5 -13.2 54 -12.6 Q50.5 -12 50 -8 Q49.5 -12 46 -12.6 Q49.5 -13.2 50 -17 Z" fill="#fff" />
+        </g>
+      );
+    }
+
+    // A red ring with a white-lined muzzle-free fox look: just the ring, the ears and tail do the work.
+    case 'fox':
+      return (
+        <g>
+          <defs>
+            <Grad id={a} stops={[[0, '#f87171'], [0.5, '#dc2626'], [1, '#991b1b']]} />
+          </defs>
+          <Ring fill={a} w={10} r={47.5} edge="#7f1d1d" />
+        </g>
+      );
+
+    // A dome helmet with a nasal band, brow band and rivets.
+    case 'viking': {
+      const rivets = [0.06, 0.2, 0.34, 0.66, 0.8, 0.94].map((t) => [8 + 84 * t, 36 - 40 * t * (1 - t)]);
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#94a3b8'], [1, '#475569']]} />
+            <Grad id={b} x1={0} y1={0} x2={1} y2={0} stops={[[0, '#64748b'], [0.5, '#cbd5e1'], [1, '#64748b']]} />
+          </defs>
+          <Ring fill={a} w={8} edge="#1e293b" />
+          {RIVET_ANGLES.map((deg) => {
+            const [x, y] = polar(R, deg);
+            return <circle key={deg} cx={x} cy={y} r="1.8" fill="#fbbf24" stroke="#92400e" strokeWidth="0.8" />;
+          })}
+          <path d="M10 33 C10 10 28 -4 50 -4 C72 -4 90 10 90 33 C70 25 30 25 10 33 Z" fill={`url(#${a})`} stroke="#1e293b" strokeWidth="1.5" />
+          <path d="M43 -4 L57 -4 L57.6 26 L42.4 26 Z" fill={`url(#${b})`} stroke="#1e293b" strokeWidth="1.2" />
+          {[2, 10, 18].map((y) => (
+            <circle key={y} cx="50" cy={y} r="1.6" fill="#fbbf24" stroke="#92400e" strokeWidth="0.7" />
+          ))}
+          <path d="M8 36 Q50 16 92 36 L93 44 Q50 24 7 44 Z" fill="#cbd5e1" stroke="#1e293b" strokeWidth="1.4" />
+          {rivets.map(([x, y]) => (
+            <circle key={x} cx={x} cy={y + 4.4} r="1.9" fill="#fbbf24" stroke="#92400e" strokeWidth="0.8" />
+          ))}
+          <path className="fx-anim fx-twinkle" d="M24 10 Q24.6 14 29 14.6 Q24.6 15.2 24 19 Q23.4 15.2 19 14.6 Q23.4 14 24 10 Z" fill="#fff" />
+        </g>
+      );
+    }
+
+    // Striped nemes headdress with a gold cobra and collar.
+    case 'pharaoh':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#4f6df0'], [1, '#1e3a8a']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#fef3c7'], [0.5, '#fbbf24'], [1, '#d97706']]} />
+            <clipPath id={clip}>
+              <path d="M12 32 C13 8 30 -8 50 -8 C70 -8 87 8 88 32 C70 24 30 24 12 32 Z" />
+            </clipPath>
+          </defs>
+          <Ring fill={a} w={6} edge="#0f1d4d" />
+          <circle cx={CX} cy={CY} r="44" fill="none" stroke="#fbbf24" strokeWidth="1.2" />
+          <path d={arc(R + 3.5, 138, 222)} fill="none" stroke="#92400e" strokeWidth="9.6" />
+          <path d={arc(R + 3.5, 138, 222)} fill="none" stroke={`url(#${b})`} strokeWidth="7" />
+          <path d="M12 32 C13 8 30 -8 50 -8 C70 -8 87 8 88 32 C70 24 30 24 12 32 Z" fill="#1e40af" />
+          <g clipPath={`url(#${clip})`}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <rect key={i} x="0" y={-6 + i * 7.5} width="100" height="3.6" fill="#fbbf24" />
+            ))}
+          </g>
+          <path d="M12 32 C13 8 30 -8 50 -8 C70 -8 87 8 88 32 C70 24 30 24 12 32 Z" fill="none" stroke="#92400e" strokeWidth="1.5" />
+          <path d="M10 34 Q50 20 90 34 L90 40 Q50 26 10 40 Z" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.2" />
+          {/* cobra */}
+          <path d="M50 -25 C43 -25 40 -16 43 -8 L57 -8 C60 -16 57 -25 50 -25 Z" fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.3" />
+          <path d="M50 -19 L50 -9" stroke="#92400e" strokeWidth="1" />
+          <circle cx="47.6" cy="-20" r="1" fill="#1e1b4b" />
+          <circle cx="52.4" cy="-20" r="1" fill="#1e1b4b" />
+          <path className="fx-anim fx-twinkle" d="M56 -16 Q56.5 -12.6 60 -12 Q56.5 -11.4 56 -8 Q55.5 -11.4 52 -12 Q55.5 -12.6 56 -16 Z" fill="#fff" />
+        </g>
+      );
 
     case 'angel':
       return (
