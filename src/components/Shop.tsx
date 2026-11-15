@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Check, Crown, Gem, ImagePlus, Loader2, Lock, Paintbrush, ShoppingBag, Sparkles, Star, X } from 'lucide-react';
-import { COSMETICS, type Cosmetic, type FrameId, type NameFxId, type Rarity } from '../../shared/cosmetics';
+import { Check, Crown, Diamond, Gem, ImagePlus, Loader2, Lock, Paintbrush, ShoppingBag, Sparkles, Star, X } from 'lucide-react';
+import { COSMETICS, RARITY_ORDER, type Cosmetic, type FrameId, type NameFxId, type Rarity } from '../../shared/cosmetics';
 import { savingsPercent, type PackId, type ShopInfo } from '../../shared/shop';
 import { useAuth, type ShopTab } from '../auth/AuthContext';
 import { readToken } from '../auth/storage';
@@ -21,7 +21,15 @@ const RARITY: Record<Rarity, { chip: string; card: string; icon: React.ReactNode
     card: 'ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]',
     icon: <Crown className="size-3" />,
   },
+  exotic: {
+    chip: 'bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 text-white',
+    card: 'ring-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.55)]',
+    icon: <Diamond className="size-3" />,
+  },
 };
+
+/** Cheapest tier first (rare, epic, legendary, exotic), then by price. */
+const byRarity = (a: Cosmetic, b: Cosmetic) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity) || a.price - b.price;
 
 // ---------------- cosmetics ----------------
 
@@ -51,7 +59,7 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
     <section className="mb-4">
       <h3 className="label">{title}</h3>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {COSMETICS.filter((c) => c.slot === slot).map((c) => {
+        {COSMETICS.filter((c) => c.slot === slot).sort(byRarity).map((c) => {
           const owned = owns(c);
           const worn = wearing(c);
           const afford = account.points >= c.price;

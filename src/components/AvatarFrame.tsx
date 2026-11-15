@@ -42,16 +42,55 @@ const Grad = ({ id, stops, x1 = 0, y1 = 0, x2 = 1, y2 = 1 }: { id: string; stops
   </linearGradient>
 );
 
-/** The slim ring every frame shares: soft shadow, gradient body, rim light. */
-function Ring({ fill, w = 4, r = R }: { fill: string; w?: number; r?: number }) {
+/** The slim ring every frame shares: soft shadow (or a solid cartoon outline with `edge`), gradient body, rim light. */
+function Ring({ fill, w = 4, r = R, edge }: { fill: string; w?: number; r?: number; edge?: string }) {
   return (
     <g fill="none">
-      <circle cx={CX} cy={CY} r={r} stroke="#000" strokeOpacity="0.25" strokeWidth={w + 2} />
+      <circle cx={CX} cy={CY} r={r} stroke={edge ?? '#000'} strokeOpacity={edge ? 1 : 0.25} strokeWidth={w + (edge ? 2.8 : 2)} />
       <circle cx={CX} cy={CY} r={r} stroke={`url(#${fill})`} strokeWidth={w} />
       <circle cx={CX} cy={CY} r={r - w * 0.22} stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
     </g>
   );
 }
+
+/** Rocks a child back and forth about the origin of its own coordinate space. */
+function Wobble({ amp, dur, begin = 0, children }: { amp: number; dur: number; begin?: number; children: React.ReactNode }) {
+  return (
+    <g>
+      {!reduceMotion && (
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          values={`${-amp} 0 0;${amp} 0 0;${-amp} 0 0`}
+          keyTimes="0;0.5;1"
+          calcMode="spline"
+          keySplines=".45 0 .55 1;.45 0 .55 1"
+          dur={`${dur}s`}
+          begin={`${begin}s`}
+          repeatCount="indefinite"
+        />
+      )}
+      {children}
+    </g>
+  );
+}
+
+/** Point on a circle around the head, `deg` clockwise from the top. */
+const polar = (r: number, deg: number): [number, number] => [CX + r * Math.sin((deg * Math.PI) / 180), CY - r * Math.cos((deg * Math.PI) / 180)];
+/** A clockwise arc around the head from `a1` to `a2` degrees. */
+const arc = (r: number, a1: number, a2: number) => {
+  const [x1, y1] = polar(r, a1);
+  const [x2, y2] = polar(r, a2);
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+};
+
+/** Triangular teeth pointing inward around the head. */
+const SHARK_TEETH = Array.from({ length: 22 }, (_, i) => {
+  const mid = (i / 22) * Math.PI * 2;
+  const half = (Math.PI / 22) * 0.8;
+  const pt = (r: number, a: number) => `${(CX + r * Math.cos(a)).toFixed(2)} ${(CY + r * Math.sin(a)).toFixed(2)}`;
+  return `M${pt(43.5, mid - half)} L${pt(35.8, mid)} L${pt(43.5, mid + half)} Z`;
+});
 
 /** A cut crystal pointing outward (local -y): lit face, shaded face, one outline. */
 function Crystal({ w, h, rot = 0 }: { w: number; h: number; rot?: number }) {
@@ -204,7 +243,90 @@ export function FrameBack({ frame }: { frame: FrameId }) {
         </g>
       );
 
+    // A shark: dorsal fin on top and a swept fin on each side.
+    case 'shark':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#9fb3c6'], [1, '#5f7a92']]} />
+          </defs>
+          {[0, 1].map((m) => (
+            <path key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined} d="M10 60 C0 70 -10 86 -15 100 C-2 98 12 93 22 86 Z" fill={`url(#${a})`} stroke="#334e63" strokeWidth="1.5" />
+          ))}
+          <g className="fx-anim fx-fin">
+            <path d="M66 10 C62 -4 50 -18 33 -26 C39 -12 35 -2 31 12 Z" fill={`url(#${a})`} stroke="#334e63" strokeWidth="1.5" />
+            <path d="M58 6 C55 -4 48 -12 40 -17" fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="1.4" strokeLinecap="round" />
+          </g>
+        </g>
+      );
+
+    // Red-and-gold shoulder guards.
+    case 'samurai':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#ef4444'], [1, '#991b1b']]} />
+          </defs>
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              <g transform="rotate(-10 6 82)">
+                {[56, 68, 80, 92].map((y, i) => {
+                  const l = -6 - i * 2.4;
+                  const r = 20 + i * 0.8;
+                  return (
+                    <g key={y}>
+                      <path d={`M${l} ${y} L${r} ${y} L${r - 1} ${y + 12} Q${(l + r) / 2} ${y + 17} ${l - 1.6} ${y + 12} Z`} fill={`url(#${a})`} stroke="#4c0f1c" strokeWidth="1.4" />
+                      <path d={`M${l - 1.4} ${y + 10.4} Q${(l + r) / 2} ${y + 15.4} ${r - 0.9} ${y + 10.4} L${r - 1} ${y + 12} Q${(l + r) / 2} ${y + 17} ${l - 1.6} ${y + 12} Z`} fill="#fbbf24" stroke="#92400e" strokeWidth="0.8" />
+                    </g>
+                  );
+                })}
+              </g>
+            </g>
+          ))}
+        </g>
+      );
+
+    // Feathery gills on both sides and a curling tail.
+    case 'axolotl':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} x1={0} y1={0} x2={1} y2={1} stops={[[0, '#f0abfc'], [1, '#c026d3']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#fce7f3'], [1, '#f9a8d4']]} />
+          </defs>
+          <path d="M44 96 C52 114 82 116 98 106 C108 99 107 88 98 87 C102 95 92 102 80 99 C68 96 62 92 58 86 Z" fill={`url(#${b})`} stroke="#b02a8a" strokeWidth="1.4" />
+          {[0, 1].map((m) => (
+            <g key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined}>
+              {[-58, -90, -122].map((rot, gi) => (
+                <g key={rot} transform={`translate(9 ${40 + gi * 13}) rotate(${rot})`}>
+                  <Wobble amp={4} dur={3.2} begin={gi * 0.4}>
+                    <path d="M0 0 L0 -29" stroke="#a21caf" strokeWidth="1.8" />
+                    {[0.2, 0.4, 0.6, 0.8].map((t, li) =>
+                      [-1, 1].map((sd) => (
+                        <ellipse key={`${li}${sd}`} transform={`translate(0 ${-29 * t}) rotate(${sd * 58})`} cx="0" cy="-6" rx={4.1 - li * 0.3} ry={8 - li * 1} fill={`url(#${a})`} stroke="#a21caf" strokeWidth="1.1" />
+                      )),
+                    )}
+                    <ellipse cx="0" cy="-30" rx="3.2" ry="5.4" fill={`url(#${a})`} stroke="#a21caf" strokeWidth="1.1" />
+                  </Wobble>
+                </g>
+              ))}
+            </g>
+          ))}
+        </g>
+      );
+
+    // The red cape behind the ermine collar.
+    case 'king':
+      return (
+        <g fill="none" strokeLinecap="round">
+          <path d={arc(R + 3, 104, 256)} stroke="#7f1d1d" strokeWidth="20" />
+          <path d={arc(R + 3, 104, 256)} stroke="#dc2626" strokeWidth="17" />
+          <path d={arc(R + 8, 112, 248)} stroke="#f87171" strokeOpacity="0.55" strokeWidth="1.6" />
+        </g>
+      );
+
     case 'pirate':
+    case 'painter':
     case 'astronaut':
     case 'wizard':
     case 'ninja':
@@ -603,6 +725,138 @@ export function FrameFront({ frame }: { frame: FrameId }) {
           ))}
         </g>
       );
+
+    // Gold frame with a red beret, a paintbrush and a palette.
+    case 'painter':
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#fde68a'], [0.45, '#f59e0b'], [1, '#b45309']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#ef4444'], [1, '#991b1b']]} />
+          </defs>
+          <Ring fill={a} w={6} edge="#6b3a0a" />
+          {/* palette */}
+          <path d="M-8 86 C-12 98 -4 111 12 111 C26 111 31 101 25 95 C21 91 15 94 14 88 C12 80 -2 78 -8 86 Z" fill="#fcd9a6" stroke="#6b4423" strokeWidth="1.5" />
+          <ellipse cx="17" cy="103" rx="2.6" ry="2" fill="#6b4423" />
+          {[
+            [-3, 93, '#ef4444'],
+            [3, 85.5, '#facc15'],
+            [10, 96.5, '#22c55e'],
+            [-1, 103, '#3b82f6'],
+          ].map(([x, y, f]) => (
+            <circle key={x} cx={x} cy={y} r="3.4" fill={f as string} stroke="#00000040" strokeWidth="0.8" />
+          ))}
+          {/* brush */}
+          <g transform="translate(106 50) rotate(7)">
+            <Wobble amp={3.5} dur={3.4}>
+              <path d="M-4 -23 L4 -23 L2.4 50 L-2.4 50 Z" fill="#fbbf24" stroke="#92400e" strokeWidth="1.3" />
+              <path d="M-2 -20 L-0.8 46" stroke="#fff" strokeOpacity="0.55" strokeWidth="1.2" />
+              <rect x="-5" y="-33" width="10" height="11" rx="2" fill="#cbd5e1" stroke="#475569" strokeWidth="1.2" />
+              <path d="M-5 -29 H5 M-5 -25.5 H5" stroke="#64748b" strokeWidth="0.9" />
+              <path d="M-5 -33 C-6 -41 -2 -48 1 -52 C4 -47 6 -40 5 -33 Z" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="1.3" />
+              <path d="M-2.2 -37 C-2 -42 -0.5 -46 0.5 -48" fill="none" stroke="#bfdbfe" strokeWidth="1.2" />
+            </Wobble>
+          </g>
+          {/* beret */}
+          <g transform="rotate(-8 40 10)">
+            <path d="M8 22 C2 4 24 -10 46 -9 C66 -8 74 8 66 22 C50 29 24 29 8 22 Z" fill={`url(#${b})`} stroke="#7f1d1d" strokeWidth="1.6" />
+            <path d="M8 22 C24 29 50 29 66 22 C62 18 52 16 40 16 C26 16 14 18 8 22 Z" fill="#7f1d1d" fillOpacity="0.28" />
+            <path d="M14 8 C20 -1 32 -6 42 -7" fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="2.2" />
+            <path d="M18 -3 L14 -11 L22 -9 Z" fill="#b91c1c" stroke="#7f1d1d" strokeWidth="1.3" />
+          </g>
+        </g>
+      );
+
+    // The shark's body with a ring of teeth.
+    case 'shark':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#b6c7d6'], [0.5, '#7b93a8'], [1, '#556f86']]} />
+          </defs>
+          <Ring fill={a} w={13} r={48} edge="#334e63" />
+          <circle cx={CX} cy={CY} r="42.6" fill="none" stroke="#e2e8f0" strokeWidth="1.6" />
+          {SHARK_TEETH.map((d, i) => (
+            <path key={i} d={d} fill="#fff" stroke="#64748b" strokeWidth="1" />
+          ))}
+          <path d={arc(52, 300, 352)} fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="1.8" strokeLinecap="round" />
+        </g>
+      );
+
+    // Crimson ring, kabuto helmet and a golden crescent crest.
+    case 'samurai':
+      return (
+        <g strokeLinejoin="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#f43f5e'], [0.5, '#be123c'], [1, '#7f1d1d']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#ef4444'], [1, '#991b1b']]} />
+            <Grad id={c} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#fef3c7'], [0.5, '#fbbf24'], [1, '#d97706']]} />
+          </defs>
+          <Ring fill={a} w={7} edge="#3f0d14" />
+          <circle cx={CX} cy={CY} r="43.6" fill="none" stroke="#fbbf24" strokeWidth="1.3" />
+          {/* crest */}
+          {[0, 1].map((m) => (
+            <path key={m} transform={m ? 'translate(100 0) scale(-1 1)' : undefined} d="M45 -2 C38 -12 24 -20 8 -19 C18 -13 26 -5 34 6 Z" fill={`url(#${c})`} stroke="#92400e" strokeWidth="1.3" />
+          ))}
+          {/* helmet */}
+          <path d="M12 28 C14 8 32 -6 50 -6 C68 -6 86 8 88 28 C70 18 30 18 12 28 Z" fill={`url(#${b})`} stroke="#4c0f1c" strokeWidth="1.5" />
+          <path d="M10 31 Q50 12 90 31 L90.6 37 Q50 18 9.4 37 Z" fill={`url(#${c})`} stroke="#92400e" strokeWidth="1.2" />
+          <path d="M22 10 C28 2 38 -2 46 -3" fill="none" stroke="#fff" strokeOpacity="0.4" strokeWidth="2" strokeLinecap="round" />
+          <path d="M34 28 L40 8 M50 22 L50 2 M66 28 L60 8" stroke="#7f1d1d" strokeOpacity="0.55" strokeWidth="1.1" fill="none" />
+          <path d="M42 -12 A9 9 0 1 0 58 -12 A6.6 6.6 0 1 1 42 -12 Z" transform="translate(0 -4)" fill={`url(#${c})`} stroke="#92400e" strokeWidth="1.3" />
+          <path className="fx-anim fx-twinkle" d="M50 -4 Q50.6 -0.6 54 0 Q50.6 0.6 50 4 Q49.4 0.6 46 0 Q49.4 -0.6 50 -4 Z" transform="translate(0 -7)" fill="#fff" />
+        </g>
+      );
+
+    // A soft pink body ring with a pale lilac inner line.
+    case 'axolotl':
+      return (
+        <g>
+          <defs>
+            <Grad id={a} stops={[[0, '#fff1f8'], [0.5, '#fbcfe8'], [1, '#f472b6']]} />
+          </defs>
+          <Ring fill={a} w={7} edge="#b02a8a" />
+          <circle cx={CX} cy={CY} r="43.6" fill="none" stroke="#c4b5fd" strokeWidth="1.5" />
+        </g>
+      );
+
+    // Gold ring, ermine collar and a jewelled crown.
+    case 'king': {
+      const tips: [number, number][] = [[23, -5], [36.5, -13], [50, -22], [63.5, -13], [77, -5]];
+      const vals = [30, 43, 57, 70];
+      const crown = `M22 15 L${tips[0].join(' ')} L${vals[0]} 1 L${tips[1].join(' ')} L${vals[1]} 1 L${tips[2].join(' ')} L${vals[2]} 1 L${tips[3].join(' ')} L${vals[3]} 1 L${tips[4].join(' ')} L78 15 Q50 22 22 15 Z`;
+      return (
+        <g strokeLinejoin="round" strokeLinecap="round">
+          <defs>
+            <Grad id={a} stops={[[0, '#fef3c7'], [0.45, '#fbbf24'], [1, '#b45309']]} />
+            <Grad id={b} x1={0} y1={0} x2={0} y2={1} stops={[[0, '#fde68a'], [1, '#f59e0b']]} />
+          </defs>
+          <Ring fill={a} w={6} edge="#6b3a0a" />
+          {/* ermine collar */}
+          <path d={arc(R + 1.6, 118, 242)} fill="none" stroke="#6b7280" strokeWidth="12.4" />
+          <path d={arc(R + 1.6, 118, 242)} fill="none" stroke="#f8fafc" strokeWidth="9.6" />
+          {[134, 157, 180, 203, 226].map((deg) => {
+            const [x, y] = polar(R + 1.6, deg);
+            return <path key={deg} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${deg})`} d="M0 -3.2 C2.2 -1 1.5 2 0 4.6 C-1.5 2 -2.2 -1 0 -3.2 Z" fill="#1f2937" />;
+          })}
+          {/* crown */}
+          <path d={crown} fill={`url(#${b})`} stroke="#92400e" strokeWidth="1.4" />
+          <path d="M50 -22 L57 1 L63.5 -13 L70 1 L77 -5 L78 15 Q64 19 50 19 Z" fill="#b45309" fillOpacity="0.18" />
+          <path d="M22 15 Q50 22 78 15 L78 9 Q50 16 22 9 Z" fill="#d97706" stroke="#92400e" strokeWidth="1.1" />
+          {tips.map(([x, y]) => (
+            <circle key={x} cx={x} cy={y - 1} r="3" fill="#fff7ed" stroke="#92400e" strokeWidth="1" />
+          ))}
+          {[
+            [50, '#ef4444', '#7f1d1d'],
+            [35, '#3b82f6', '#1e3a8a'],
+            [65, '#3b82f6', '#1e3a8a'],
+          ].map(([x, f, st]) => (
+            <path key={x} d={`M${x} 6 L${(x as number) + 4} 11 L${x} 16 L${(x as number) - 4} 11 Z`} fill={f as string} stroke={st as string} strokeWidth="1" />
+          ))}
+          <path className="fx-anim fx-twinkle" d="M50 4 Q50.6 8.4 55 9 Q50.6 9.6 50 14 Q49.4 9.6 45 9 Q49.4 8.4 50 4 Z" fill="#fff" />
+        </g>
+      );
+    }
 
     case 'angel':
       return (

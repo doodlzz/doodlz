@@ -157,6 +157,7 @@ body {
 .fx-inferno-ccw { transform-box: fill-box; transform-origin: center; animation: fx-inferno-ccw 10s linear infinite; }
 .fx-inferno-glow { transform-box: fill-box; transform-origin: center; animation: fx-inferno-glow 2.4s ease-in-out infinite; }
 .fx-dash { animation: fx-dash 3.2s linear infinite; }
+.fx-fin { transform-box: fill-box; transform-origin: 50% 100%; animation: fx-fin 3.4s ease-in-out infinite; }
 @keyframes fx-breathe { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.45; } }
 @keyframes fx-neon { 0%, 100% { opacity: 1; } 91% { opacity: 1; } 92% { opacity: 0.35; } 93% { opacity: 1; } 95% { opacity: 0.5; } 96% { opacity: 1; } }
 @keyframes fx-twinkle { 0%, 100% { opacity: 0; transform: scale(0.4); } 50% { opacity: 1; transform: scale(1); } }
@@ -165,6 +166,7 @@ body {
 @keyframes fx-flap-r { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(6deg); } }
 @keyframes fx-twitch { 0%, 84%, 100% { transform: rotate(0); } 88% { transform: rotate(-10deg); } 92% { transform: rotate(4deg); } 96% { transform: rotate(-3deg); } }
 @keyframes fx-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(6deg); } }
+@keyframes fx-fin { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(4deg); } }
 @keyframes fx-dash { to { stroke-dashoffset: -309; } }
 
 /* ---------------- cosmetics: name effects ---------------- */
