@@ -1,6 +1,7 @@
 import { useT } from '../i18n';
 
 const LINKS = [
+  ['/pricing', 'footer.pricing'],
   ['/privacy', 'footer.privacy'],
   ['/terms', 'footer.terms'],
   ['/refunds', 'footer.refunds'],

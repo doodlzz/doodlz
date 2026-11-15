@@ -145,16 +145,22 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
 // ---------------- get points (real money) ----------------
 
 const POPULAR: PackId = 'p200';
-/** Load Paddle.js once and set it up with the public client token. */
+/**
+ * Load Paddle.js once and set it up with the public client token. For Paddle Retain, `pwCustomer` is the
+ * buyer's Paddle customer id (ctm_…), never our own account id or their email; it's only known after a
+ * first purchase, and is passed again with Paddle.Update if it turns up later.
+ */
 let paddleReady: Promise<any> | null = null;
-function loadPaddle(token: string, env: 'sandbox' | 'production'): Promise<any> {
-  paddleReady ??= new Promise((resolve, reject) => {
+function loadPaddle(token: string, env: 'sandbox' | 'production', customerId?: string): Promise<any> {
+  const pwCustomer = customerId ? { id: customerId } : {};
+  if (paddleReady) return paddleReady.then((paddle) => (customerId && paddle.Update({ pwCustomer }), paddle));
+  paddleReady = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
     script.onload = () => {
       const paddle = (window as any).Paddle;
       if (env === 'sandbox') paddle.Environment.set('sandbox');
-      paddle.Initialize({ token });
+      paddle.Initialize({ token, pwCustomer });
       resolve(paddle);
     };
     script.onerror = () => {
@@ -171,6 +177,7 @@ const BEST: PackId = 'p1000';
 function PointsTab() {
   const t = useT();
   const { settings } = useSettings();
+  const { account } = useAuth();
   const [shop, setShop] = useState<ShopInfo | null>(null);
   const [buying, setBuying] = useState<PackId | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -194,11 +201,10 @@ function PointsTab() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${readToken() ?? ''}` },
         body: JSON.stringify({ pack }),
       });
-      const data = (await res.json()) as { url?: string; transactionId?: string; error?: string };
-      if (data.url) return void (window.location.href = data.url);
+      const data = (await res.json()) as { transactionId?: string; error?: string };
       if (data.transactionId && shop?.paddle) {
-        const paddle = await loadPaddle(shop.paddle.token, shop.paddle.env);
-        paddle.Checkout.open({ transactionId: data.transactionId, settings: { successUrl: `${window.location.origin}/?points=success` } });
+        const paddle = await loadPaddle(shop.paddle.token, shop.paddle.env, account?.paddleCustomerId);
+        paddle.Checkout.open({ transactionId: data.transactionId, settings: { successUrl: `${window.location.origin}/?points=success&txn=${data.transactionId}` } });
         setBuying(null);
         return;
       }

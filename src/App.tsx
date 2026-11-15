@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { readToken } from './auth/storage';
 import CookieNotice from './components/CookieNotice';
 import CrayonScene from './components/CrayonScene';
 import Game from './components/Game';
@@ -15,6 +16,13 @@ import { useT } from './i18n';
 import { isLegalPath, LegalPage } from './legal/LegalPages';
 import { SettingsProvider, useSettings } from './settings/SettingsContext';
 
+/** Read once when the page loads (not in an effect, which React may run twice and the URL is cleaned up after). */
+const PAYMENT_RETURN = (() => {
+  const params = new URLSearchParams(location.search);
+  const result = params.get('points');
+  return result === 'success' || result === 'cancel' ? { result: result as 'success' | 'cancel', txn: params.get('txn') } : null;
+})();
+
 function Shell() {
   const t = useT();
   const { settings } = useSettings();
@@ -25,14 +33,25 @@ function Shell() {
   const { account, applyReward, refresh, shopTab, closeShop } = useAuth();
   const [shopNote, setShopNote] = useState<'success' | 'cancel' | null>(null);
 
-  // Back from Stripe's payment page. The points are added when Stripe confirms the payment to the
-  // server, which can take a few seconds, so check the account again a few times.
+  // Back from the payment page. The points are added once the payment provider confirms the payment to
+  // the server, which can take a few seconds, so check the account again a few times. For Paddle we also
+  // ask the server to look the transaction up with Paddle, in case its webhook is late or can't reach us.
   useEffect(() => {
-    const result = new URLSearchParams(location.search).get('points');
-    if (result !== 'success' && result !== 'cancel') return;
+    if (!PAYMENT_RETURN) return;
+    const { result, txn } = PAYMENT_RETURN;
     history.replaceState(null, '', '/');
     setShopNote(result);
-    const timers = result === 'success' ? [1500, 4000, 8000, 15000].map((ms) => setTimeout(refresh, ms)) : [];
+    const check = async () => {
+      if (txn) {
+        await fetch('/api/shop/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${readToken() ?? ''}` },
+          body: JSON.stringify({ transactionId: txn }),
+        }).catch(() => null);
+      }
+      refresh();
+    };
+    const timers = result === 'success' ? [500, 3000, 7000, 15000, 30000].map((ms) => setTimeout(check, ms)) : [];
     timers.push(setTimeout(() => setShopNote(null), 6000));
     return () => timers.forEach(clearTimeout);
   }, []);

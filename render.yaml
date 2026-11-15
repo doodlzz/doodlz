@@ -28,3 +28,15 @@ services:
         sync: false
       - key: VITE_CONTACT_EMAIL
         sync: false
+      # Buying points with Paddle (see README). PADDLE_ENV is "sandbox" or "production"; PADDLE_PRICES maps
+      # each pack to its Paddle price id: p50=pri_…,p100=pri_…,p200=pri_…,p400=pri_…,p1000=pri_…
+      - key: PADDLE_ENV
+        sync: false
+      - key: PADDLE_API_KEY
+        sync: false
+      - key: PADDLE_CLIENT_TOKEN
+        sync: false
+      - key: PADDLE_WEBHOOK_SECRET
+        sync: false
+      - key: PADDLE_PRICES
+        sync: false

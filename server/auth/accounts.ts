@@ -28,6 +28,7 @@ interface Account {
   points?: number; // point balance: earned from ranked games and quests, plus bought
   boughtPoints?: number; // lifetime points bought (so earned points can be told apart later)
   purchases?: Purchase[];
+  paddleCustomerId?: string; // Paddle customer (ctm_…) from their first purchase, for Paddle Retain
   earnedPoints?: number; // lifetime points earned from games and quests (for leaderboards)
   owned?: string[]; // cosmetic ids bought with points
   equipped?: Equipped;
@@ -35,7 +36,7 @@ interface Account {
 }
 
 interface Purchase {
-  id: string; // Stripe Checkout session id; each one is credited once
+  id: string; // payment transaction id (Paddle txn_…); each one is credited once
   pack: string;
   points: number;
   cents: number;
@@ -64,6 +65,8 @@ export interface PublicAccount {
   daily: DailyProgress;
   owned: string[];
   equipped: Equipped;
+  /** Paddle customer id (ctm_…), set after their first purchase. Passed to Paddle Retain. */
+  paddleCustomerId?: string;
 }
 
 export type ShopError = 'shop.notFound' | 'shop.owned' | 'shop.notEnough' | 'shop.notOwned' | 'shop.needUnlock';
@@ -260,6 +263,7 @@ export class AccountStore {
       daily: this.dailyOf(a),
       owned: a.owned ?? [],
       equipped: a.equipped ?? {},
+      ...(a.paddleCustomerId ? { paddleCustomerId: a.paddleCustomerId } : {}),
     };
   }
 
@@ -321,11 +325,16 @@ export class AccountStore {
   }
 
   /**
-   * Add bought points once per paid Stripe session. Returns the new balance,
-   * or null if the account is gone or this session was already credited.
+   * Add bought points once per paid transaction. Returns the new balance,
+   * or null if the account is gone or this transaction was already credited.
+   * `customerId` is the payment provider's customer id, remembered for Paddle Retain.
    */
-  creditPurchase(accountId: string, p: Purchase): number | null {
+  creditPurchase(accountId: string, p: Purchase, customerId?: unknown): number | null {
     const a = this.store.accounts.find((x) => x.id === accountId);
+    if (a && typeof customerId === 'string' && /^ctm_[a-z0-9]{10,40}$/.test(customerId) && a.paddleCustomerId !== customerId) {
+      a.paddleCustomerId = customerId;
+      this.save();
+    }
     if (!a || a.purchases?.some((x) => x.id === p.id)) return null;
     a.purchases = [...(a.purchases ?? []), p];
     a.boughtPoints = (a.boughtPoints ?? 0) + p.points;
