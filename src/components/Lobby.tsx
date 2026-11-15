@@ -17,7 +17,6 @@ import { guestTag } from '../lib/session';
 import Avatar from './Avatar';
 import AvatarBuilder from './AvatarBuilder';
 import Chat from './Chat';
-import CrayonScene from './CrayonScene';
 import GameSettingsPanel from './GameSettingsPanel';
 import { PlayerMenu } from './Leaderboard';
 import Logo from './Logo';
@@ -106,8 +105,7 @@ function HomeView({ game }: { game: GameApi }) {
   };
 
   return (
-    <div className="crayon-home dark mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
-      <CrayonScene />
+    <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
       {picking && <CategoryPicker onPick={createWith} onClose={() => setPicking(false)} />}
       <div className="absolute top-4 left-4">
         <OnlineBadge online={game.online} />
@@ -228,9 +226,9 @@ function HomeView({ game }: { game: GameApi }) {
       </div>
       <SupportCard className="mt-4 w-full max-w-xl" />
       <AdSlot className="mt-4 w-full max-w-xl" />
-      {/* Pinned to the bottom corners on wide screens; stacked at the end on smaller ones. */}
+      {/* Pinned to the bottom corners on wide screens (socials from 1024px, quests from 1280px); stacked at the end on smaller ones. */}
       <DailyQuests className="crayon-edge mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:w-80" />
-      <Socials className="mt-6 xl:fixed xl:right-4 xl:bottom-4 xl:z-10 xl:mt-0" />
+      <Socials className="mt-6 lg:fixed lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0" />
       <Footer className="mt-8 pb-14" />
     </div>
   );
@@ -284,7 +282,7 @@ function RoomView({ game }: { game: GameApi }) {
         <Logo size="sm" />
         <div className="flex gap-2">
           <SettingsButton />
-          <button className="btn btn-ghost py-2 text-base" onClick={game.leaveRoom}>
+          <button className="btn btn-ghost crayon-edge py-2 text-base" onClick={game.leaveRoom}>
             <DoorOpen className="size-5" /> {t('lobby.leave')}
           </button>
         </div>
@@ -292,7 +290,7 @@ function RoomView({ game }: { game: GameApi }) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1.2fr_1fr] lg:items-start">
         <div className="flex flex-col gap-4">
-          <div className="panel p-5">
+          <div className="panel crayon-edge p-5">
             <span className="label flex items-center gap-1.5">
               {state.isPublic && <Globe2 className="size-4" />}
               {state.isPublic ? t('lobby.publicRoom') : t('lobby.roomCode')}
@@ -302,13 +300,13 @@ function RoomView({ game }: { game: GameApi }) {
                 <span className="flex-1 text-center font-display text-3xl font-bold tracking-[0.3em] text-yellow-300">{maskCode(state.code, codeHidden)}</span>
                 <CodeEyeButton className="size-10 text-yellow-300/80 hover:bg-white/10 hover:text-yellow-300" />
               </div>
-              <button className={`btn ${copied ? 'btn-green' : 'btn-blue'} h-[52px]`} onClick={copy} title={t('lobby.invite')}>
+              <button className={`btn ${copied ? 'btn-green' : 'btn-blue'} crayon-edge crayon-grain h-[52px]`} onClick={copy} title={t('lobby.invite')}>
                 {copied ? <Check className="size-5" /> : <Copy className="size-5" />}
                 <span className="hidden sm:inline">{copied ? t('lobby.copied') : t('lobby.invite')}</span>
               </button>
             </div>
           </div>
-          <div className="panel p-5">
+          <div className="panel crayon-edge p-5">
             <span className="label flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5">
                 <Tags className="size-4" /> {t('lobby.category')}
@@ -344,7 +342,7 @@ function RoomView({ game }: { game: GameApi }) {
           />
         </div>
 
-        <div className="panel flex flex-col p-5">
+        <div className="panel crayon-edge flex flex-col p-5">
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold text-indigo-900">
             <Users className="size-5 text-emerald-500" /> {t('lobby.players')}
             <span className="ml-auto rounded-full bg-indigo-100 px-3 py-0.5 text-sm text-indigo-700">
@@ -386,7 +384,7 @@ function RoomView({ game }: { game: GameApi }) {
               </div>
             )}
             {isHost ? (
-              <button className="btn btn-green w-full py-4 text-xl" disabled={connectedCount < 2} onClick={game.startGame}>
+              <button className="btn btn-green btn-play crayon-edge crayon-grain w-full py-4 text-xl" disabled={connectedCount < 2} onClick={game.startGame}>
                 <Play className="size-6 fill-current" /> {t('lobby.start')}
               </button>
             ) : (
@@ -398,7 +396,7 @@ function RoomView({ game }: { game: GameApi }) {
           </div>
         </div>
 
-        <Chat messages={game.messages} players={state.players} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
+        <Chat messages={game.messages} players={state.players} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="crayon-edge crayon-inset h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
       </div>
     </div>
   );

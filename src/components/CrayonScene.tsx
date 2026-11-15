@@ -5,14 +5,12 @@ import { memo, type ReactNode } from 'react';
  * filters the crayon UI outlines use (`filter: url(#cr-edge-a)` etc. in index.css).
  *
  * The doodles are placed once, from a fixed seed, so they never tile or jump between renders.
- * Wide screens keep the middle column (logo + card) clear; narrow screens use a portrait layout
- * that sits behind the card, since the card covers most of the screen there anyway.
+ * They cover the whole sheet edge to edge; panels sit on top and the doodles show in every gap.
+ * Narrow screens get their own portrait layout.
  */
 
-type Kind = 'sun' | 'car' | 'kid' | 'cat' | 'house' | 'rocket' | 'star' | 'spiral' | 'smiley' | 'cloud' | 'heart' | 'flower' | 'squiggle' | 'balloon';
-
 // Each doodle is drawn in a 100×100 box with round crayon strokes.
-const SHAPES: Record<Kind, ReactNode> = {
+const SHAPES = {
   sun: (
     <>
       <circle cx="50" cy="50" r="17" />
@@ -90,11 +88,80 @@ const SHAPES: Record<Kind, ReactNode> = {
       <path d="M47 63h6l-3 4ZM50 67q-8 10 2 18t-2 13" />
     </>
   ),
-};
+  fish: (
+    <>
+      <path d="M20 50q25-26 52 0-27 26-52 0ZM72 50l18-14v28ZM33 46v2M44 38q6 6 0 12" />
+      <circle cx="12" cy="30" r="3" />
+      <circle cx="8" cy="18" r="2" />
+    </>
+  ),
+  tree: <path d="M44 92V64M56 92V64M50 64C26 66 18 52 26 40c-6-14 10-24 20-18 8-12 26-6 26 8 14 2 12 24-2 30-6 6-14 4-20 4ZM40 44l6 6M58 36l-4 8" />,
+  moon: <path d="M60 14a36 36 0 1 0 26 52 28 28 0 1 1-26-52ZM20 20l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" />,
+  butterfly: (
+    <path d="M50 30v44M50 40C34 18 14 24 20 42c4 12 20 10 30 4ZM50 40c16-22 36-16 30 2-4 12-20 10-30 4ZM50 50c-12 4-22 16-14 24 8 4 14-8 14-18ZM50 50c12 4 22 16 14 24-8 4-14-8-14-18ZM48 30q-4-10-10-12M52 30q4-10 10-12" />
+  ),
+  snail: <path d="M54 66a20 20 0 1 1 14-34 14 14 0 1 1-22 14 8 8 0 1 1 12-6M12 70h68q8 0 8-8M18 70q-6-14 2-22M20 48l-6-10M22 48l2-12" />,
+  bolt: <path d="M56 8 26 54h22l-8 38 34-50H52Z" />,
+  rainbow: <path d="M10 76a40 40 0 0 1 80 0M20 76a30 30 0 0 1 60 0M30 76a20 20 0 0 1 40 0M4 78q6-8 14-2 6-6 12 2ZM70 78q6-8 14-2 6-6 12 2Z" />,
+  icecream: <path d="M34 50 50 92l16-42ZM40 58l14 14M44 52l18 18M32 50q-6-18 10-20 2-14 16-10 14-2 12 14 10 6 2 16Z" />,
+  plane: <path d="M10 52 82 40q10 0 8 8L18 62ZM40 48 30 26h8l18 18M44 58l-6 18h8l14-20M14 54 8 42h6l8 8" />,
+  boat: <path d="M14 62h72L74 80H26ZM50 62V14M50 18l28 38H50ZM50 26 28 56h22M8 90q8-6 16 0t16 0 16 0 16 0 16 0" />,
+  note: <path d="M38 72V24l40-10v48M38 34l40-10M38 72a9 7 0 1 1-18 0 9 7 0 1 1 18 0ZM78 62a9 7 0 1 1-18 0 9 7 0 1 1 18 0Z" />,
+  pencil: <path d="M20 80 70 30l10 10-50 50-14 4ZM64 36l10 10M20 80l6 6" />,
+  cupcake: (
+    <>
+      <path d="M28 56h44l-6 34H34ZM40 56l2 34M50 56v34M60 56l-2 34M24 56q-4-14 12-16 2-14 14-12 12-2 14 12 16 2 12 16ZM50 17q2-8 8-10" />
+      <circle cx="50" cy="22" r="5" />
+    </>
+  ),
+  ghost: (
+    <>
+      <path d="M26 88V44a24 24 0 0 1 48 0v44l-8-8-8 8-8-8-8 8-8-8ZM42 44v4M58 44v4" />
+      <circle cx="50" cy="58" r="4" />
+    </>
+  ),
+  dino: <path d="M14 74q6-20 30-22 10-30 26-26 12 2 12 12-2 8-12 8-4 14-2 28M30 74v14M50 74v14M14 74q-6 4-10 0M38 74h20M30 52l4-8 4 8 4-8 4 8M72 32v1" />,
+  umbrella: <path d="M12 52a38 38 0 0 1 76 0q-6-6-13 0-6-6-12 0-6-6-12 0-6-6-12 0-6-6-12 0-7-6-15 0ZM50 52v30q0 8-8 8t-8-8M50 14v-4" />,
+  crown: (
+    <>
+      <path d="M18 72 14 34l20 18 16-26 16 26 20-18-4 38ZM18 82h64" />
+      <circle cx="34" cy="64" r="3" />
+      <circle cx="50" cy="62" r="3" />
+      <circle cx="66" cy="64" r="3" />
+    </>
+  ),
+  planet: (
+    <>
+      <circle cx="50" cy="50" r="20" />
+      <ellipse cx="50" cy="50" rx="42" ry="11" transform="rotate(-20 50 50)" />
+      <path d="M14 16v6M11 19h6M84 80v6M81 83h6" />
+    </>
+  ),
+  mushroom: (
+    <>
+      <path d="M14 52q2-34 36-36 34 2 36 36ZM38 52q-4 30 2 36h20q6-6 2-36" />
+      <circle cx="34" cy="36" r="5" />
+      <circle cx="58" cy="28" r="4" />
+      <circle cx="68" cy="42" r="4" />
+    </>
+  ),
+  snowman: (
+    <>
+      <circle cx="50" cy="70" r="20" />
+      <circle cx="50" cy="36" r="14" />
+      <path d="M36 24h28M42 24V10h16v14M30 64 14 54M70 64l16-10M45 34v1M55 34v1M50 39l6 2" />
+    </>
+  ),
+  tulip: <path d="M36 26l6 10 8-14 8 14 6-10v18q0 12-14 12T36 44ZM50 56v38M50 80q-14-12-20-8 6 12 20 12" />,
+  kite: <path d="M50 8l26 32-26 40-26-40ZM50 8v72M24 40h52M50 80q-10 6 0 12t-4 8M44 86l-4-2M52 94l4-1" />,
+  apple: <path d="M50 30q-26-10-30 16-2 30 22 40 8-4 16 0 24-10 22-40-4-26-30-16ZM50 30q0-12 6-18M52 22q12-8 18 2-10 6-18-2M32 46q0-8 6-10" />,
+} satisfies Record<string, ReactNode>;
+
+type Kind = keyof typeof SHAPES;
 
 const KINDS = Object.keys(SHAPES) as Kind[];
-// Muted pastel crayons: soft pink, warm yellow, sky blue, coral, mint, lilac.
-const COLORS = ['#f9a8d4', '#fde68a', '#93c5fd', '#fca5a5', '#a7f3d0', '#c4b5fd'];
+// Muted pastel crayons: soft pink, warm yellow, sky blue, coral, mint, lilac, peach, lime, aqua.
+const COLORS = ['#f9a8d4', '#fde68a', '#93c5fd', '#fca5a5', '#a7f3d0', '#c4b5fd', '#fdba74', '#d9f99d', '#a5f3fc'];
 
 function rng(seed: number) {
   return () => {
@@ -116,29 +183,43 @@ interface Doodle {
   draw: boolean;
 }
 
-/** Scatter doodles over a w×h sheet without overlaps, skipping the `clear` rectangle. */
-function scatter(w: number, h: number, count: number, seed: number, clear?: { x0: number; x1: number; y0: number; y1: number }) {
+/**
+ * Scatter doodles over a w×h sheet without overlaps. Big ones are placed first and smaller ones
+ * fill the gaps between them. Kinds come from a shuffled bag, so every kind appears about equally.
+ */
+function scatter(w: number, h: number, count: number, seed: number, minSize: number, maxSize: number) {
   const rand = rng(seed);
   const out: Doodle[] = [];
-  let lastKind: Kind | null = null;
-  for (let tries = 0; out.length < count && tries < 4000; tries++) {
-    const size = 70 + rand() * 60;
-    const x = rand() * (w - size);
-    const y = rand() * (h - size);
+  let bag: Kind[] = [];
+  let lastColor = '';
+  const DRAWN = 10; // how many doodles get the draw-in animation
+  for (let tries = 0; out.length < count && tries < 30000; tries++) {
+    // Shrinks as the sheet fills up, so later doodles squeeze into the leftover space.
+    const t = Math.min(1, tries / 12000);
+    const size = minSize + (maxSize - minSize) * (1 - t) * (0.55 + rand() * 0.45);
+    const x = rand() * (w - size * 0.6) - size * 0.2;
+    const y = rand() * (h - size * 0.6) - size * 0.2;
     const cx = x + size / 2;
     const cy = y + size / 2;
-    if (clear && x + size > clear.x0 && x < clear.x1 && y + size > clear.y0 && y < clear.y1) continue;
-    if (out.some((d) => Math.hypot(d.x + d.size / 2 - cx, d.y + d.size / 2 - cy) < (d.size + size) / 2 + 16)) continue;
-    let kind = KINDS[Math.floor(rand() * KINDS.length)];
-    if (kind === lastKind) kind = KINDS[(KINDS.indexOf(kind) + 1) % KINDS.length];
-    lastKind = kind;
-    out.push({ kind, x, y, size, rot: (rand() - 0.5) * 40, color: COLORS[out.length % COLORS.length], draw: out.length % 6 === 0 });
+    if (out.some((d) => Math.hypot(d.x + d.size / 2 - cx, d.y + d.size / 2 - cy) < (d.size + size) / 2 * 0.92 + 2)) continue;
+    if (!bag.length) {
+      bag = [...KINDS];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+    }
+    const kind = bag.pop()!;
+    let color = COLORS[Math.floor(rand() * COLORS.length)];
+    if (color === lastColor) color = COLORS[(COLORS.indexOf(color) + 1) % COLORS.length];
+    lastColor = color;
+    out.push({ kind, x, y, size, rot: (rand() - 0.5) * 50, color, draw: out.length % 7 === 0 && out.length < DRAWN * 7 });
   }
   return out;
 }
 
-const WIDE = scatter(1600, 1000, 34, 7, { x0: 450, x1: 1150, y0: -1, y1: 1001 });
-const NARROW = scatter(420, 900, 12, 11, { x0: 30, x1: 390, y0: 50, y1: 230 });
+const WIDE = scatter(1600, 1000, 220, 7, 34, 120);
+const NARROW = scatter(420, 900, 70, 11, 26, 80);
 
 function Sheet({ doodles, viewBox, className }: { doodles: Doodle[]; viewBox: string; className: string }) {
   let drawn = 0;

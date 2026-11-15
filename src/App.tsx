@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import CookieNotice from './components/CookieNotice';
+import CrayonScene from './components/CrayonScene';
 import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
@@ -52,6 +53,8 @@ function Shell() {
       <a href="#main" className="skip-link">
         {t('a11y.skip')}
       </a>
+      {/* The doodle backdrop (and the crayon outline filters) behind every game screen. */}
+      <CrayonScene />
       <MouseTrail />
       <div id="main" tabIndex={-1}>
         {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}

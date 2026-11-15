@@ -145,7 +145,7 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
   }, [settings.customWords]);
 
   return (
-    <div className="panel p-5">
+    <div className="panel crayon-edge p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-1">
         <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-indigo-900">
           <Settings className="size-5 text-sky-500" /> {t('gs.title')}

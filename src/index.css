@@ -268,16 +268,30 @@ body {
 /* ---------------- landing page: crayon sketchbook ---------------- */
 /* Doodles + SVG filters live in CrayonScene.tsx. Outlines are drawn on ::before/::after and only
    those go through the wobble filter, so text, inputs and icons stay perfectly crisp. */
-.crayon-scene { background: #1e1633; }
-.crayon-scene svg g { opacity: 0.55; }
-.crayon-scene .md\:hidden g { opacity: 0.4; }
+.crayon-scene {
+  background-color: #4f46e5;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.14) 1.5px, transparent 1.5px),
+    linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  background-size: 22px 22px, 100% 100%;
+}
+.dark .crayon-scene {
+  background-color: #1e1633;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.07) 1.5px, transparent 1.5px),
+    linear-gradient(135deg, #1e1633 0%, #241944 55%, #2b1640 100%);
+}
+.crayon-scene svg g { opacity: 0.6; }
+.crayon-scene .md\:hidden g { opacity: 0.45; }
+.dark .crayon-scene svg g { opacity: 0.55; }
+.dark .crayon-scene .md\:hidden g { opacity: 0.4; }
 .doodle-draw { stroke-dasharray: 520; animation: doodle-draw 1.6s ease-out both; }
 @keyframes doodle-draw { from { stroke-dashoffset: 520; } to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .doodle-draw { animation: none !important; stroke-dasharray: none; }
 }
 
-.crayon-home {
+:root {
   --cr-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.1 0 0 0 -0.52'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   --cr-wax: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='120'><filter id='w'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.9 0 0 0 -0.38'/></filter><rect width='100%' height='100%' filter='url(%23w)'/></svg>");
 }
@@ -298,6 +312,9 @@ body {
 }
 .crayon-edge::before { inset: -3px; filter: url(#cr-edge-a); }
 .crayon-edge::after { inset: 1px -1px -1px 2px; opacity: 0.5; filter: url(#cr-edge-b); }
+/* For boxes that clip their overflow (e.g. the chat): keep both lines inside the edge. */
+.crayon-inset::before { inset: 3px; }
+.crayon-inset::after { inset: 6px 5px 5px 7px; }
 
 /* Grainy wax fill: white speckles + faint horizontal wax streaks over the fill colour. */
 .crayon-grain {
@@ -305,24 +322,42 @@ body {
   background-size: 180px 180px, 240px 120px;
 }
 
-.crayon-home .panel { border-color: transparent; box-shadow: 0 22px 50px rgba(8, 4, 24, 0.55); }
-.crayon-home .panel.crayon-edge { --cr-line: #b9a6f5; --cr-width: 3.5px; }
-.crayon-home .crayon-field { display: block; border-radius: 1rem; --cr-line: #8b80d9; }
-.crayon-home .crayon-field .input { border-color: transparent; background-color: rgba(255, 255, 255, 0.04); }
-.crayon-home .crayon-field:focus-within { --cr-line: #fde047; }
-.crayon-home .crayon-avatar { --cr-line: #f9a8d4; background-color: #2b2452; }
+/* Light theme first, dark overrides below. */
+.panel.crayon-edge { border-color: transparent; box-shadow: 0 18px 40px rgba(30, 27, 75, 0.3); }
+.panel.crayon-edge { --cr-line: #a78bfa; --cr-width: 3.5px; }
+.crayon-field { display: block; border-radius: 1rem; --cr-line: #a5b4fc; }
+.crayon-field .input { border-color: transparent; }
+.crayon-field:focus-within { --cr-line: #f59e0b; }
+.crayon-avatar {
+  --cr-line: #f472b6;
+  /* Softer wax on the light circle; the white speckles only show up on dark fills. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='120'><filter id='w'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.3' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0 0.6  0.45 0 0 0 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23w)'/></svg>");
+  background-size: 240px 120px;
+}
 
-.crayon-home .btn { --cr-width: 2.5px; }
-.crayon-home .btn.crayon-edge::before { inset: -4px; }
+.btn.crayon-edge { --cr-width: 2.5px; }
+.btn.crayon-edge::before { inset: -4px; }
 /* "Play with randoms" is the focal point: the brightest fill, outline and a soft glow. */
-.crayon-home .btn-play {
+.btn-play {
   background-color: #15803d;
-  --cr-line: #bbf7d0;
+  --cr-line: #4ade80;
   box-shadow: 0 4px 0 #14532d, 0 0 28px rgba(74, 222, 128, 0.35);
   text-shadow: 0 1px 1px rgba(5, 46, 22, 0.55);
 }
-.crayon-home .btn-play:active { box-shadow: 0 1px 0 #14532d, 0 0 18px rgba(74, 222, 128, 0.3); }
-.crayon-home .btn-blue.crayon-edge { --cr-line: #7dd3fc; background-color: #1f5a85; }
-.crayon-home .btn-violet.crayon-edge { --cr-line: #c4b5fd; }
+.btn-play:active { box-shadow: 0 1px 0 #14532d, 0 0 18px rgba(74, 222, 128, 0.3); }
+.btn-blue.crayon-edge { --cr-line: #38bdf8; background-color: #1f5a85; }
+.btn-violet.crayon-edge { --cr-line: #a78bfa; }
+.btn-ghost.crayon-edge { --cr-line: #a5b4fc; }
+.crayon-rule { height: 3px; border-radius: 2px; background: #c7d2fe; filter: url(#cr-edge-a); }
 
-.crayon-rule { height: 3px; border-radius: 2px; background: #4b4285; filter: url(#cr-edge-a); }
+.dark .panel.crayon-edge { box-shadow: 0 22px 50px rgba(8, 4, 24, 0.55); }
+.dark .panel.crayon-edge { --cr-line: #b9a6f5; }
+.dark .crayon-field { --cr-line: #8b80d9; }
+.dark .crayon-field .input { background-color: rgba(255, 255, 255, 0.04); }
+.dark .crayon-field:focus-within { --cr-line: #fde047; }
+.dark .crayon-avatar { --cr-line: #f9a8d4; background-color: #2b2452; background-image: var(--cr-grain), var(--cr-wax); background-size: 180px 180px, 240px 120px; }
+.dark .btn-play { --cr-line: #bbf7d0; }
+.dark .btn-blue.crayon-edge { --cr-line: #7dd3fc; }
+.dark .btn-violet.crayon-edge { --cr-line: #c4b5fd; }
+.dark .btn-ghost.crayon-edge { --cr-line: #6f66b8; }
+.dark .crayon-rule { background: #4b4285; }
