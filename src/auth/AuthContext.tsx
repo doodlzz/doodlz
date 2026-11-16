@@ -21,6 +21,8 @@ export interface Account {
   /** Cosmetic ids bought with points, and what's being worn. */
   owned: string[];
   equipped: Equipped;
+  /** Paddle customer id (ctm_…) after their first purchase; passed to Paddle Retain. */
+  paddleCustomerId?: string;
 }
 
 export type ShopTab = 'cosmetics' | 'points';

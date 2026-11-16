@@ -24,4 +24,3 @@ create table if not exists account_images (
 alter table accounts enable row level security;
 alter table sessions enable row level security;
 alter table account_images enable row level security;
-  
