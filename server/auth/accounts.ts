@@ -4,7 +4,7 @@ import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
-import { emptyDaily, POINTS, questsFor, utcDay, type DailyProgress, type QuestEvent, type QuestId } from '../../shared/quests.js';
+import { emptyDaily, emptyWeekly, POINTS, questsFor, utcDay, utcWeek, weeklyQuestsFor, type DailyProgress, type QuestDef, type QuestEvent, type QuestId, type WeeklyProgress } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { mailEnabled, sendMail, verificationEmail } from '../mail/mailer.js';
 import { isProfane } from '../moderation/profanity.js';
@@ -32,6 +32,7 @@ interface Account {
   owned?: string[]; // cosmetic ids bought with points
   equipped?: Equipped;
   daily?: DailyProgress; // today's game points and quest progress
+  weekly?: WeeklyProgress; // this week's quest progress
 }
 
 interface Purchase {
@@ -62,6 +63,7 @@ export interface PublicAccount {
   avatar?: Avatar;
   points: number;
   daily: DailyProgress;
+  weekly: WeeklyProgress;
   owned: string[];
   equipped: Equipped;
 }
@@ -258,6 +260,7 @@ export class AccountStore {
       avatar: this.avatarOf(a),
       points: a.points ?? 0,
       daily: this.dailyOf(a),
+      weekly: this.weeklyOf(a),
       owned: a.owned ?? [],
       equipped: a.equipped ?? {},
     };
@@ -320,6 +323,11 @@ export class AccountStore {
     return a.daily?.day === utcDay() ? a.daily : emptyDaily();
   }
 
+  /** This week's progress (a fresh one each Monday, UTC). */
+  private weeklyOf(a: Account): WeeklyProgress {
+    return a.weekly?.week === utcWeek() ? a.weekly : emptyWeekly();
+  }
+
   /**
    * Add bought points once per paid Stripe session. Returns the new balance,
    * or null if the account is gone or this session was already credited.
@@ -340,8 +348,8 @@ export class AccountStore {
   }
 
   /**
-   * Add a ranked game's earnings: game points up to the daily cap, then quest progress
-   * (each finished quest pays POINTS.quest once a day).
+   * Add a ranked game's earnings: game points up to the daily cap, then daily and weekly quest progress
+   * (each quest pays its points once, when it's finished).
    */
   award(accountId: string, earned: GameEarnings) {
     const a = this.store.accounts.find((x) => x.id === accountId);
@@ -350,20 +358,30 @@ export class AccountStore {
     const gamePoints = Math.max(0, Math.min(earned.points, POINTS.dailyGameCap - daily.gamePoints));
     daily.gamePoints += gamePoints;
 
+    const weekly = this.weeklyOf(a);
     const questsDone: QuestId[] = [];
-    for (const q of questsFor(daily.day)) {
-      const n = earned.events[q.event] ?? 0;
-      const before = daily.progress[q.id] ?? 0;
-      if (!n || before >= q.target) continue;
-      daily.progress[q.id] = Math.min(q.target, before + n);
-      if (daily.progress[q.id]! >= q.target) questsDone.push(q.id);
-    }
-    const questPoints = questsDone.length * POINTS.quest;
+    let questPoints = 0;
+    const advance = (quests: QuestDef[], progress: Partial<Record<QuestId, number>>) => {
+      for (const q of quests) {
+        const id = q.id as QuestId;
+        const n = earned.events[q.event] ?? 0;
+        const before = progress[id] ?? 0;
+        if (!n || before >= q.target) continue;
+        progress[id] = Math.min(q.target, before + n);
+        if (progress[id]! >= q.target) {
+          questsDone.push(id);
+          questPoints += q.points;
+        }
+      }
+    };
+    advance(questsFor(daily.day), daily.progress);
+    advance(weeklyQuestsFor(weekly.week), weekly.progress);
     a.points = (a.points ?? 0) + gamePoints + questPoints;
     a.earnedPoints = (a.earnedPoints ?? 0) + gamePoints + questPoints;
     a.daily = daily;
+    a.weekly = weekly;
     this.save();
-    return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily };
+    return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily, weekly };
   }
 
   private newSession(accountId: string): string {

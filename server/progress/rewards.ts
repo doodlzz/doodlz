@@ -3,7 +3,7 @@
 // A game is ranked only when it is public (matchmade, so friends can't pick their own room), it finished
 // normally, and at least POINTS.rankedMinPlayers different signed-in players were still there at the end,
 // each on their own device and IP address. Players also need a score above zero (no AFK farming).
-// Game points are capped per day; quests add a little on top.
+// Game points are capped per day; daily and weekly quests add on top.
 import { POINTS, type QuestEvent, type RewardSummary, type UnrankedReason } from '../../shared/quests.js';
 import type { AccountStore } from '../auth/accounts.js';
 import { config } from '../config.js';
@@ -51,8 +51,15 @@ export function gameOverRewards(io: IO, accounts: AccountStore, room: Room, comp
       publicFinished: 1,
       guessed: p.gameGuesses,
       drew: p.gameDrawings,
+      firstGuess: p.gameFirstGuesses,
+      cleanGuess: p.gameCleanGuesses,
+      fullHouse: p.gameFullHouses,
+      ...(place === 1 ? { won: 1 } : {}),
+      ...(place <= 3 ? { podium: 1 } : {}),
       ...(room.settings.mode === 'duo' ? { duoFinished: 1 } : {}),
       ...(room.settings.speed > 0 ? { speedFinished: 1 } : {}),
+      ...(room.settings.singleColor ? { singleColorFinished: 1 } : {}),
+      ...(room.settings.blindfold ? { blindfoldFinished: 1 } : {}),
     };
     const result = accounts.award(p.accountId, { points: placePoints(place), events });
     if (!result) continue;

@@ -62,6 +62,10 @@ export interface Player {
   /** This game: correct guesses made after real drawing, and turns they actually drew. */
   gameGuesses: number;
   gameDrawings: number;
+  /** This game, for quests: guesses that came first, guesses without a hint, and drawn turns everyone guessed. */
+  gameFirstGuesses: number;
+  gameCleanGuesses: number;
+  gameFullHouses: number;
   chatTimes: number[];
 }
 
@@ -202,6 +206,9 @@ export class Room {
       accountId,
       gameGuesses: 0,
       gameDrawings: 0,
+      gameFirstGuesses: 0,
+      gameCleanGuesses: 0,
+      gameFullHouses: 0,
     };
     this.players.set(player.id, player);
     if (!this.hostId) this.hostId = player.id;
@@ -345,6 +352,9 @@ export class Room {
       p.hasGuessed = false;
       p.gameGuesses = 0;
       p.gameDrawings = 0;
+      p.gameFirstGuesses = 0;
+      p.gameCleanGuesses = 0;
+      p.gameFullHouses = 0;
     }
     this.round = 0;
     this.drawQueue = [];
@@ -531,7 +541,10 @@ export class Room {
     if (this.phase === 'drawing') {
       for (const id of this.drawerIds) {
         const p = this.players.get(id);
-        if (p && this.history.filter((h) => h.by === id).length >= config.questMinOps) p.gameDrawings++;
+        if (p && this.history.filter((h) => h.by === id).length >= config.questMinOps) {
+          p.gameDrawings++;
+          if (reason === 'all_guessed' && this.guessScores.length > 0) p.gameFullHouses++;
+        }
       }
     }
 
@@ -679,7 +692,11 @@ export class Room {
     player.score += points;
     player.hasGuessed = true;
     // Only guesses made after some real drawing count toward quests.
-    if (Date.now() - this.drawingStartedAt >= config.questGuessMinMs && this.history.length >= config.questMinOps) player.gameGuesses++;
+    if (Date.now() - this.drawingStartedAt >= config.questGuessMinMs && this.history.length >= config.questMinOps) {
+      player.gameGuesses++;
+      if (order === 0) player.gameFirstGuesses++;
+      if (player.hintsUsed === 0) player.gameCleanGuesses++;
+    }
     this.guessScores.push(points);
     this.deltas[player.id] = (this.deltas[player.id] ?? 0) + points;
 

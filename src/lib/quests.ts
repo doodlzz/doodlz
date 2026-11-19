@@ -1,32 +1,54 @@
-// Daily quests for guests, tracked in this browser. Signed-in players' quests are tracked by the server
-// (ranked games only) and come with their account. Three quests a day; "play 3 games" is always one of them.
-import { questsFor, utcDay, type QuestEvent, type QuestId } from '../../shared/quests';
+// Daily and weekly quests for guests, tracked in this browser. Signed-in players' quests are tracked by the
+// server (ranked games only) and come with their account. Three quests a day ("play 3 games" is always one)
+// and two a week.
+import { questsFor, utcDay, utcWeek, weeklyQuestsFor, type QuestDef, type QuestEvent, type QuestId } from '../../shared/quests';
 import { readJson, writeJson } from './storage';
 
-export { msUntilReset, questsFor, QUESTS } from '../../shared/quests';
+export { msUntilReset, msUntilWeeklyReset, questsFor, weeklyQuestsFor, QUESTS } from '../../shared/quests';
 export type { QuestDef, QuestEvent, QuestId } from '../../shared/quests';
 
 const KEY = 'doodlz:quests';
+const WEEK_KEY = 'doodlz:weeklyQuests';
+
+type Progress = Partial<Record<QuestId, number>>;
 
 interface Stored {
   day: string;
-  progress: Partial<Record<QuestId, number>>;
+  progress: Progress;
 }
 
-const today = () => utcDay();
+interface StoredWeek {
+  week: string;
+  progress: Progress;
+}
 
 export function loadProgress(): Stored {
-  const s = readJson<Stored>(KEY, { day: today(), progress: {} });
-  return s.day === today() ? s : { day: today(), progress: {} };
+  const day = utcDay();
+  const s = readJson<Stored>(KEY, { day, progress: {} });
+  return s.day === day ? s : { day, progress: {} };
 }
 
-/** Count an event toward today's quests. */
-export function recordQuestEvent(event: QuestEvent): void {
-  const s = loadProgress();
-  for (const q of questsFor(s.day)) {
-    if (q.event === event) s.progress[q.id] = Math.min(q.target, (s.progress[q.id] ?? 0) + 1);
+export function loadWeeklyProgress(): StoredWeek {
+  const week = utcWeek();
+  const s = readJson<StoredWeek>(WEEK_KEY, { week, progress: {} });
+  return s.week === week ? s : { week, progress: {} };
+}
+
+function bump(quests: QuestDef[], progress: Progress, event: QuestEvent): void {
+  for (const q of quests) {
+    const id = q.id as QuestId;
+    if (q.event === event) progress[id] = Math.min(q.target, (progress[id] ?? 0) + 1);
   }
-  writeJson(KEY, s);
+}
+
+/** Count an event toward today's and this week's quests. */
+export function recordQuestEvent(event: QuestEvent): void {
+  const d = loadProgress();
+  bump(questsFor(d.day), d.progress, event);
+  writeJson(KEY, d);
+  const w = loadWeeklyProgress();
+  bump(weeklyQuestsFor(w.week), w.progress, event);
+  writeJson(WEEK_KEY, w);
   window.dispatchEvent(new Event('doodlz:quests'));
 }
 

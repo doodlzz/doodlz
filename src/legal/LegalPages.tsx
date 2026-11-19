@@ -44,7 +44,7 @@ const Privacy = () => (
         <b>If you play as a guest:</b> a nickname you type. Your browser stores a random device ID and a #tag so you keep the same name and so one person can’t fill a room with tabs. We don’t ask for your email.
       </li>
       <li>
-        <b>If you create an account:</b> username, email address, a salted hash of your password (we never store the password itself), the time you accepted these policies, your avatar or picture, points, purchased and equipped cosmetics, daily quest progress, and a record of point purchases (Stripe session ID, pack, amount, date).
+        <b>If you create an account:</b> username, email address, a salted hash of your password (we never store the password itself), the time you accepted these policies, your avatar or picture, points, purchased and equipped cosmetics, daily and weekly quest progress, and a record of point purchases (Stripe session ID, pack, amount, date).
       </li>
       <li>
         <b>While you play:</b> chat messages, drawings and guesses are shared with the other players in your room and are kept only while the room exists. They are not saved to your account. Your IP address is used by the server in memory to limit abuse (for example, how many players join from one address and ranked-game fairness) and to slow down password guessing; we don’t store it in your account.

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { CosmeticSlot, Equipped } from '../../shared/cosmetics';
-import type { DailyProgress, RewardSummary } from '../../shared/quests';
+import type { DailyProgress, RewardSummary, WeeklyProgress } from '../../shared/quests';
 import type { Avatar } from '../../shared/types';
 import AuthModal, { type AuthMode } from './AuthModal';
 import { readGuest, readToken, writeGuest, writeToken } from './storage';
@@ -18,6 +18,8 @@ export interface Account {
   points: number;
   /** Today's game points and quest progress (from ranked games). */
   daily: DailyProgress;
+  /** This week's quest progress (from ranked games). */
+  weekly?: WeeklyProgress;
   /** Cosmetic ids bought with points, and what's being worn. */
   owned: string[];
   equipped: Equipped;
@@ -200,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       },
       applyReward: (r) => {
-        if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily! });
+        if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily!, weekly: r.weekly ?? a.weekly });
       },
     }),
     [account, signedIn, refresh, shopTab],

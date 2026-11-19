@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react';
-import { POINTS, type RewardSummary } from '../../shared/quests';
+import { POINTS, QUESTS, type RewardSummary } from '../../shared/quests';
 import { useAuth } from '../auth/AuthContext';
 import { useT } from '../i18n';
 
@@ -46,7 +46,7 @@ export default function RewardCard({ reward }: { reward: RewardSummary }) {
         {reward.questsDone.map((q) => (
           <li key={q} className="flex justify-between gap-2">
             <span>{t('reward.quest', { quest: t(`quest.${q}`) })}</span>
-            <span>+{POINTS.quest}</span>
+            <span>+{QUESTS[q].points}</span>
           </li>
         ))}
       </ul>

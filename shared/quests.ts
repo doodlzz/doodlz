@@ -1,38 +1,85 @@
-// Account points and daily quests, shared by the server (which awards them) and the client (which shows them).
+// Account points and daily / weekly quests, shared by the server (which awards them) and the client (which shows them).
 
-export type QuestId = 'play3' | 'guess5' | 'draw3' | 'duo' | 'speed' | 'random';
-export type QuestEvent = 'gameFinished' | 'duoFinished' | 'speedFinished' | 'publicFinished' | 'guessed' | 'drew';
+export type QuestEvent =
+  | 'gameFinished'
+  | 'duoFinished'
+  | 'speedFinished'
+  | 'publicFinished'
+  | 'singleColorFinished'
+  | 'blindfoldFinished'
+  | 'won' // finished 1st
+  | 'podium' // finished in the top 3
+  | 'guessed'
+  | 'firstGuess' // first to guess the word
+  | 'cleanGuess' // guessed without using a hint
+  | 'drew'
+  | 'fullHouse'; // drew a word every guesser got
+
+export type QuestPeriod = 'daily' | 'weekly';
 
 export interface QuestDef {
-  id: QuestId;
+  id: string;
+  period: QuestPeriod;
   target: number;
   event: QuestEvent;
   emoji: string;
+  /** Account points for finishing it. */
+  points: number;
 }
 
-export const QUESTS: Record<QuestId, QuestDef> = {
-  play3: { id: 'play3', target: 3, event: 'gameFinished', emoji: '🎮' },
-  guess5: { id: 'guess5', target: 5, event: 'guessed', emoji: '💡' },
-  draw3: { id: 'draw3', target: 3, event: 'drew', emoji: '✏️' },
-  duo: { id: 'duo', target: 1, event: 'duoFinished', emoji: '👯' },
-  speed: { id: 'speed', target: 1, event: 'speedFinished', emoji: '⚡' },
-  random: { id: 'random', target: 1, event: 'publicFinished', emoji: '🌍' },
-};
+const daily = (id: string, target: number, event: QuestEvent, emoji: string): QuestDef => ({ id, period: 'daily', target, event, emoji, points: 5 });
+const weekly = (id: string, target: number, event: QuestEvent, emoji: string): QuestDef => ({ id, period: 'weekly', target, event, emoji, points: 40 });
 
-const ROTATING: QuestId[] = ['guess5', 'draw3', 'duo', 'speed', 'random'];
+export const QUESTS = {
+  // Daily: "play 3 games" every day, plus two from the rotation.
+  play3: daily('play3', 3, 'gameFinished', '🎮'),
+  guess5: daily('guess5', 5, 'guessed', '💡'),
+  guess10: daily('guess10', 10, 'guessed', '🎯'),
+  draw3: daily('draw3', 3, 'drew', '✏️'),
+  draw5: daily('draw5', 5, 'drew', '🖌️'),
+  duo: daily('duo', 1, 'duoFinished', '👯'),
+  speed: daily('speed', 1, 'speedFinished', '⚡'),
+  random: daily('random', 1, 'publicFinished', '🌍'),
+  oneColor: daily('oneColor', 1, 'singleColorFinished', '🎨'),
+  blind: daily('blind', 1, 'blindfoldFinished', '🙈'),
+  podium: daily('podium', 1, 'podium', '🏆'),
+  win: daily('win', 1, 'won', '👑'),
+  noHints: daily('noHints', 3, 'cleanGuess', '🧠'),
+  first2: daily('first2', 2, 'firstGuess', '🥇'),
+  fullHouse: daily('fullHouse', 1, 'fullHouse', '🌟'),
+  // Weekly: two a week, meant to take several sessions.
+  wPlay: weekly('wPlay', 25, 'gameFinished', '🗓️'),
+  wWin: weekly('wWin', 5, 'won', '👑'),
+  wPodium: weekly('wPodium', 12, 'podium', '🏆'),
+  wGuess: weekly('wGuess', 60, 'guessed', '🎯'),
+  wDraw: weekly('wDraw', 30, 'drew', '🖌️'),
+  wFirst: weekly('wFirst', 15, 'firstGuess', '🥇'),
+  wFullHouse: weekly('wFullHouse', 8, 'fullHouse', '🌟'),
+} satisfies Record<string, QuestDef>;
+
+export type QuestId = keyof typeof QUESTS;
+
+const DAILY_ROTATION: QuestId[] = ['guess5', 'guess10', 'draw3', 'draw5', 'duo', 'speed', 'random', 'oneColor', 'blind', 'podium', 'win', 'noHints', 'first2', 'fullHouse'];
+const WEEKLY_ROTATION: QuestId[] = ['wPlay', 'wWin', 'wPodium', 'wGuess', 'wDraw', 'wFirst', 'wFullHouse'];
 
 /** Account points for a ranked game, and the daily limits. */
 export const POINTS = {
   place: [10, 6, 4], // 1st, 2nd, 3rd
   finished: 2, // everyone else who finished
   dailyGameCap: 30, // most points per day from games
-  quest: 5, // each finished daily quest (on top of the game cap)
   rankedMinPlayers: 4, // different signed-in players needed for a game to count
 } as const;
 
-/** Quest days run on UTC so the server and every player agree on when they reset. */
+/** Quest days and weeks run on UTC so the server and every player agree on when they reset. */
 export function utcDay(d = new Date()): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** The Monday (UTC) that starts this quest week, as YYYY-MM-DD. */
+export function utcWeek(d = new Date()): string {
+  const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  return utcDay(monday);
 }
 
 export function msUntilReset(now = new Date()): number {
@@ -41,14 +88,34 @@ export function msUntilReset(now = new Date()): number {
   return next.getTime() - now.getTime();
 }
 
-/** Same three quests for everyone on a given day, picked from a hash of the date. */
-export function questsFor(day: string): QuestDef[] {
+export function msUntilWeeklyReset(now = new Date()): number {
+  const next = new Date(utcWeek(now) + 'T00:00:00Z');
+  next.setUTCDate(next.getUTCDate() + 7);
+  return next.getTime() - now.getTime();
+}
+
+function hash(key: string): number {
   let h = 0;
-  for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const a = ROTATING[h % ROTATING.length];
-  const rest = ROTATING.filter((q) => q !== a);
-  const b = rest[Math.floor(h / ROTATING.length) % rest.length];
-  return [QUESTS.play3, QUESTS[a], QUESTS[b]];
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return h;
+}
+
+/** Two different quests from a rotation, picked from a hash so everyone gets the same ones. */
+function pickTwo(pool: QuestId[], key: string): [QuestId, QuestId] {
+  const h = hash(key);
+  const a = pool[h % pool.length];
+  const rest = pool.filter((q) => q !== a);
+  return [a, rest[Math.floor(h / pool.length) % rest.length]];
+}
+
+/** Same three daily quests for everyone on a given day: "play 3 games" plus two from the rotation. */
+export function questsFor(day: string): QuestDef[] {
+  return [QUESTS.play3, ...pickTwo(DAILY_ROTATION, day).map((id) => QUESTS[id])];
+}
+
+/** Same two weekly quests for everyone in a given week (`week` is its Monday). */
+export function weeklyQuestsFor(week: string): QuestDef[] {
+  return pickTwo(WEEKLY_ROTATION, 'week:' + week).map((id) => QUESTS[id]);
 }
 
 /** A signed-in player's progress for one day. */
@@ -59,6 +126,14 @@ export interface DailyProgress {
 }
 
 export const emptyDaily = (day = utcDay()): DailyProgress => ({ day, gamePoints: 0, progress: {} });
+
+/** A signed-in player's progress for one week (`week` is its Monday). */
+export interface WeeklyProgress {
+  week: string;
+  progress: Partial<Record<QuestId, number>>;
+}
+
+export const emptyWeekly = (week = utcWeek()): WeeklyProgress => ({ week, progress: {} });
 
 export type UnrankedReason = 'guest' | 'private' | 'unfinished' | 'fewPlayers' | 'noScore';
 
@@ -76,4 +151,5 @@ export interface RewardSummary {
   /** Account total and today's progress after this game (signed-in players only). */
   total?: number;
   daily?: DailyProgress;
+  weekly?: WeeklyProgress;
 }
