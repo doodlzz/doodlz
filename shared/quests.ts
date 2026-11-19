@@ -28,7 +28,7 @@ export interface QuestDef {
 }
 
 const daily = (id: string, target: number, event: QuestEvent, emoji: string): QuestDef => ({ id, period: 'daily', target, event, emoji, points: 5 });
-const weekly = (id: string, target: number, event: QuestEvent, emoji: string): QuestDef => ({ id, period: 'weekly', target, event, emoji, points: 40 });
+const weekly = (id: string, target: number, event: QuestEvent, emoji: string): QuestDef => ({ id, period: 'weekly', target, event, emoji, points: 15 });
 
 export const QUESTS = {
   // Daily: "play 3 games" every day, plus two from the rotation.
