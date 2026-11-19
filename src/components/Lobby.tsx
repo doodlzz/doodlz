@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, CheckCircle2, Copy, Crown, DoorOpen, Globe2, Loader2, Lock, Play, RefreshCw, Shuffle, Tags, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Lock, Play, RefreshCw, Shuffle, Tags, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
 import type { Category } from '../../shared/types';
 import AuthButtons from '../auth/AuthButtons';
 import { useAuth } from '../auth/AuthContext';
@@ -62,7 +62,7 @@ function HomeView({ game }: { game: GameApi }) {
   const [picking, setPicking] = useState(false); // choosing a category for a new private room
   const [invited, setInvited] = useState(() => new URLSearchParams(location.search).has('room'));
   const ready = game.connected && !busy && !game.resuming;
-  const { account, requireAccount, updateAccount } = useAuth();
+  const { account, open, requireAccount, updateAccount } = useAuth();
   // Signed-in players get all 12 of each part and their uploaded picture; guests get the first 6.
   const parts = account ? AVATAR_PARTS_MEMBER : AVATAR_PARTS_FREE;
   const image = account?.avatar?.image;
@@ -83,39 +83,6 @@ function HomeView({ game }: { game: GameApi }) {
   }, [face, accountId]);
   const [myGuestTag] = useState(guestTag);
 
-  // Signed-in players rename their account right here; the server keeps the #tag unless the new name already has it.
-  const [accName, setAccName] = useState(account?.username ?? '');
-  const [nameError, setNameError] = useState<string | null>(null);
-  // Tag before the last successful rename, so we can say when the server had to pick a new one.
-  const [savedFromTag, setSavedFromTag] = useState<string | null>(null);
-  const [savingName, setSavingName] = useState(false);
-  const savedName = useRef(account?.username ?? '');
-  useEffect(() => {
-    savedName.current = account?.username ?? '';
-    setAccName(account?.username ?? '');
-    setNameError(null);
-  }, [accountId, account?.username]);
-  useEffect(() => setSavedFromTag(null), [accountId]);
-
-  /** Save a changed account name. Returns false if the server refused it. */
-  const commitName = async (): Promise<boolean> => {
-    if (!account) return true;
-    const next = accName.trim();
-    if (next === savedName.current) {
-      setAccName(next);
-      return true;
-    }
-    const oldTag = account.tag;
-    setSavingName(true);
-    const err = await updateAccount({ username: next });
-    setSavingName(false);
-    setNameError(err);
-    if (err) return false;
-    savedName.current = next;
-    setSavedFromTag(oldTag);
-    return true;
-  };
-
   useEffect(() => saveProfile(name, face), [name, face]);
 
   // A failed reconnect clears "?room=" from the URL; drop the invite view with it.
@@ -128,10 +95,6 @@ function HomeView({ game }: { game: GameApi }) {
   const run = (fn: (name: string) => Promise<boolean>) =>
     requireAccount(async (acc) => {
       setBusy(true);
-      if (acc && !(await commitName())) {
-        setBusy(false);
-        return;
-      }
       await fn(name.trim() || acc?.username || '');
       setBusy(false);
     });
@@ -156,60 +119,42 @@ function HomeView({ game }: { game: GameApi }) {
       <ConnectionBadge connected={game.connected} resuming={game.resuming} />
 
       <div className="panel crayon-edge mt-5 w-full max-w-xl animate-pop p-5 sm:p-7">
-        <label className="label" htmlFor="nickname">
-          {t('home.nickname')}
-        </label>
-        {/* Everyone plays as name#1234. Signed-in players rename their account here (Enter or leaving the box saves). */}
-        <form
-          className="mb-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void commitName();
-          }}
-        >
-          <div className="crayon-edge crayon-field">
-          <input
-            id="nickname"
-            className="input pr-20 text-lg"
-            placeholder={t('home.nicknamePlaceholder')}
-            value={account ? accName : name}
-            maxLength={20}
-            aria-invalid={!!nameError}
-            onChange={(e) => {
-              const v = e.target.value.replace(/#/g, '');
-              if (account) {
-                setAccName(v.replace(/\s/g, ''));
-                setNameError(null);
-                setSavedFromTag(null);
-              } else setName(v);
-            }}
-            onBlur={() => void commitName()}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape' && account) {
-                setAccName(savedName.current);
-                setNameError(null);
-              }
-            }}
-            autoFocus={!account}
-          />
-          <span className="pointer-events-none absolute top-1/2 right-4 flex -translate-y-1/2 items-center gap-1.5 font-display text-lg font-semibold text-indigo-300">
-            {savingName && <Loader2 className="size-4 animate-spin" />}#{account ? account.tag : myGuestTag}
-          </span>
-          </div>
-          {account && (
-            <p className={`mt-1.5 px-1 text-xs font-bold ${nameError ? 'text-rose-600' : savedFromTag ? 'text-emerald-600' : 'text-indigo-400'}`} role={nameError || savedFromTag ? 'status' : undefined}>
-              {nameError ? (
-                t(nameError)
-              ) : savedFromTag && savedFromTag !== account.tag ? (
-                <span className="inline-flex items-center gap-1"><CheckCircle2 className="size-3.5" /> {t('home.tagChanged', { tag: account.tag })}</span>
-              ) : savedFromTag ? (
-                <span className="inline-flex items-center gap-1"><CheckCircle2 className="size-3.5" /> {t('home.nameSaved')}</span>
-              ) : (
-                t('home.nameIsAccount')
-              )}
+        {/* Everyone plays as name#1234. Guests type a nickname; signed-in players just see their account name
+            (it's not an input, so it doesn't look typeable) and change it in account settings. */}
+        {account ? (
+          <div className="mb-5">
+            <span className="label">{t('home.nickname')}</span>
+            <div className="rounded-2xl bg-indigo-50/60 px-4 py-3 text-lg font-bold text-indigo-950 select-none dark:bg-black/20">
+              <TaggedName name={account.username} tag={account.tag} fx={account.equipped?.nameFx} />
+            </div>
+            <p className="mt-1.5 px-1 text-xs font-bold text-indigo-400">
+              {t('home.nameFromAccount')}{' '}
+              <button type="button" className="cursor-pointer text-pink-500 underline underline-offset-2 hover:text-pink-400" onClick={() => open('account')}>
+                {t('auth.accountTitle')}
+              </button>
             </p>
-          )}
-        </form>
+          </div>
+        ) : (
+          <div className="mb-5">
+            <label className="label" htmlFor="nickname">
+              {t('home.nickname')}
+            </label>
+            <div className="crayon-edge crayon-field">
+              <input
+                id="nickname"
+                className="input pr-20 text-lg"
+                placeholder={t('home.nicknamePlaceholder')}
+                value={name}
+                maxLength={20}
+                onChange={(e) => setName(e.target.value.replace(/#/g, ''))}
+                autoFocus
+              />
+              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-display text-lg font-semibold text-indigo-300">
+                #{myGuestTag}
+              </span>
+            </div>
+          </div>
+        )}
 
         <span className="label">{t('home.avatar')}</span>
         <div className="mb-6 flex justify-center">
