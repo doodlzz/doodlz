@@ -205,7 +205,7 @@ function Chat({ friend }: { friend: FriendInfo }) {
               return (
                 <li key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                   <span
-                    className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm font-semibold break-words ${mine ? 'rounded-br-md bg-pink-500 text-white' : 'rounded-bl-md bg-white text-indigo-950 dark:bg-white/10 dark:text-indigo-100'}`}
+                    className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm font-semibold break-words ${mine ? 'rounded-br-md bg-pink-500 text-white' : 'rounded-bl-md bg-white text-indigo-950 dark:bg-white/10'}`}
                     title={new Date(m.ts).toLocaleString()}
                   >
                     {m.text}

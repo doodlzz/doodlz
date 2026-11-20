@@ -6,9 +6,10 @@ function tier(level: number): { cls: string; icon?: 'gem' | 'crown' } {
   if (level >= 100) return { cls: 'level-rainbow text-white', icon: 'crown' };
   if (level >= 75) return { cls: 'bg-sky-100 text-sky-800 ring-1 ring-sky-300 dark:bg-sky-400/20 dark:text-sky-200', icon: 'gem' };
   if (level >= 50) return { cls: 'bg-amber-100 text-amber-800 ring-1 ring-amber-400 dark:bg-amber-400/20 dark:text-amber-200' };
-  if (level >= 25) return { cls: 'bg-slate-100 text-slate-700 ring-1 ring-slate-300 dark:bg-slate-400/20 dark:text-slate-200' };
+  // Indigo and slate already flip in dark mode (see index.css), so these two need no dark: variants.
+  if (level >= 25) return { cls: 'bg-slate-100 text-slate-700 ring-1 ring-slate-300 dark:ring-slate-400' };
   if (level >= 10) return { cls: 'bg-orange-100 text-orange-800 ring-1 ring-orange-300 dark:bg-orange-400/20 dark:text-orange-200' };
-  return { cls: 'bg-indigo-100 text-indigo-600 dark:bg-white/10 dark:text-indigo-200' };
+  return { cls: 'bg-indigo-100 text-indigo-600' };
 }
 
 /** Small "Lv 12" chip shown next to signed-in players' names. */
