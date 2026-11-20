@@ -71,6 +71,8 @@ export interface Avatar {
   /** Bought cosmetics, shown to everyone (always set by the server). */
   frame?: FrameId;
   nameFx?: NameFxId;
+  /** Account level (signed-in players only; always set by the server). */
+  level?: number;
 }
 
 /** Eyes / mouths / extras everyone gets, and how many signed-in players get. */

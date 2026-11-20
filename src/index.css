@@ -363,3 +363,16 @@ body {
 .dark .btn-violet.crayon-edge { --cr-line: #c4b5fd; }
 .dark .btn-ghost.crayon-edge { --cr-line: #6f66b8; }
 .dark .crayon-rule { background: #4b4285; }
+
+/* Level 100 badge: a slow rainbow sweep. */
+.level-rainbow {
+  background: linear-gradient(90deg, #f43f5e, #f59e0b, #22c55e, #3b82f6, #a855f7, #f43f5e);
+  background-size: 200% 100%;
+  animation: level-rainbow 4s linear infinite;
+}
+@keyframes level-rainbow {
+  to { background-position: 200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .level-rainbow { animation: none; }
+}

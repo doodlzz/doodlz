@@ -23,7 +23,7 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
     const id = accounts.identity(profile.authToken);
     if (id) {
       // The server decides the picture and cosmetics from the account; the client can't claim them.
-      const extras = { ...(id.image ? { image: id.image } : {}), ...id.equipped };
+      const extras = { ...(id.image ? { image: id.image } : {}), ...id.equipped, level: id.level };
       return { ...profile, name: `${id.username}#${id.tag}`, avatar: { ...profile.avatar, ...extras } };
     }
     profile = { ...profile, avatar: sanitizeAvatar(profile.avatar, AVATAR_PARTS_FREE) };

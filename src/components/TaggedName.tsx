@@ -1,5 +1,6 @@
 import type { NameFxId } from '../../shared/cosmetics';
 import { splitTag } from '../../shared/tag';
+import LevelBadge from './LevelBadge';
 
 interface Props {
   name: string;
@@ -9,10 +10,30 @@ interface Props {
   stacked?: boolean;
   /** Bought name effect. */
   fx?: NameFxId;
+  /** Account level: shows a small badge before the name. */
+  level?: number;
 }
 
-/** Shows "name#1234" with the tag a little faded, Discord-style. */
-export default function TaggedName({ name, tag, className = '', stacked = false, fx }: Props) {
+/** Shows "name#1234" with the tag a little faded, Discord-style, and the level badge when given. */
+export default function TaggedName({ level, ...props }: Props) {
+  if (!level) return <NameOnly {...props} />;
+  if (props.stacked) {
+    return (
+      <span className="flex min-w-0 flex-col items-center">
+        <NameOnly {...props} />
+        <LevelBadge level={level} className="mt-0.5" />
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+      <LevelBadge level={level} />
+      <NameOnly {...props} className={`min-w-0 truncate ${props.className ?? ''}`} />
+    </span>
+  );
+}
+
+function NameOnly({ name, tag, className = '', stacked = false, fx }: Omit<Props, 'level'>) {
   const parts = tag === undefined ? splitTag(name) : { name, tag };
   const TRINKET = { gold: '✦', rainbow: '★', fire: '▲', glitch: '▮', ice: '❄', toxic: '●', electric: '↯' } as const;
   if (fx && !stacked) {

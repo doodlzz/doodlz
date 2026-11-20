@@ -8,6 +8,7 @@ import Game from './components/Game';
 import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
 import Shop from './components/Shop';
+import LevelsModal from './components/LevelsModal';
 import MouseTrail from './components/MouseTrail';
 import { useGame } from './hooks/useGame';
 import { useQuestTracker } from './hooks/useQuestTracker';
@@ -22,7 +23,7 @@ function Shell() {
   useGameSounds(game);
   useQuestTracker(game);
   const code = game.state?.code;
-  const { account, applyReward, refresh, shopTab, closeShop } = useAuth();
+  const { account, applyReward, refresh, shopTab, closeShop, levelsOpen, closeLevels } = useAuth();
   const [shopNote, setShopNote] = useState<'success' | 'cancel' | null>(null);
 
   // Back from Stripe's payment page. The points are added when Stripe confirms the payment to the
@@ -62,6 +63,7 @@ function Shell() {
 
       <CookieNotice />
       {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
+      {levelsOpen && account && <LevelsModal xp={account.xp ?? 0} onClose={closeLevels} />}
       {shopNote && !game.toast && (
         <div
           className={`fixed top-4 left-1/2 z-[80] flex w-max max-w-[90vw] -translate-x-1/2 animate-pop items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] ${shopNote === 'success' ? 'bg-emerald-500' : 'bg-slate-600'}`}

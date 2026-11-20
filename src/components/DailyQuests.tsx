@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { CalendarCheck, CalendarRange, Check, Star } from 'lucide-react';
+import { levelInfo } from '../../shared/levels';
 import { POINTS, utcDay, utcWeek } from '../../shared/quests';
+import LevelBadge from './LevelBadge';
 import { useAuth } from '../auth/AuthContext';
 import { useT } from '../i18n';
 import { loadProgress, loadWeeklyProgress, msUntilReset, msUntilWeeklyReset, questsFor, weeklyQuestsFor, type QuestDef, type QuestId } from '../lib/quests';
@@ -10,6 +12,31 @@ function formatLeft(ms: number) {
   const h = Math.floor((ms % 86_400_000) / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
   return d > 0 ? `${d}d ${h}h` : `${h}h ${String(m).padStart(2, '0')}m`;
+}
+
+/** Signed-in players: current level and XP toward the next one. */
+function LevelBar({ xp }: { xp: number }) {
+  const t = useT();
+  const { openLevels } = useAuth();
+  const { level, into, span } = levelInfo(xp);
+  return (
+    <button
+      type="button"
+      onClick={openLevels}
+      title={t('levels.open')}
+      className="mb-4 block w-full cursor-pointer rounded-2xl bg-indigo-50/70 px-3 py-2.5 text-left transition hover:bg-indigo-100 hover:ring-2 hover:ring-violet-300"
+    >
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 font-display text-base font-semibold text-indigo-950">
+          <LevelBadge level={level} /> {t('level.title', { n: level })}
+        </span>
+        <span className="text-xs font-extrabold text-indigo-400">{span ? t('level.progress', { into, span }) : t('level.max')}</span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-indigo-100" role="progressbar" aria-valuemin={0} aria-valuemax={span || 1} aria-valuenow={span ? into : 1}>
+        <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${span ? (into / span) * 100 : 100}%` }} />
+      </div>
+    </button>
+  );
 }
 
 function QuestList({ quests, progress, showPoints }: { quests: QuestDef[]; progress: Partial<Record<QuestId, number>>; showPoints: boolean }) {
@@ -86,6 +113,7 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
 
   return (
     <div className={`panel p-4 ${className}`}>
+      {account && <LevelBar xp={account.xp ?? 0} />}
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-indigo-950">
           <CalendarCheck className="size-5 text-emerald-500" /> {t('quests.title')}

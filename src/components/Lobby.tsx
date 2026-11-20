@@ -14,6 +14,7 @@ import { useT } from '../i18n';
 import { AVATAR_PARTS_FREE, AVATAR_PARTS_MEMBER } from '../../shared/types';
 import { limitAvatar, loadProfile, saveProfile } from '../lib/avatar';
 import { guestTag } from '../lib/session';
+import { levelOf } from '../../shared/levels';
 import Avatar from './Avatar';
 import AvatarBuilder from './AvatarBuilder';
 import Chat from './Chat';
@@ -125,7 +126,7 @@ function HomeView({ game }: { game: GameApi }) {
           <div className="mb-5">
             <span className="label">{t('home.nickname')}</span>
             <div className="rounded-2xl bg-indigo-50/60 px-4 py-3 text-lg font-bold text-indigo-950 select-none dark:bg-black/20">
-              <TaggedName name={account.username} tag={account.tag} fx={account.equipped?.nameFx} />
+              <TaggedName name={account.username} tag={account.tag} fx={account.equipped?.nameFx} level={levelOf(account.xp ?? 0)} />
             </div>
             <p className="mt-1.5 px-1 text-xs font-bold text-indigo-400">
               {t('home.nameFromAccount')}{' '}
@@ -373,7 +374,7 @@ function RoomView({ game }: { game: GameApi }) {
                   </div>
                 )}
                 <Avatar avatar={p.avatar} size={64} />
-                <TaggedName name={p.name} fx={p.avatar.nameFx} stacked className="mt-1 w-full text-center font-bold text-indigo-950" />
+                <TaggedName name={p.name} fx={p.avatar.nameFx} level={p.avatar.level} stacked className="mt-1 w-full text-center font-bold text-indigo-950" />
                 {p.id === state.you && <div className="text-xs font-extrabold text-pink-500">{t('lobby.thatsYou')}</div>}
               </div>
             ))}

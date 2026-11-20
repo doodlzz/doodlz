@@ -16,6 +16,8 @@ export interface Account {
   avatar?: Avatar;
   /** Account points from ranked games and quests. */
   points: number;
+  /** Level XP (from games and quests; buying points doesn't count). */
+  xp?: number;
   /** Today's game points and quest progress (from ranked games). */
   daily: DailyProgress;
   /** This week's quest progress (from ranked games). */
@@ -76,6 +78,10 @@ interface Ctx {
   openShop: (tab?: ShopTab) => void;
   shopTab: ShopTab | null;
   closeShop: () => void;
+  /** The levels window (signed-in players only). The app shell shows it. */
+  levelsOpen: boolean;
+  openLevels: () => void;
+  closeLevels: () => void;
   /** Spend points on a cosmetic. Returns an error key, or null on success. */
   buyItem: (itemId: string) => Promise<string | null>;
   /** Wear an owned frame / name effect, or take it off with null. */
@@ -88,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [mode, setMode] = useState<AuthMode | null>(null);
   const [shopTab, setShopTab] = useState<ShopTab | null>(null);
+  const [levelsOpen, setLevelsOpen] = useState(false);
   const pending = useRef<((account: Account | null) => void) | null>(null);
 
   const refresh = useCallback(async (): Promise<Account | null> => {
@@ -189,6 +196,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       openShop: (tab = 'cosmetics') => setShopTab(tab),
       shopTab,
       closeShop: () => setShopTab(null),
+      levelsOpen,
+      openLevels: () => setLevelsOpen(true),
+      closeLevels: () => setLevelsOpen(false),
       buyItem: async (item) => {
         const res = await api('/api/shop/item', { item }, readToken());
         if (!res.account) return res.error ?? 'auth.err.network';
@@ -202,10 +212,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       },
       applyReward: (r) => {
-        if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily!, weekly: r.weekly ?? a.weekly });
+        if (r.total !== undefined && r.daily) setAccount((a) => a && { ...a, points: r.total!, daily: r.daily!, weekly: r.weekly ?? a.weekly, xp: r.xp ?? a.xp });
       },
     }),
-    [account, signedIn, refresh, shopTab],
+    [account, signedIn, refresh, shopTab, levelsOpen],
   );
 
   return (

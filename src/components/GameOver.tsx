@@ -90,7 +90,7 @@ function PodiumSpot({
           {place === 1 ? <Trophy className="mb-1 size-8 fill-amber-300 text-amber-500" /> : <Medal className={`mb-1 size-6 ${spot.medal}`} />}
           <Avatar avatar={player.avatar} size={spot.place === 1 ? 88 : 68} className={spot.place === 1 ? 'animate-float' : ''} />
           <span className="mt-1 max-w-full truncate font-display text-base font-bold text-white drop-shadow sm:text-lg">
-            <TaggedName name={player.name} fx={player.avatar.nameFx} />
+            <TaggedName name={player.name} fx={player.avatar.nameFx} level={player.avatar.level} />
             {player.id === you && ` ${t('lb.you')}`}
           </span>
           <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-sm font-extrabold text-[#1e1b4b]">{player.score}</span>
@@ -196,7 +196,7 @@ export default function GameOver({ game }: { game: GameApi }) {
                 <span className="w-6 text-center font-display font-bold text-indigo-400">{places[i + 3]}</span>
                 <Avatar avatar={p.avatar} size={32} />
                 <span className="flex-1 truncate font-bold text-indigo-950">
-                  <TaggedName name={p.name} fx={p.avatar.nameFx} />
+                  <TaggedName name={p.name} fx={p.avatar.nameFx} level={p.avatar.level} />
                   {p.id === state.you && ` ${t('lb.you')}`}
                 </span>
                 <span className="font-bold text-indigo-500">{t('lb.pts', { n: p.score })}</span>

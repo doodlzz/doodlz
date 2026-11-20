@@ -122,6 +122,7 @@ export function weeklyQuestsFor(week: string): QuestDef[] {
 export interface DailyProgress {
   day: string;
   gamePoints: number; // earned from games today (up to POINTS.dailyGameCap)
+  casualXp?: number; // XP from private / unranked games today (up to CASUAL_XP.perDay)
   progress: Partial<Record<QuestId, number>>;
 }
 
@@ -152,4 +153,8 @@ export interface RewardSummary {
   total?: number;
   daily?: DailyProgress;
   weekly?: WeeklyProgress;
+  /** XP this game gave, the account's XP after it, and bonus points from levelling up. */
+  xpGained?: number;
+  xp?: number;
+  levelPoints?: number;
 }

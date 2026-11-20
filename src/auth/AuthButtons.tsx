@@ -3,6 +3,8 @@ import type { Avatar } from '../../shared/types';
 import AvatarMenu from '../components/AvatarMenu';
 import TaggedName from '../components/TaggedName';
 import { useT } from '../i18n';
+import { levelOf } from '../../shared/levels';
+import LevelBadge from '../components/LevelBadge';
 import { useAuth } from './AuthContext';
 
 interface Props {
@@ -15,11 +17,21 @@ interface Props {
 /** Register / Sign in buttons for the top bar, or the signed-in avatar, username and sign-out button. */
 export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Props) {
   const t = useT();
-  const { account, open, openShop } = useAuth();
+  const { account, open, openShop, openLevels } = useAuth();
 
   if (account) {
     return (
       <div className="flex items-center gap-2">
+        {/* Level; clicking it opens the levels window. */}
+        <button
+          type="button"
+          onClick={openLevels}
+          className="flex cursor-pointer items-center rounded-2xl bg-white/15 px-2 py-2 backdrop-blur-sm transition hover:bg-white/25"
+          title={t('levels.open')}
+          aria-label={t('levels.open')}
+        >
+          <LevelBadge level={levelOf(account.xp ?? 0)} />
+        </button>
         {/* Points balance; clicking it opens the shop. */}
         <button
           type="button"

@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
+import { CASUAL_XP, LEVEL_UP_POINTS, levelOf } from '../../shared/levels.js';
 import { emptyDaily, emptyWeekly, POINTS, questsFor, utcDay, utcWeek, weeklyQuestsFor, type DailyProgress, type QuestDef, type QuestEvent, type QuestId, type WeeklyProgress } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
 import { mailEnabled, sendMail, verificationEmail } from '../mail/mailer.js';
@@ -29,6 +30,7 @@ interface Account {
   boughtPoints?: number; // lifetime points bought (so earned points can be told apart later)
   purchases?: Purchase[];
   earnedPoints?: number; // lifetime points earned from games and quests (for leaderboards)
+  xp?: number; // level XP; accounts from before levels start at their earnedPoints
   owned?: string[]; // cosmetic ids bought with points
   equipped?: Equipped;
   daily?: DailyProgress; // today's game points and quest progress
@@ -62,6 +64,7 @@ export interface PublicAccount {
   /** Saved face; `image` is set when they uploaded a picture. */
   avatar?: Avatar;
   points: number;
+  xp: number;
   daily: DailyProgress;
   weekly: WeeklyProgress;
   owned: string[];
@@ -146,9 +149,9 @@ export class AccountStore {
   }
 
   /** Signed-in player's name, tag, picture URL and equipped cosmetics for a session token. */
-  identity(token: unknown): { username: string; tag: string; image?: string; equipped: Equipped } | null {
+  identity(token: unknown): { username: string; tag: string; image?: string; equipped: Equipped; level: number } | null {
     const a = typeof token === 'string' ? this.accountFor(token) : null;
-    return a ? { username: a.username, tag: a.tag, image: this.imageUrl(a), equipped: { ...a.equipped } } : null;
+    return a ? { username: a.username, tag: a.tag, image: this.imageUrl(a), equipped: { ...a.equipped }, level: levelOf(this.xpOf(a)) } : null;
   }
 
   private owns = (a: Account, id: string) => a.owned?.includes(id) ?? false;
@@ -259,6 +262,7 @@ export class AccountStore {
       emailVerified: this.isVerified(a),
       avatar: this.avatarOf(a),
       points: a.points ?? 0,
+      xp: this.xpOf(a),
       daily: this.dailyOf(a),
       weekly: this.weeklyOf(a),
       owned: a.owned ?? [],
@@ -323,6 +327,35 @@ export class AccountStore {
     return a.daily?.day === utcDay() ? a.daily : emptyDaily();
   }
 
+  private xpOf(a: Account): number {
+    return a.xp ?? a.earnedPoints ?? 0;
+  }
+
+  /** Add XP; each level gained pays LEVEL_UP_POINTS shop points. Returns those bonus points. */
+  private addXp(a: Account, xp: number): number {
+    const before = levelOf(this.xpOf(a));
+    a.xp = this.xpOf(a) + xp;
+    const bonus = (levelOf(a.xp) - before) * LEVEL_UP_POINTS;
+    a.points = (a.points ?? 0) + bonus;
+    return bonus;
+  }
+
+  /**
+   * XP for a finished game that doesn't earn points (private rooms, or public ones without enough signed-in
+   * players): one per turn really played, capped per game and per day. Never gives shop points (except level-ups).
+   */
+  awardCasualXp(accountId: string, turns: number) {
+    const a = this.store.accounts.find((x) => x.id === accountId);
+    if (!a) return null;
+    const daily = this.dailyOf(a);
+    const xpGained = Math.max(0, Math.min(turns, CASUAL_XP.perGame, CASUAL_XP.perDay - (daily.casualXp ?? 0)));
+    daily.casualXp = (daily.casualXp ?? 0) + xpGained;
+    a.daily = daily;
+    const levelPoints = this.addXp(a, xpGained);
+    this.save();
+    return { xpGained, xp: this.xpOf(a), levelPoints, total: a.points ?? 0, daily, weekly: this.weeklyOf(a) };
+  }
+
   /** This week's progress (a fresh one each Monday, UTC). */
   private weeklyOf(a: Account): WeeklyProgress {
     return a.weekly?.week === utcWeek() ? a.weekly : emptyWeekly();
@@ -380,8 +413,11 @@ export class AccountStore {
     a.earnedPoints = (a.earnedPoints ?? 0) + gamePoints + questPoints;
     a.daily = daily;
     a.weekly = weekly;
+    // XP has no daily cap: the full place points count, plus quests.
+    const xpGained = earned.points + questPoints;
+    const levelPoints = this.addXp(a, xpGained);
     this.save();
-    return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily, weekly };
+    return { gamePoints, capped: gamePoints < earned.points, questPoints, questsDone, total: a.points, daily, weekly, xpGained, xp: this.xpOf(a), levelPoints };
   }
 
   private newSession(accountId: string): string {

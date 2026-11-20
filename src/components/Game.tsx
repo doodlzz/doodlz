@@ -155,7 +155,7 @@ function TurnSummary({ state }: { state: ClientRoomState }) {
           return (
             <li key={p.id} className="flex items-center gap-1.5 rounded-full bg-indigo-50 py-1 pr-3 pl-1">
               <Avatar avatar={p.avatar} size={26} />
-              <TaggedName name={p.name} fx={p.avatar.nameFx} className="max-w-32 truncate text-sm font-bold text-indigo-950" />
+              <TaggedName name={p.name} fx={p.avatar.nameFx} level={p.avatar.level} className="max-w-32 truncate text-sm font-bold text-indigo-950" />
               {state.drawerIds.includes(p.id) && <Pencil className="size-3.5 text-amber-500" />}
               <span className={`font-display font-bold ${d > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>+{d}</span>
             </li>
