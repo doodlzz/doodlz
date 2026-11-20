@@ -28,6 +28,10 @@ export interface Persistence {
   saveImage(accountId: string, ext: string, bytes: Buffer): Promise<void>;
   loadImage(accountId: string, ext: string): Promise<ImageData | null>;
   deleteImage(accountId: string, ext: string): Promise<void>;
+  /** Friends' private messages: every conversation's recent history, by thread key. */
+  loadThreads(): Promise<Record<string, unknown[]>>;
+  /** Called after each new message. Must not throw; it may write later. */
+  saveThread(key: string, messages: unknown[]): void;
   /** Wait until everything saved so far is written (used on shutdown). */
   flush(): Promise<void>;
 }
@@ -35,7 +39,39 @@ export interface Persistence {
 // ---------------- local files ----------------
 
 export class FilePersistence implements Persistence {
+  private threads: Record<string, unknown[]> = {};
+  private threadTimer: NodeJS.Timeout | null = null;
+
   constructor(private file: string) {}
+
+  private get threadsFile() {
+    return path.join(path.dirname(this.file), 'messages.json');
+  }
+
+  async loadThreads() {
+    try {
+      if (existsSync(this.threadsFile)) this.threads = JSON.parse(readFileSync(this.threadsFile, 'utf8'));
+    } catch (err) {
+      console.error('Could not read messages file, starting empty:', err);
+    }
+    return this.threads;
+  }
+
+  saveThread(key: string, messages: unknown[]) {
+    this.threads[key] = messages;
+    if (this.threadTimer) return;
+    this.threadTimer = setTimeout(() => {
+      this.threadTimer = null;
+      this.writeThreads();
+    }, 500);
+  }
+
+  private writeThreads() {
+    mkdirSync(path.dirname(this.threadsFile), { recursive: true });
+    const tmp = `${this.threadsFile}.tmp`;
+    writeFileSync(tmp, JSON.stringify(this.threads));
+    renameSync(tmp, this.threadsFile);
+  }
 
   async load<A extends StoredAccount>(): Promise<StoreData<A>> {
     const empty: StoreData<A> = { accounts: [], sessions: {} };
@@ -70,7 +106,13 @@ export class FilePersistence implements Persistence {
   async deleteImage(id: string, ext: string) {
     rmSync(this.imageFile(id, ext), { force: true });
   }
-  async flush() {}
+  async flush() {
+    if (this.threadTimer) {
+      clearTimeout(this.threadTimer);
+      this.threadTimer = null;
+      this.writeThreads();
+    }
+  }
 }
 
 // ---------------- Supabase ----------------
@@ -114,7 +156,8 @@ export class SupabasePersistence implements Persistence {
   private async fetchAll<T>(table: string, select: string): Promise<T[]> {
     const rows: T[] = [];
     for (let from = 0; ; from += PAGE) {
-      const res = await this.rest(`${table}?select=${select}&order=${table === 'sessions' ? 'token' : 'id'}`, { headers: { Range: `${from}-${from + PAGE - 1}` } });
+      const order = table === 'sessions' ? 'token' : table === 'dm_threads' ? 'key' : 'id';
+      const res = await this.rest(`${table}?select=${select}&order=${order}`, { headers: { Range: `${from}-${from + PAGE - 1}` } });
       const page = (await res.json()) as T[];
       rows.push(...page);
       if (page.length < PAGE) return rows;
@@ -209,5 +252,33 @@ export class SupabasePersistence implements Persistence {
       this.chain = this.chain.then(() => this.sync()).catch((err) => console.error('Saving to Supabase failed:', err));
     }
     await this.chain;
+  }
+
+  // Private messages live in their own table (see supabase/schema.sql). If it's missing, messages still work
+  // until the next restart, and the server says so once.
+  private threadsMissing = false;
+
+  async loadThreads() {
+    try {
+      const rows = await this.fetchAll<{ key: string; data: unknown[] }>('dm_threads', 'key,data');
+      return Object.fromEntries(rows.map((r) => [r.key, r.data]));
+    } catch (err) {
+      this.threadsMissing = true;
+      console.warn('Could not load private messages (run supabase/schema.sql to add the dm_threads table):', err);
+      return {};
+    }
+  }
+
+  saveThread(key: string, messages: unknown[]) {
+    if (this.threadsMissing) return;
+    this.chain = this.chain
+      .then(() =>
+        this.rest('dm_threads?on_conflict=key', {
+          method: 'POST',
+          prefer: 'resolution=merge-duplicates,return=minimal',
+          body: JSON.stringify({ key, data: messages, updated_at: new Date().toISOString() }),
+        }).then(() => undefined),
+      )
+      .catch((err) => console.error('Saving a private message failed:', err));
   }
 }

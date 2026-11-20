@@ -806,6 +806,16 @@ export class Room {
     else this.sendState(reporter);
   }
 
+  /** The host hands leadership to another connected player, between games (lobby or end screen). */
+  giveHost(by: string, targetId: unknown): void {
+    const target = typeof targetId === 'string' ? this.players.get(targetId) : undefined;
+    if (by !== this.hostId || !target || target.id === by || !target.connected) return;
+    if (this.phase !== 'lobby' && this.phase !== 'game_over') return;
+    this.hostId = target.id;
+    this.chat('system', 'chat.newHost', { name: target.name });
+    this.broadcastState();
+  }
+
   hostKick(by: string, targetId: unknown): void {
     const target = typeof targetId === 'string' ? this.players.get(targetId) : undefined;
     if (by !== this.hostId || !target || target.id === by || this.isPublic) return;

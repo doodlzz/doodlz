@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
+import { FRIEND_LIMITS, type FriendError, type FriendRequestInfo } from '../../shared/friends.js';
 import { CASUAL_XP, LEVEL_UP_POINTS, levelOf } from '../../shared/levels.js';
 import { emptyDaily, emptyWeekly, POINTS, questsFor, utcDay, utcWeek, weeklyQuestsFor, type DailyProgress, type QuestDef, type QuestEvent, type QuestId, type WeeklyProgress } from '../../shared/quests.js';
 import { AVATAR_PARTS_MEMBER, type Avatar } from '../../shared/types.js';
@@ -33,6 +34,10 @@ interface Account {
   xp?: number; // level XP; accounts from before levels start at their earnedPoints
   owned?: string[]; // cosmetic ids bought with points
   equipped?: Equipped;
+  friends?: string[]; // account ids
+  friendIn?: string[]; // requests received
+  friendOut?: string[]; // requests sent
+  dmRead?: Record<string, number>; // friend id -> time their messages were last read
   daily?: DailyProgress; // today's game points and quest progress
   weekly?: WeeklyProgress; // this week's quest progress
 }
@@ -327,6 +332,105 @@ export class AccountStore {
     return a.daily?.day === utcDay() ? a.daily : emptyDaily();
   }
 
+  // ---------------- friends ----------------
+
+  /** Set by the friends service: forget a deleted account's conversations. */
+  onDeleted?: (accountId: string) => void;
+
+  private byId(id: string): Account | undefined {
+    return this.store.accounts.find((x) => x.id === id);
+  }
+
+  /** How other players see this account: name#tag, look and level. */
+  publicCard(id: string): FriendRequestInfo | null {
+    const a = this.byId(id);
+    if (!a) return null;
+    const avatar = { ...(this.avatarOf(a) ?? { color: '#f472b6', eyes: 0, mouth: 0, accessory: 0 }), ...a.equipped, level: levelOf(this.xpOf(a)) };
+    return { id: a.id, name: `${a.username}#${a.tag}`, avatar };
+  }
+
+  /** Account id for "name#1234" (case-insensitive), or null. */
+  findByNameTag(nameTag: string): string | null {
+    const m = /^(.+)#(\d{4})$/.exec(nameTag.trim());
+    if (!m) return null;
+    return this.sameName(m[1]).find((a) => a.tag === m[2])?.id ?? null;
+  }
+
+  friendLists(id: string): { friends: string[]; incoming: string[]; outgoing: string[]; read: Record<string, number> } {
+    const a = this.byId(id);
+    return { friends: a?.friends ?? [], incoming: a?.friendIn ?? [], outgoing: a?.friendOut ?? [], read: a?.dmRead ?? {} };
+  }
+
+  areFriends(a: string, b: string): boolean {
+    return this.byId(a)?.friends?.includes(b) ?? false;
+  }
+
+  /** Send a request, or accept theirs if they already asked. */
+  requestFriend(fromId: string, toId: string): { accepted: boolean } | { error: FriendError } {
+    const from = this.byId(fromId);
+    const to = this.byId(toId);
+    if (!from || !to) return { error: 'friends.err.notFound' };
+    if (fromId === toId) return { error: 'friends.err.self' };
+    if (from.friends?.includes(toId)) return { error: 'friends.err.already' };
+    if (from.friendIn?.includes(toId)) {
+      this.respondFriend(fromId, toId, true);
+      return { accepted: true };
+    }
+    if (from.friendOut?.includes(toId)) return { error: 'friends.err.pending' };
+    if ((from.friends?.length ?? 0) >= FRIEND_LIMITS.friends || (to.friends?.length ?? 0) >= FRIEND_LIMITS.friends) return { error: 'friends.err.limit' };
+    if ((from.friendOut?.length ?? 0) >= FRIEND_LIMITS.pending || (to.friendIn?.length ?? 0) >= FRIEND_LIMITS.pending) return { error: 'friends.err.limit' };
+    from.friendOut = [...(from.friendOut ?? []), toId];
+    to.friendIn = [...(to.friendIn ?? []), fromId];
+    this.save();
+    return { accepted: false };
+  }
+
+  /** Accept or decline a request `otherId` sent to `meId`. */
+  respondFriend(meId: string, otherId: string, accept: boolean): boolean {
+    const me = this.byId(meId);
+    const other = this.byId(otherId);
+    if (!me || !me.friendIn?.includes(otherId)) return false;
+    me.friendIn = me.friendIn.filter((x) => x !== otherId);
+    if (other) other.friendOut = (other.friendOut ?? []).filter((x) => x !== meId);
+    if (accept && other) {
+      me.friends = [...new Set([...(me.friends ?? []), otherId])];
+      other.friends = [...new Set([...(other.friends ?? []), meId])];
+    }
+    this.save();
+    return true;
+  }
+
+  cancelFriendRequest(meId: string, otherId: string): void {
+    const me = this.byId(meId);
+    const other = this.byId(otherId);
+    if (me) me.friendOut = (me.friendOut ?? []).filter((x) => x !== otherId);
+    if (other) other.friendIn = (other.friendIn ?? []).filter((x) => x !== meId);
+    this.save();
+  }
+
+  removeFriend(meId: string, otherId: string): void {
+    const me = this.byId(meId);
+    const other = this.byId(otherId);
+    if (me) me.friends = (me.friends ?? []).filter((x) => x !== otherId);
+    if (other) other.friends = (other.friends ?? []).filter((x) => x !== meId);
+    this.save();
+  }
+
+  markRead(meId: string, friendId: string, ts: number): void {
+    const me = this.byId(meId);
+    if (!me || (me.dmRead?.[friendId] ?? 0) >= ts) return;
+    me.dmRead = { ...me.dmRead, [friendId]: ts };
+    this.save();
+  }
+
+  loadThreads() {
+    return this.persistence.loadThreads();
+  }
+
+  saveThread(key: string, messages: unknown[]) {
+    this.persistence.saveThread(key, messages);
+  }
+
   private xpOf(a: Account): number {
     return a.xp ?? a.earnedPoints ?? 0;
   }
@@ -560,6 +664,14 @@ export class AccountStore {
     if (account.image) await this.persistence.deleteImage(account.id, account.image.ext);
     for (const [t, s] of Object.entries(this.store.sessions)) if (s.accountId === account.id) delete this.store.sessions[t];
     this.store.accounts = this.store.accounts.filter((a) => a.id !== account.id);
+    // Drop them from everyone's friends and requests; their messages go too.
+    for (const a of this.store.accounts) {
+      if (a.friends?.includes(account.id)) a.friends = a.friends.filter((x) => x !== account.id);
+      if (a.friendIn?.includes(account.id)) a.friendIn = a.friendIn.filter((x) => x !== account.id);
+      if (a.friendOut?.includes(account.id)) a.friendOut = a.friendOut.filter((x) => x !== account.id);
+      if (a.dmRead?.[account.id]) delete a.dmRead[account.id];
+    }
+    this.onDeleted?.(account.id);
     this.save();
     return { ok: true };
   }

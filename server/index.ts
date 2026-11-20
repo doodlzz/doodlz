@@ -14,6 +14,7 @@ import { registerLobbyHandlers } from './handlers/lobbyHandlers.js';
 import { gameOverRewards } from './progress/rewards.js';
 import { RoomManager } from './rooms/RoomManager.js';
 import { shopRoutes } from './shop/routes.js';
+import { FriendsService } from './social/friends.js';
 
 const app = express();
 if (config.trustProxy) app.set('trust proxy', true);
@@ -31,6 +32,8 @@ const accounts = new AccountStore(useSupabase ? new SupabasePersistence(config.s
 await accounts.init();
 console.log(`accounts: ${useSupabase ? 'Supabase' : 'local file'}`);
 const manager = new RoomManager(io, (room, complete) => gameOverRewards(io, accounts, room, complete));
+const friends = new FriendsService(accounts, manager);
+await friends.init();
 app.use('/api/auth', authRoutes(accounts));
 app.use('/api/shop', shopRoutes(accounts));
 
@@ -60,7 +63,8 @@ io.on('connection', (socket) => {
   socket.emit('online_count', io.engine.clientsCount);
   broadcastOnline();
   socket.on('disconnect', broadcastOnline);
-  const ctx = createContext(socket, manager, accounts);
+  const ctx = createContext(socket, manager, accounts, () => friends.roomChanged(socket));
+  friends.register(socket, ctx.safe);
   registerLobbyHandlers(ctx);
   registerGameHandlers(ctx);
   registerCanvasHandlers(ctx);

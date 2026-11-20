@@ -5,6 +5,7 @@ import TaggedName from '../components/TaggedName';
 import { useT } from '../i18n';
 import { levelOf } from '../../shared/levels';
 import LevelBadge from '../components/LevelBadge';
+import FriendsButton from '../friends/FriendsButton';
 import { useAuth } from './AuthContext';
 
 interface Props {
@@ -22,6 +23,7 @@ export default function AuthButtons({ avatar, onAvatarChange, parts = 12 }: Prop
   if (account) {
     return (
       <div className="flex items-center gap-2">
+        <FriendsButton />
         {/* Level; clicking it opens the levels window. */}
         <button
           type="button"

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Crown, Flag, MoreVertical, Pencil, Trophy, UserX, WifiOff } from 'lucide-react';
+import { Check, Crown, Flag, MoreVertical, Pencil, Trophy, UserPlus, UserX, WifiOff } from 'lucide-react';
+import { useFriends } from '../friends/FriendsContext';
 import type { ClientRoomState, PlayerPublic, ReportReason } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import { useT } from '../i18n';
@@ -10,6 +11,33 @@ import ScoringHelp from './ScoringHelp';
 const RANK_STYLES = ['bg-amber-400 text-amber-950', 'bg-slate-300 text-slate-800', 'bg-orange-300 text-orange-950'];
 const REASONS: ReportReason[] = ['drawing', 'chat', 'name', 'other'];
 
+/** "Add friend" in a player's menu: only between signed-in players (they show a level), and not if already friends. */
+function AddFriendItem({ player }: { player: PlayerPublic }) {
+  const t = useT();
+  const { state, request } = useFriends();
+  const [note, setNote] = useState<string | null>(null);
+  if (!state || !player.avatar.level) return null;
+  const already = state.friends.some((f) => f.name === player.name);
+  const pending = state.outgoing.some((f) => f.name === player.name);
+  return (
+    <>
+      <button
+        type="button"
+        disabled={already || pending || note === 'friends.sent'}
+        onClick={async () => {
+          const res = await request({ playerId: player.id });
+          setNote('error' in res ? res.error : res.accepted ? 'friends.nowFriends' : 'friends.sent');
+        }}
+        className="mb-1 flex w-full cursor-pointer items-center gap-2 rounded-xl border-b-2 border-indigo-50 px-2.5 py-2 text-left text-sm font-bold text-emerald-700 hover:bg-emerald-50 disabled:cursor-default disabled:opacity-60"
+      >
+        <UserPlus className="size-4" />
+        {already ? t('friends.alreadyFriends') : pending ? t('friends.requested') : t('friends.addFriend')}
+      </button>
+      {note && <p className="px-2.5 pb-1 text-xs font-bold text-indigo-500">{t(note)}</p>}
+    </>
+  );
+}
+
 /** Report / kick menu for one player. */
 export function PlayerMenu({ player, state, game, align = 'right' }: { player: PlayerPublic; state: ClientRoomState; game: GameApi; align?: 'left' | 'right' }) {
   const t = useT();
@@ -17,6 +45,7 @@ export function PlayerMenu({ player, state, game, align = 'right' }: { player: P
   const ref = useRef<HTMLDivElement>(null);
   const reported = state.reported.includes(player.id);
   const canKick = state.hostId === state.you && !state.isPublic;
+  const canGiveHost = state.hostId === state.you && player.connected && (state.phase === 'lobby' || state.phase === 'game_over');
 
   useEffect(() => {
     if (!open) return;
@@ -37,7 +66,8 @@ export function PlayerMenu({ player, state, game, align = 'right' }: { player: P
         <MoreVertical className="size-4" />
       </button>
       {open && (
-        <div className={`panel absolute top-8 z-40 w-56 animate-pop overflow-hidden p-1.5 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+        <div data-player-menu className={`panel absolute top-8 z-40 w-56 animate-pop overflow-hidden p-1.5 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <AddFriendItem player={player} />
           <p className="truncate px-2.5 py-1.5 text-xs font-extrabold tracking-wider text-indigo-300 uppercase">{t('report.title', { name: player.name })}</p>
           {REASONS.map((r) => (
             <button
@@ -54,6 +84,19 @@ export function PlayerMenu({ player, state, game, align = 'right' }: { player: P
               {reported ? t('report.reported') : t(`report.${r}`)}
             </button>
           ))}
+          {canGiveHost && (
+            <button
+              type="button"
+              onClick={() => {
+                game.giveHost(player.id);
+                setOpen(false);
+              }}
+              className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded-xl border-t-2 border-indigo-50 px-2.5 py-2 text-left text-sm font-bold text-amber-700 hover:bg-amber-50"
+            >
+              <Crown className="size-4" />
+              {t('report.makeHost')}
+            </button>
+          )}
           {canKick && (
             <button
               type="button"

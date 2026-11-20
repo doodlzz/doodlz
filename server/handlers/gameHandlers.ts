@@ -37,4 +37,5 @@ export function registerModerationHandlers(ctx: HandlerContext): void {
     ),
   );
   socket.on('kick_player', safe(withRoom(ctx, (room, id, targetId) => room.hostKick(id, targetId))));
+  socket.on('give_host', safe(withRoom(ctx, (room, id, targetId) => room.giveHost(id, targetId))));
 }

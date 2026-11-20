@@ -25,6 +25,7 @@ import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
 import TaggedName from './TaggedName';
+import FriendsButton from '../friends/FriendsButton';
 
 function ConnectionBadge({ connected, resuming }: { connected: boolean; resuming: boolean }) {
   const t = useT();
@@ -289,6 +290,7 @@ function RoomView({ game }: { game: GameApi }) {
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <Logo size="sm" />
         <div className="flex gap-2">
+          <FriendsButton />
           <SettingsButton />
           <button className="btn btn-ghost crayon-edge py-2 text-base" onClick={game.leaveRoom}>
             <DoorOpen className="size-5" /> {t('lobby.leave')}
@@ -361,7 +363,7 @@ function RoomView({ game }: { game: GameApi }) {
             {state.players.map((p) => (
               <div
                 key={p.id}
-                className={`relative flex animate-pop flex-col items-center rounded-2xl p-3 ${p.id === state.you ? 'bg-pink-50 ring-4 ring-pink-200' : 'bg-indigo-50/70'} ${p.connected ? '' : 'opacity-50'}`}
+                className={`relative flex animate-pop flex-col items-center rounded-2xl p-3 has-[[data-player-menu]]:z-50 ${p.id === state.you ? 'bg-pink-50 ring-4 ring-pink-200' : 'bg-indigo-50/70'} ${p.connected ? '' : 'opacity-50'}`}
               >
                 {p.id === state.hostId && (
                   <span className="absolute top-2 left-2 grid size-7 place-items-center rounded-full bg-amber-400" title="Host">

@@ -11,7 +11,9 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
   const leaveCurrent = () => {
     const cur = ctx.current();
     if (cur) cur.room.removePlayer(cur.playerId);
+    const was = socket.data.roomCode;
     socket.data.roomCode = socket.data.playerId = undefined;
+    if (was) ctx.roomChanged();
   };
 
   /**
@@ -45,6 +47,7 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
     socket.data.roomCode = room.code;
     socket.data.playerId = player.id;
     manager.register(room, player);
+    ctx.roomChanged();
     ack({ ok: true, code: room.code, token: player.token, playerId: player.id });
   };
 
@@ -100,6 +103,7 @@ export function registerLobbyHandlers(ctx: HandlerContext): void {
       socket.data.roomCode = room.code;
       socket.data.playerId = player.id;
       room.reconnect(player.id, socket.id);
+      ctx.roomChanged();
       ack({ ok: true, code: room.code, token: player.token, playerId: player.id });
     }),
   );

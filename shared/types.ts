@@ -1,6 +1,7 @@
 // Types and constants shared by the client (src/) and the game server (server/).
 import type { FrameId, NameFxId } from './cosmetics.js';
 import type { RewardSummary } from './quests.js';
+import type { DirectMessage, FriendAck, FriendInvite, FriendsState } from './friends.js';
 
 // ---------------- enums & constants ----------------
 
@@ -274,6 +275,18 @@ export interface ClientToServerEvents {
   request_hint: () => void;
   report_player: (p: { targetId: string; reason: ReportReason }) => void;
   kick_player: (targetId: string) => void;
+  give_host: (targetId: string) => void;
+  // Friends (signed-in players). `friends_hello` says which account this connection belongs to.
+  friends_hello: (p: { token: string | null }, ack?: (state: FriendsState | null) => void) => void;
+  friends_refresh: (ack: (state: FriendsState | null) => void) => void;
+  friend_request: (p: { nameTag?: string; playerId?: string }, ack: FriendAck<{ accepted: boolean }>) => void;
+  friend_respond: (p: { id: string; accept: boolean }, ack?: FriendAck) => void;
+  friend_cancel: (id: string, ack?: FriendAck) => void;
+  friend_remove: (id: string, ack?: FriendAck) => void;
+  dm_history: (friendId: string, ack: (messages: DirectMessage[]) => void) => void;
+  dm_send: (p: { to: string; text: string }, ack: FriendAck<{ message: DirectMessage }>) => void;
+  dm_read: (friendId: string) => void;
+  friend_invite: (friendId: string, ack: FriendAck) => void;
 }
 
 export interface ServerToClientEvents {
@@ -286,4 +299,7 @@ export interface ServerToClientEvents {
   kicked: (p: { reason: string }) => void;
   online_count: (n: number) => void;
   rewards: (r: RewardSummary) => void;
+  friends_state: (s: FriendsState) => void;
+  dm_message: (m: DirectMessage) => void;
+  friend_invite: (inv: FriendInvite) => void;
 }

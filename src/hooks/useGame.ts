@@ -218,6 +218,7 @@ export function useGame(lang: Lang) {
     setBackground: (bg: BackgroundId) => socket.emit('set_background', bg),
     report: (targetId: string, reason: ReportReason) => socket.emit('report_player', { targetId, reason }),
     kick: (targetId: string) => socket.emit('kick_player', targetId),
+    giveHost: (targetId: string) => socket.emit('give_host', targetId),
     backToLobby: () => socket.emit('back_to_lobby'),
   };
 }

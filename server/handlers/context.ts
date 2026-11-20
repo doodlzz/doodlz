@@ -8,6 +8,8 @@ import type { RoomManager } from '../rooms/RoomManager.js';
 export interface SocketData {
   roomCode?: string;
   playerId?: string;
+  /** Signed-in account of this connection, set by `friends_hello`. */
+  accountId?: string;
 }
 
 export type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
@@ -20,6 +22,8 @@ export interface HandlerContext {
   ip: string;
   /** The room and player id this socket is bound to, if any. */
   current(): { room: Room; playerId: string } | null;
+  /** This socket joined or left a room (friends see where you are). */
+  roomChanged(): void;
   /** Wrap a handler so bad client input can never crash the server. */
   safe<A extends unknown[]>(fn: (...args: A) => void): (...args: A) => void;
 }
@@ -33,12 +37,13 @@ export function clientIp(socket: GameSocket): string {
   return socket.handshake.address ?? '';
 }
 
-export function createContext(socket: GameSocket, manager: RoomManager, accounts: AccountStore): HandlerContext {
+export function createContext(socket: GameSocket, manager: RoomManager, accounts: AccountStore, onRoomChange: () => void = () => {}): HandlerContext {
   return {
     socket,
     manager,
     accounts,
     ip: clientIp(socket),
+    roomChanged: onRoomChange,
     current() {
       const { roomCode, playerId } = socket.data;
       const room = roomCode ? manager.rooms.get(roomCode) : undefined;

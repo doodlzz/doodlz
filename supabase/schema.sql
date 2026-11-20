@@ -25,3 +25,11 @@ alter table accounts enable row level security;
 alter table sessions enable row level security;
 alter table account_images enable row level security;
   
+
+-- Friends' private messages: the recent history of each conversation (key = the two account ids, sorted).
+create table if not exists dm_threads (
+  key text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table dm_threads enable row level security;

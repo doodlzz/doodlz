@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
 import { AuthProvider, useAuth } from './auth/AuthContext';
@@ -9,6 +9,10 @@ import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
 import Shop from './components/Shop';
 import LevelsModal from './components/LevelsModal';
+import { FriendsProvider, useFriends } from './friends/FriendsContext';
+import FriendsPanel from './friends/FriendsPanel';
+import InviteToast from './friends/InviteToast';
+import { loadProfile } from './lib/avatar';
 import MouseTrail from './components/MouseTrail';
 import { useGame } from './hooks/useGame';
 import { useQuestTracker } from './hooks/useQuestTracker';
@@ -48,9 +52,18 @@ function Shell() {
     if (code) history.replaceState(null, '', `/?room=${code}`);
   }, [code]);
 
+  // Joining a friend's room uses the saved nickname and face (signed-in players get their account name anyway).
+  const joinFriend = useCallback(
+    (roomCode: string) => {
+      const p = loadProfile();
+      void game.joinRoom(roomCode, p.name, p.avatar);
+    },
+    [game.joinRoom],
+  );
+
   const phase = game.state?.phase;
   return (
-    <>
+    <FriendsProvider onJoin={joinFriend} myRoomCode={code ?? null}>
       <a href="#main" className="skip-link">
         {t('a11y.skip')}
       </a>
@@ -64,6 +77,7 @@ function Shell() {
       <CookieNotice />
       {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
       {levelsOpen && account && <LevelsModal xp={account.xp ?? 0} onClose={closeLevels} />}
+      <FriendsOverlays />
       {shopNote && !game.toast && (
         <div
           className={`fixed top-4 left-1/2 z-[80] flex w-max max-w-[90vw] -translate-x-1/2 animate-pop items-center gap-2 rounded-2xl px-4 py-3 font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] ${shopNote === 'success' ? 'bg-emerald-500' : 'bg-slate-600'}`}
@@ -82,6 +96,17 @@ function Shell() {
           {t(game.toast.key, game.toast.params)}
         </div>
       )}
+    </FriendsProvider>
+  );
+}
+
+/** The friends window and friend invites, over every screen. */
+function FriendsOverlays() {
+  const { panelOpen } = useFriends();
+  return (
+    <>
+      {panelOpen && <FriendsPanel />}
+      <InviteToast />
     </>
   );
 }
