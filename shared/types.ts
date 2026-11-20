@@ -146,6 +146,16 @@ export interface WordChoice {
   parts?: [string, string]; // duo mode: who draws which half
 }
 
+/** Fun end-of-game awards, worked out by the server when the game ends. */
+export type AwardId = 'fastest' | 'artist' | 'firstGuesser' | 'noHints' | 'soClose';
+
+export interface Award {
+  id: AwardId;
+  playerId: string;
+  /** fastest: seconds (one decimal); others: a count. */
+  value: number;
+}
+
 export interface TurnSummary {
   word: string;
   reason: 'all_guessed' | 'time_up' | 'drawer_left';
@@ -180,6 +190,8 @@ export interface ClientRoomState {
   hintsLeft: number; // for this guesser
   hintsUsed: number;
   autoStartAt: number | null; // public rooms start themselves
+  /** End screen only: who won which award (empty when nobody qualified). */
+  awards: Award[];
   /** Public rooms: the first player still has to pick the category. */
   categoryPending: boolean;
   categoryPickEndsAt: number | null; // a random category is picked when this runs out

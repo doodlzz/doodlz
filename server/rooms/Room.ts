@@ -7,6 +7,8 @@ import {
   SCORING,
   SINGLE_COLORS,
   type Avatar,
+  type Award,
+  type AwardId,
   type BackgroundId,
   type Category,
   type ChatKind,
@@ -66,6 +68,10 @@ export interface Player {
   gameFirstGuesses: number;
   gameCleanGuesses: number;
   gameFullHouses: number;
+  /** This game, for end-screen awards: fastest counted guess, guesses on their drawings, near misses. */
+  gameFastestMs: number | null;
+  gameArtistGuesses: number;
+  gameCloseCalls: number;
   chatTimes: number[];
 }
 
@@ -85,6 +91,34 @@ export interface RoomHooks {
 let msgCounter = 0;
 const msgId = () => `${Date.now().toString(36)}-${(msgCounter++).toString(36)}`;
 const pick = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+/**
+ * End-screen awards: for each one, the player with the best stat this game (ties go to the higher score).
+ * An award is left out when nobody earned it.
+ */
+function pickAwards(players: Player[]): Award[] {
+  const awards: Award[] = [];
+  const best = (id: AwardId, stat: (p: Player) => number | null, opts: { min?: number; lowest?: boolean } = {}) => {
+    let top: Player | null = null;
+    let topVal = 0;
+    for (const p of players) {
+      const v = stat(p);
+      if (v === null || v < (opts.min ?? 1)) continue;
+      const better = top === null || (opts.lowest ? v < topVal : v > topVal) || (v === topVal && p.score > top.score);
+      if (better) {
+        top = p;
+        topVal = v;
+      }
+    }
+    if (top) awards.push({ id, playerId: top.id, value: id === 'fastest' ? Math.round(topVal / 100) / 10 : topVal });
+  };
+  best('fastest', (p) => p.gameFastestMs, { lowest: true });
+  best('artist', (p) => p.gameArtistGuesses);
+  best('firstGuesser', (p) => p.gameFirstGuesses, { min: 2 });
+  best('noHints', (p) => p.gameCleanGuesses, { min: 2 });
+  best('soClose', (p) => p.gameCloseCalls, { min: 2 });
+  return awards;
+}
 
 export class Room {
   readonly players = new Map<string, Player>();
@@ -114,6 +148,7 @@ export class Room {
   private rerollsLeft = 0;
   private usedWords = new Set<string>();
   private autoStartAt: number | null = null;
+  private awards: Award[] = [];
   private drawingStartedAt = 0;
   private categoryPending = false;
   private categoryPickEndsAt: number | null = null;
@@ -209,6 +244,9 @@ export class Room {
       gameFirstGuesses: 0,
       gameCleanGuesses: 0,
       gameFullHouses: 0,
+      gameFastestMs: null,
+      gameArtistGuesses: 0,
+      gameCloseCalls: 0,
     };
     this.players.set(player.id, player);
     if (!this.hostId) this.hostId = player.id;
@@ -355,6 +393,9 @@ export class Room {
       p.gameFirstGuesses = 0;
       p.gameCleanGuesses = 0;
       p.gameFullHouses = 0;
+      p.gameFastestMs = null;
+      p.gameArtistGuesses = 0;
+      p.gameCloseCalls = 0;
     }
     this.round = 0;
     this.drawQueue = [];
@@ -579,9 +620,14 @@ export class Room {
     this.parts = null;
     this.phaseEndsAt = null;
     this.drawQueue = [];
+    this.awards = this.round > 0 ? pickAwards([...this.players.values()]) : [];
     const winner = [...this.players.values()].sort((a, b) => b.score - a.score)[0];
     if (winner) this.chat('system', 'chat.winner', { name: winner.name, points: winner.score });
-    if (this.isPublic) this.timer = setTimeout(() => this.backToLobby(null), config.publicRestartMs);
+    if (this.isPublic) {
+      // The end screen counts down to this.
+      this.phaseEndsAt = Date.now() + config.publicRestartMs;
+      this.timer = setTimeout(() => this.backToLobby(null), config.publicRestartMs);
+    }
     this.broadcastState();
     this.hooks.onGameOver?.(this, complete && this.round > 0);
   }
@@ -682,6 +728,7 @@ export class Room {
     if (this.parts?.some((part) => compact(part) === guess)) {
       this.privateMsg(player, 'close', 'chat.partCorrect', { text });
     } else if (isCloseGuess(text, this.word)) {
+      player.gameCloseCalls++;
       this.privateMsg(player, 'close', 'chat.close', { text });
     }
   }
@@ -692,10 +739,16 @@ export class Room {
     player.score += points;
     player.hasGuessed = true;
     // Only guesses made after some real drawing count toward quests.
-    if (Date.now() - this.drawingStartedAt >= config.questGuessMinMs && this.history.length >= config.questMinOps) {
+    const took = Date.now() - this.drawingStartedAt;
+    if (took >= config.questGuessMinMs && this.history.length >= config.questMinOps) {
       player.gameGuesses++;
       if (order === 0) player.gameFirstGuesses++;
       if (player.hintsUsed === 0) player.gameCleanGuesses++;
+      player.gameFastestMs = player.gameFastestMs === null ? took : Math.min(player.gameFastestMs, took);
+      for (const id of this.drawerIds) {
+        const d = this.players.get(id);
+        if (d) d.gameArtistGuesses++;
+      }
     }
     this.guessScores.push(points);
     this.deltas[player.id] = (this.deltas[player.id] ?? 0) + points;
@@ -818,6 +871,7 @@ export class Room {
       hintsLeft: this.phase === 'drawing' && !knows ? Math.max(0, this.maxHints() - p.hintsUsed) : 0,
       hintsUsed: p.hintsUsed,
       autoStartAt: this.autoStartAt,
+      awards: this.phase === 'game_over' ? this.awards.filter((a) => this.players.has(a.playerId)) : [],
       categoryPending: this.categoryPending,
       categoryPickEndsAt: this.categoryPickEndsAt,
       reported,
