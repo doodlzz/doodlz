@@ -180,7 +180,6 @@ interface Doodle {
   size: number;
   rot: number;
   color: string;
-  draw: boolean;
 }
 
 /**
@@ -192,7 +191,6 @@ function scatter(w: number, h: number, count: number, seed: number, minSize: num
   const out: Doodle[] = [];
   let bag: Kind[] = [];
   let lastColor = '';
-  const DRAWN = 10; // how many doodles get the draw-in animation
   for (let tries = 0; out.length < count && tries < 30000; tries++) {
     // Shrinks as the sheet fills up, so later doodles squeeze into the leftover space.
     const t = Math.min(1, tries / 12000);
@@ -213,7 +211,7 @@ function scatter(w: number, h: number, count: number, seed: number, minSize: num
     let color = COLORS[Math.floor(rand() * COLORS.length)];
     if (color === lastColor) color = COLORS[(COLORS.indexOf(color) + 1) % COLORS.length];
     lastColor = color;
-    out.push({ kind, x, y, size, rot: (rand() - 0.5) * 50, color, draw: out.length % 7 === 0 && out.length < DRAWN * 7 });
+    out.push({ kind, x, y, size, rot: (rand() - 0.5) * 50, color });
   }
   return out;
 }
@@ -222,7 +220,6 @@ const WIDE = scatter(1600, 1000, 220, 7, 34, 120);
 const NARROW = scatter(420, 900, 70, 11, 26, 80);
 
 function Sheet({ doodles, viewBox, className }: { doodles: Doodle[]; viewBox: string; className: string }) {
-  let drawn = 0;
   return (
     <svg className={className} viewBox={viewBox} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       {doodles.map((d, i) => (
@@ -232,8 +229,6 @@ function Sheet({ doodles, viewBox, className }: { doodles: Doodle[]; viewBox: st
             width={d.size}
             height={d.size}
             color={d.color}
-            className={d.draw ? 'doodle-draw' : undefined}
-            style={d.draw ? { animationDelay: `${0.15 + drawn++ * 0.25}s` } : undefined}
           />
         </g>
       ))}
