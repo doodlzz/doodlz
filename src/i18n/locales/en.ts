@@ -328,6 +328,8 @@ export const en = {
   'socials.title': "Follow us",
   'lobby.showCode': "Show code",
   'lobby.hideCode': "Hide code",
+  "game.hideWord": "Hide the word",
+  "game.showWord": "Show the word",
   'game.code': "Code",
   'set.open': 'Settings',
   'set.title': 'Settings',

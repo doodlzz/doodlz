@@ -311,6 +311,8 @@ export const ru: Dict = {
   'socials.title': "Мы в соцсетях",
   'lobby.showCode': "Показать код",
   'lobby.hideCode': "Скрыть код",
+  "game.hideWord": "Скрыть слово",
+  "game.showWord": "Показать слово",
   'game.code': "Код",
   'set.open': 'Настройки',
   'set.title': 'Настройки',

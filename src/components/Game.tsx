@@ -1,4 +1,5 @@
-import { AlarmClock, DoorOpen, Flag, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
+import { AlarmClock, DoorOpen, Eye, EyeOff, Flag, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
+import { useSettings } from '../settings/SettingsContext';
 import type { ClientRoomState } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
@@ -42,8 +43,23 @@ function Timer({ secondsLeft, total }: { secondsLeft: number; total: number }) {
 
 function WordDisplay({ state, game }: { state: ClientRoomState; game: GameApi }) {
   const t = useT();
+  const { settings, update } = useSettings();
   const isDrawer = state.drawerIds.includes(state.you);
   const lead = state.players.find((p) => p.id === state.drawerIds[0]);
+  // Drawers can hide the word on their own screen, for players sitting next to each other.
+  const masked = isDrawer && settings.hideWord && state.phase === 'drawing';
+  const eye = isDrawer && state.phase === 'drawing' && (
+    <button
+      type="button"
+      onClick={() => update({ hideWord: !settings.hideWord })}
+      className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-xl text-indigo-300 transition hover:bg-indigo-50 hover:text-indigo-700"
+      aria-label={settings.hideWord ? t('game.showWord') : t('game.hideWord')}
+      title={settings.hideWord ? t('game.showWord') : t('game.hideWord')}
+      aria-pressed={settings.hideWord}
+    >
+      {settings.hideWord ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+    </button>
+  );
 
   if (state.phase === 'choosing') {
     return (
@@ -67,7 +83,8 @@ function WordDisplay({ state, game }: { state: ClientRoomState; game: GameApi })
         </span>
         {state.myPart ? (
           <span className="font-display text-2xl font-bold tracking-wide text-indigo-950 uppercase">
-            {state.myPart} <span className="text-base text-indigo-300 normal-case">({state.word})</span>
+            {masked ? '•'.repeat(state.myPart.length) : state.myPart}{' '}
+            {!masked && <span className="text-base text-indigo-300 normal-case">({state.word})</span>}
           </span>
         ) : (
           <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 sm:gap-x-4">
@@ -80,7 +97,7 @@ function WordDisplay({ state, game }: { state: ClientRoomState; game: GameApi })
                       known ? (isDrawer ? 'border-indigo-200 text-indigo-950' : 'border-emerald-300 text-emerald-600') : 'border-indigo-950 text-indigo-950'
                     }`}
                   >
-                    {ch === '_' ? ' ' : ch}
+                    {masked ? '•' : ch === '_' ? ' ' : ch}
                   </span>
                 ))}
               </div>
@@ -88,6 +105,7 @@ function WordDisplay({ state, game }: { state: ClientRoomState; game: GameApi })
           </div>
         )}
       </div>
+      {eye}
       {state.phase === 'drawing' && !isDrawer && !known && (
         <button
           type="button"

@@ -311,6 +311,8 @@ export const zh: Dict = {
   'socials.title': "关注我们",
   'lobby.showCode': "显示房间码",
   'lobby.hideCode': "隐藏房间码",
+  "game.hideWord": "隐藏词语",
+  "game.showWord": "显示词语",
   'game.code': "房间码",
   'set.open': '设置',
   'set.title': '设置',

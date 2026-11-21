@@ -311,6 +311,8 @@ export const es: Dict = {
   'socials.title': "Síguenos",
   'lobby.showCode': "Mostrar código",
   'lobby.hideCode': "Ocultar código",
+  "game.hideWord": "Ocultar la palabra",
+  "game.showWord": "Mostrar la palabra",
   'game.code': "Código",
   'set.open': 'Ajustes',
   'set.title': 'Ajustes',
