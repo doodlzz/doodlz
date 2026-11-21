@@ -66,15 +66,14 @@ export default function GoogleButton({ text, onSignIn, className = '' }: { text:
         initializedFor = id;
       }
       el.current.innerHTML = '';
-      // Google's dark button in dark mode, the outlined white one in light mode.
-      const dark = document.documentElement.classList.contains('dark');
-      g.renderButton(el.current, { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text, locale: settings.lang, width: Math.min(el.current.offsetWidth || 320, 400) });
+      // Google's white button in both themes: it stands out on the dark panels too.
+      g.renderButton(el.current, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text, locale: settings.lang, width: Math.min(el.current.offsetWidth || 320, 400) });
       setReady(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, [text, settings.lang, settings.theme]);
+  }, [text, settings.lang]);
 
   if (ready === false) return null;
   // color-scheme: light stops the browser painting a white box behind Google's frame when the site is dark.
