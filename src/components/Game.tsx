@@ -191,7 +191,10 @@ export default function Game({ game }: { game: GameApi }) {
           <WifiOff className="size-5" /> {t('game.reconnectBanner')}
         </div>
       )}
-      <header className="panel crayon-edge flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 sm:flex-nowrap sm:px-4">
+      {/* Three separate islands: timer and room info, the word, and the logo and buttons. */}
+      <header className="flex flex-wrap items-stretch justify-between gap-3 sm:flex-nowrap">
+        {/* On phones this one shrinks so it shares the first row with the buttons; the word goes underneath. */}
+        <div className="panel crayon-edge flex min-w-0 flex-1 basis-0 items-center gap-3 px-3 py-2 sm:flex-none sm:basis-auto sm:shrink-0 sm:px-4">
         <Timer secondsLeft={secondsLeft} total={timerTotal} />
         <div className="hidden flex-col leading-tight sm:flex">
           <span className="flex items-center gap-1 text-xs font-extrabold tracking-wider text-indigo-300 uppercase">
@@ -225,19 +228,23 @@ export default function Game({ game }: { game: GameApi }) {
             <CodeEyeButton className="size-7 text-indigo-300 hover:bg-indigo-50 hover:text-indigo-700" />
           </span>
         </div>
-        <div className="order-last flex min-w-0 basis-full flex-col items-center justify-center px-2 pb-1 text-center sm:order-none sm:flex-1 sm:basis-auto sm:pb-0">
-          <WordDisplay state={state} game={game} />
-          {partner && isDrawer && state.phase === 'drawing' && <span className="text-xs font-bold text-pink-500">{t('game.duoPartner', { name: partner.name })}</span>}
         </div>
-        <div className="hidden xl:block">
-          <Logo size="sm" />
+        <div className="order-last flex min-w-0 basis-full justify-center sm:order-none sm:flex-1 sm:basis-auto">
+          <div className="panel crayon-edge flex min-w-0 max-w-full flex-col items-center justify-center px-5 py-2 text-center sm:min-w-[18rem] sm:px-8">
+            <WordDisplay state={state} game={game} />
+            {partner && isDrawer && state.phase === 'drawing' && <span className="text-xs font-bold text-pink-500">{t('game.duoPartner', { name: partner.name })}</span>}
+          </div>
         </div>
-        <span className="flex-1 sm:hidden" />
-        <SettingsButton />
-        <button className="btn btn-ghost px-3 py-2 text-sm" onClick={game.leaveRoom} title={t('game.leave')}>
-          <DoorOpen className="size-5" />
-          <span className="hidden sm:inline">{t('game.leave')}</span>
-        </button>
+        <div className="panel crayon-edge flex shrink-0 items-center gap-2 px-3 py-2">
+          <div className="hidden xl:block">
+            <Logo size="sm" />
+          </div>
+          <SettingsButton />
+          <button className="btn btn-ghost px-3 py-2 text-sm" onClick={game.leaveRoom} title={t('game.leave')}>
+            <DoorOpen className="size-5" />
+            <span className="hidden sm:inline">{t('game.leave')}</span>
+          </button>
+        </div>
       </header>
 
       <main className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[250px_minmax(0,1fr)_300px]">
