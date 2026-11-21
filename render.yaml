@@ -16,6 +16,10 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
+      # "Sign in with Google": the OAuth client id from Google Cloud Console (APIs & Services → Credentials).
+      # Leave unset to hide the Google button.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       # Email (verification codes) via Resend. MAIL_FROM must be on a domain verified in Resend, e.g. Doodlz <noreply@doodlz.io>.
       - key: RESEND_API_KEY
         sync: false

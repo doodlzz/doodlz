@@ -4,6 +4,7 @@ import { useT } from '../i18n';
 import AccountSettings from './AccountSettings';
 import { useAuth } from './AuthContext';
 import { Checkbox, ErrorNote, PasswordInput } from './fields';
+import GoogleButton, { useGoogleEnabled } from './GoogleButton';
 
 export type AuthMode = 'gate' | 'register' | 'login' | 'logout' | 'account' | 'verify';
 
@@ -18,7 +19,10 @@ const linkCls = 'cursor-pointer text-pink-500 underline underline-offset-2 hover
 
 export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
   const t = useT();
-  const { account, register, login, logout, verifyEmail, resendCode } = useAuth();
+  const { account, register, login, googleSignIn, logout, verifyEmail, resendCode } = useAuth();
+  const googleOn = useGoogleEnabled();
+  /** A Google sign-in for someone with no account yet: waits here until they accept the Terms. */
+  const [googlePending, setGooglePending] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [username, setUsername] = useState('');
@@ -36,7 +40,38 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  useEffect(() => setError(null), [mode]);
+  useEffect(() => {
+    setError(null);
+    setGooglePending(null);
+  }, [mode]);
+
+  const onGoogle = async (credential: string, consent = mode === 'register' && agreed) => {
+    setBusy(true);
+    const err = await googleSignIn(credential, remember, consent);
+    setBusy(false);
+    if (err === 'auth.err.googleNew') {
+      setGooglePending(credential);
+      setError(null);
+    } else setError(err);
+  };
+
+  const consentLabel = (
+    <span className="text-sm font-semibold">
+      {t('auth.agreePre')} <a href="/terms" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.terms')}</a> {t('auth.agreeAnd')}{' '}
+      <a href="/privacy" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.privacy')}</a>
+      {t('auth.agreeAge')}
+    </span>
+  );
+
+  const googleBlock = (text: 'signin_with' | 'signup_with' | 'continue_with') =>
+    googleOn && (
+      <>
+        <GoogleButton text={text} onSignIn={(c) => void onGoogle(c)} />
+        <div className="my-3 flex items-center gap-3 text-xs font-extrabold tracking-widest text-indigo-300 uppercase">
+          <div className="h-0.5 flex-1 rounded bg-indigo-100" /> {t('auth.or')} <div className="h-0.5 flex-1 rounded bg-indigo-100" />
+        </div>
+      </>
+    );
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -136,9 +171,23 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
               </button>
             </div>
           </div>
+        ) : googlePending ? (
+          <div className="flex flex-col gap-3">
+            <p className="-mt-2 text-sm font-bold text-indigo-500">{t('auth.googleNewText')}</p>
+            <Checkbox checked={agreed} onChange={setAgreed} required label={consentLabel} />
+            <ErrorNote error={error} />
+            <button type="button" className="btn btn-pink py-3" disabled={!agreed || busy} onClick={() => void onGoogle(googlePending, true)}>
+              {busy ? <Loader2 className="size-5 animate-spin" /> : <UserPlus className="size-5" />} {t('auth.createAccount')}
+            </button>
+            <button type="button" className="btn btn-ghost py-2 text-base" onClick={() => setGooglePending(null)}>
+              {t('auth.cancel')}
+            </button>
+          </div>
         ) : mode === 'gate' ? (
           <div className="flex flex-col gap-3">
             <p className="-mt-2 mb-1 text-sm font-bold text-indigo-400">{t('auth.gateText')}</p>
+            {googleOn && <GoogleButton text="continue_with" onSignIn={(c) => void onGoogle(c, false)} />}
+            <ErrorNote error={error} />
             <button type="button" className="btn btn-pink py-4" onClick={() => setMode('register')} autoFocus>
               <UserPlus className="size-5" /> {t('auth.register')}
             </button>
@@ -154,6 +203,7 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
           </div>
         ) : (
           <form className="flex flex-col" onSubmit={submit}>
+            {googleBlock(mode === 'register' ? 'signup_with' : 'signin_with')}
             <label className="label" htmlFor="auth-user">
               {mode === 'register' ? t('auth.username') : t('auth.usernameOrEmail')}
             </label>
@@ -223,13 +273,7 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
                     checked={agreed}
                     onChange={setAgreed}
                     required
-                    label={
-                      <span className="text-sm font-semibold">
-                        {t('auth.agreePre')} <a href="/terms" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.terms')}</a> {t('auth.agreeAnd')}{' '}
-                        <a href="/privacy" target="_blank" rel="noreferrer" className={linkCls}>{t('auth.privacy')}</a>
-                        {t('auth.agreeAge')}
-                      </span>
-                    }
+                    label={consentLabel}
                   />
                 </>
               )}

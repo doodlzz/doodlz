@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual
 import { promisify } from 'node:util';
 import { randomTag, TAG_RE } from '../../shared/tag.js';
 import { findCosmetic, isFrame, isNameFx, type Equipped } from '../../shared/cosmetics.js';
+import type { GoogleProfile } from './google.js';
 import { FRIEND_LIMITS, type FriendError, type FriendRequestInfo } from '../../shared/friends.js';
 import { CASUAL_XP, LEVEL_UP_POINTS, levelOf } from '../../shared/levels.js';
 import { emptyDaily, emptyWeekly, POINTS, questsFor, utcDay, utcWeek, weeklyQuestsFor, type DailyProgress, type QuestDef, type QuestEvent, type QuestId, type WeeklyProgress } from '../../shared/quests.js';
@@ -20,7 +21,8 @@ interface Account {
   username: string;
   tag: string; // 4 digits; username + tag is unique
   email: string;
-  passHash: string; // "salt:hash", both hex
+  passHash: string; // "salt:hash", both hex; empty for accounts made with Google that never set a password
+  googleId?: string; // Google account id ("sub") when signing in with Google
   createdAt: number;
   emailVerified?: boolean; // set once they enter the code we emailed (only enforced when email sending is configured)
   verify?: { hash: string; expires: number; attempts: number; sentAt: number }; // the pending code, hashed
@@ -66,6 +68,10 @@ export interface PublicAccount {
   email: string;
   /** False until they confirm the code emailed to them. Always true when email sending isn't configured. */
   emailVerified: boolean;
+  /** False for Google accounts that haven't set a password (they can set one in account settings). */
+  hasPassword: boolean;
+  /** Signs in with Google. */
+  google: boolean;
   /** Saved face; `image` is set when they uploaded a picture. */
   avatar?: Avatar;
   points: number;
@@ -89,6 +95,9 @@ export type AuthError =
   | 'auth.err.usernameTaken'
   | 'auth.err.email'
   | 'auth.err.consent'
+  | 'auth.err.google'
+  | 'auth.err.googleNew'
+  | 'auth.err.confirmName'
   | 'auth.err.emailTaken'
   | 'auth.err.password'
   | 'auth.err.badLogin'
@@ -265,6 +274,8 @@ export class AccountStore {
       tag: a.tag,
       email: a.email,
       emailVerified: this.isVerified(a),
+      hasPassword: !!a.passHash,
+      google: !!a.googleId,
       avatar: this.avatarOf(a),
       points: a.points ?? 0,
       xp: this.xpOf(a),
@@ -568,6 +579,38 @@ export class AccountStore {
     return { token, account: this.toPublic(account) };
   }
 
+  /**
+   * Sign in (or sign up) with a Google account Google has verified. Order: an account already linked to this
+   * Google id; else an account with the same email, which gets linked (Google proved they own it); else a new
+   * account, which needs the Terms / Privacy / age consent like any other sign-up.
+   */
+  signInWithGoogle(g: GoogleProfile, consent: unknown): { token: string; account: PublicAccount; created: boolean } | { error: AuthError } {
+    let account = this.store.accounts.find((a) => a.googleId === g.sub);
+    let created = false;
+    if (!account) {
+      account = this.store.accounts.find((a) => a.email === g.email);
+      if (account) {
+        account.googleId = g.sub;
+        account.emailVerified = true;
+      }
+    }
+    if (!account) {
+      if (consent !== true) return { error: 'auth.err.googleNew' };
+      // Username from their Google first name, cleaned up to letters, numbers and _.
+      let username = g.name.normalize('NFKD').replace(/[^A-Za-z0-9_]/g, '').slice(0, 20);
+      if (username.length < 3 || this.checkUsername(username)) username = `Doodler${Math.floor(Math.random() * 9000 + 1000)}`;
+      const tag = this.freeTag(username);
+      if (!tag) return { error: 'auth.err.usernameTaken' };
+      account = { id: randomBytes(12).toString('hex'), username, tag, email: g.email, emailVerified: true, googleId: g.sub, passHash: '', createdAt: Date.now(), consentAt: Date.now() };
+      this.store.accounts.push(account);
+      created = true;
+    }
+    const token = this.newSession(account.id);
+    this.pruneSessions();
+    this.save();
+    return { token, account: this.toPublic(account), created };
+  }
+
   /** `login` can be the email, "name#1234", or just the name when only one account has it. */
   async login(rawLogin: unknown, rawPassword: unknown): Promise<{ token: string; account: PublicAccount } | { error: AuthError }> {
     const login = String(rawLogin ?? '').trim().toLowerCase();
@@ -589,6 +632,7 @@ export class AccountStore {
   }
 
   private async checkPassword(account: Account, password: string): Promise<boolean> {
+    if (!account.passHash) return false; // Google-only account
     const [saltHex, hashHex] = account.passHash.split(':');
     const expected = Buffer.from(hashHex, 'hex');
     const actual = await scrypt(password, Buffer.from(saltHex, 'hex'), expected.length);
@@ -633,7 +677,8 @@ export class AccountStore {
       if (bad) return { error: bad };
     }
     if (newPassword !== undefined && !AccountStore.validPassword(newPassword)) return { error: 'auth.err.password' };
-    if ((emailChanged || newPassword !== undefined) && !(await this.checkPassword(account, String(changes.currentPassword ?? '')))) {
+    // Changing the email or password needs the current password. Google accounts without one can set their first.
+    if ((emailChanged || (newPassword !== undefined && account.passHash)) && !(await this.checkPassword(account, String(changes.currentPassword ?? '')))) {
       return { error: 'auth.err.wrongPassword' };
     }
 
@@ -660,7 +705,10 @@ export class AccountStore {
   async deleteAccount(token: string | undefined, password: unknown): Promise<{ ok: true } | { error: AuthError }> {
     const account = this.accountFor(token);
     if (!account) return { error: 'auth.err.session' };
-    if (!(await this.checkPassword(account, String(password ?? '')))) return { error: 'auth.err.wrongPassword' };
+    // Google accounts without a password confirm by typing their username instead.
+    if (!account.passHash) {
+      if (String(password ?? '').trim().toLowerCase() !== account.username.toLowerCase()) return { error: 'auth.err.confirmName' };
+    } else if (!(await this.checkPassword(account, String(password ?? '')))) return { error: 'auth.err.wrongPassword' };
     if (account.image) await this.persistence.deleteImage(account.id, account.image.ext);
     for (const [t, s] of Object.entries(this.store.sessions)) if (s.accountId === account.id) delete this.store.sessions[t];
     this.store.accounts = this.store.accounts.filter((a) => a.id !== account.id);

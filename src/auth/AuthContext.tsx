@@ -12,6 +12,10 @@ export interface Account {
   email: string;
   /** False until the 6-digit code emailed to them is entered. */
   emailVerified: boolean;
+  /** False for Google accounts that haven't set a password yet. */
+  hasPassword?: boolean;
+  /** Signs in with Google. */
+  google?: boolean;
   /** Saved face; `avatar.image` is their uploaded picture, if any. */
   avatar?: Avatar;
   /** Account points from ranked games and quests. */
@@ -58,6 +62,8 @@ interface Ctx {
   /** Permanently delete the signed-in account (needs the password). Returns an error key, or null on success. */
   deleteAccount: (password: string) => Promise<string | null>;
   login: (login: string, password: string, remember: boolean) => Promise<string | null>;
+  /** Sign in or up with a Google ID token. 'auth.err.googleNew' means a new account needs consent first. */
+  googleSignIn: (credential: string, remember: boolean, consent: boolean) => Promise<string | null>;
   /** Returns an error key, or null on success. */
   updateAccount: (changes: AccountChanges) => Promise<string | null>;
   /** Upload a picture (data URL) or remove it with null. Returns an error key, or null on success. */
@@ -167,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       },
       login: async (login, password, remember) => signedIn(await api('login', { login, password }), remember),
+      googleSignIn: async (credential, remember, consent) => signedIn(await api('google', { credential, consent }), remember),
       updateAccount: async (changes) => {
         const res = await api('account', changes, readToken());
         if (!res.account) return res.error ?? 'auth.err.network';
