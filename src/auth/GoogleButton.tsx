@@ -66,16 +66,19 @@ export default function GoogleButton({ text, onSignIn, className = '' }: { text:
         initializedFor = id;
       }
       el.current.innerHTML = '';
-      g.renderButton(el.current, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text, locale: settings.lang, width: Math.min(el.current.offsetWidth || 320, 400) });
+      // Google's dark button in dark mode, the outlined white one in light mode.
+      const dark = document.documentElement.classList.contains('dark');
+      g.renderButton(el.current, { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text, locale: settings.lang, width: Math.min(el.current.offsetWidth || 320, 400) });
       setReady(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, [text, settings.lang]);
+  }, [text, settings.lang, settings.theme]);
 
   if (ready === false) return null;
-  return <div ref={el} className={`flex min-h-11 justify-center ${className}`} />;
+  // color-scheme: light stops the browser painting a white box behind Google's frame when the site is dark.
+  return <div ref={el} style={{ colorScheme: 'light' }} className={`flex min-h-11 justify-center ${className}`} />;
 }
 
 /** Whether Google sign-in is set up on the server (so screens can hide the "or" divider too). */
