@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AlarmClock, DoorOpen, Eye, EyeOff, Flag, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
 import { useSettings } from '../settings/SettingsContext';
 import type { ClientRoomState } from '../../shared/types';
@@ -8,6 +9,7 @@ import Avatar from './Avatar';
 import Canvas from './canvas/Canvas';
 import Chat from './Chat';
 import Leaderboard from './Leaderboard';
+import LeaveConfirm from './LeaveConfirm';
 import Logo from './Logo';
 import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import SettingsButton from './SettingsModal';
@@ -186,6 +188,7 @@ function TurnSummary({ state }: { state: ClientRoomState }) {
 
 export default function Game({ game }: { game: GameApi }) {
   const t = useT();
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const state = game.state!;
   const isDrawer = state.drawerIds.includes(state.you);
   const isLead = state.drawerIds[0] === state.you;
@@ -258,12 +261,13 @@ export default function Game({ game }: { game: GameApi }) {
             <Logo size="sm" />
           </div>
           <SettingsButton />
-          <button className="btn btn-ghost px-3 py-2 text-sm" onClick={game.leaveRoom} title={t('game.leave')}>
+          <button className="btn btn-ghost px-3 py-2 text-sm" onClick={() => setConfirmLeave(true)} title={t('game.leave')}>
             <DoorOpen className="size-5" />
             <span className="hidden sm:inline">{t('game.leave')}</span>
           </button>
         </div>
       </header>
+      {confirmLeave && <LeaveConfirm inGame onStay={() => setConfirmLeave(false)} onLeave={game.leaveRoom} />}
 
       <main className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[250px_minmax(0,1fr)_300px]">
         <div className="sm:col-span-2 lg:order-2 lg:col-span-1">

@@ -25,6 +25,7 @@ import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
 import TaggedName from './TaggedName';
+import LeaveConfirm from './LeaveConfirm';
 import FriendsButton from '../friends/FriendsButton';
 
 function ConnectionBadge({ connected, resuming }: { connected: boolean; resuming: boolean }) {
@@ -248,6 +249,7 @@ function HomeView({ game }: { game: GameApi }) {
 
 function RoomView({ game }: { game: GameApi }) {
   const t = useT();
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const state = game.state!;
   const [copied, setCopied] = useState(false);
   const isHost = state.hostId === state.you;
@@ -293,11 +295,12 @@ function RoomView({ game }: { game: GameApi }) {
         <div className="flex gap-2">
           <FriendsButton />
           <SettingsButton />
-          <button className="btn btn-ghost crayon-edge py-2 text-base" onClick={game.leaveRoom}>
+          <button className="btn btn-ghost crayon-edge py-2 text-base" onClick={() => setConfirmLeave(true)}>
             <DoorOpen className="size-5" /> {t('lobby.leave')}
           </button>
         </div>
       </header>
+      {confirmLeave && <LeaveConfirm inGame={false} onStay={() => setConfirmLeave(false)} onLeave={game.leaveRoom} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1.2fr_1fr] lg:items-start">
         <div className="flex flex-col gap-4">
