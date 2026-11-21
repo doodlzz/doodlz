@@ -25,7 +25,7 @@ export default function WordSelectModal({ choices, totalSeconds, rerollsLeft, pa
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-indigo-950/60 p-4 backdrop-blur-sm dark:bg-black/70" role="dialog" aria-modal aria-labelledby="choose-title">
-      <div className="panel max-h-[95vh] w-full max-w-2xl animate-pop overflow-y-auto p-6 text-center">
+      <div className="panel max-h-[95vh] w-full max-w-2xl animate-modal overflow-y-auto p-6 text-center">
         <h2 id="choose-title" className="font-display text-3xl font-bold text-indigo-950">
           {t('words.title')}
         </h2>

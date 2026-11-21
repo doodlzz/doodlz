@@ -148,7 +148,7 @@ export default function PictureCropper({ file, onCancel, onSave }: Props) {
       aria-labelledby="crop-title"
       onClick={onCancel}
     >
-      <div className="panel m-auto w-full max-w-sm animate-pop p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="panel m-auto w-full max-w-sm animate-modal p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 id="crop-title" className="font-display text-2xl font-bold text-indigo-950">
             {t('crop.title')}

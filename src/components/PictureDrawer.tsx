@@ -121,7 +121,7 @@ export default function PictureDrawer({ background, onCancel, onSave }: Props) {
       aria-labelledby="drawer-title"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="panel m-auto w-full max-w-md animate-pop p-4">
+      <div className="panel m-auto w-full max-w-md animate-modal p-4">
         <div className="mb-3 flex items-center gap-3">
           <Avatar avatar={{ color: background, eyes: 0, mouth: 0, accessory: 0, image: preview }} size={44} />
           <h2 id="drawer-title" className="flex flex-1 items-center gap-2 font-display text-xl font-bold text-indigo-950">

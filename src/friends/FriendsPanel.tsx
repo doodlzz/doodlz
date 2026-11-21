@@ -256,7 +256,7 @@ export default function FriendsPanel() {
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal aria-labelledby="friends-title" onClick={closePanel}>
-      <div className="panel flex h-[min(640px,90vh)] w-full max-w-md animate-pop flex-col p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="panel flex h-[min(640px,90vh)] w-full max-w-md animate-modal flex-col p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <h2 id="friends-title" className="flex items-center gap-2 font-display text-2xl font-bold text-indigo-950">
             <Users className="size-6 text-emerald-500" /> {t('friends.title')}

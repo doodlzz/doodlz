@@ -49,7 +49,7 @@ export default function SettingsButton({ className = '' }: { className?: string 
       </button>
       {open && (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal aria-labelledby="settings-title" onClick={() => setOpen(false)}>
-          <div className="panel w-full max-w-md animate-pop p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="panel w-full max-w-md animate-modal p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 id="settings-title" className="flex items-center gap-2 font-display text-2xl font-bold text-indigo-950">
                 <Settings className="size-6 text-sky-500" /> {t('set.title')}

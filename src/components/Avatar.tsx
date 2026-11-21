@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { memo, useId } from 'react';
 import { FRAMED_VIEWBOX, FrameBack, FrameFront } from './AvatarFrame';
 import type { Avatar as AvatarConfig } from '../../shared/types';
 
@@ -261,7 +261,7 @@ interface Props {
   className?: string;
 }
 
-export default function Avatar({ avatar, size = 48, className = '' }: Props) {
+function AvatarSvg({ avatar, size = 48, className = '' }: Props) {
   const clip = useId();
   if (avatar.image) {
     // Uploaded picture, cropped to the same round head.
@@ -295,3 +295,11 @@ export default function Avatar({ avatar, size = 48, className = '' }: Props) {
     </svg>
   );
 }
+
+const same = (a: AvatarConfig, b: AvatarConfig) =>
+  a === b ||
+  (a.color === b.color && a.eyes === b.eyes && a.mouth === b.mouth && a.accessory === b.accessory && a.image === b.image && a.frame === b.frame && a.nameFx === b.nameFx && a.level === b.level);
+
+/** Avatars are detailed SVGs (frames especially), so they only redraw when something about them changes. */
+const Avatar = memo(AvatarSvg, (p, n) => p.size === n.size && p.className === n.className && same(p.avatar, n.avatar));
+export default Avatar;

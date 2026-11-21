@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Crown, Diamond, Gem, ImagePlus, Loader2, Lock, Paintbrush, ShoppingBag, Sparkles, Star, X } from 'lucide-react';
 import { COSMETICS, RARITY_ORDER, type Cosmetic, type FrameId, type NameFxId, type Rarity } from '../../shared/cosmetics';
 import { savingsPercent, type PackId, type ShopInfo } from '../../shared/shop';
@@ -6,7 +6,9 @@ import { useAuth, type ShopTab } from '../auth/AuthContext';
 import { readToken } from '../auth/storage';
 import { useT } from '../i18n';
 import { useSettings } from '../settings/SettingsContext';
-import Avatar from './Avatar';
+import AvatarView from './Avatar';
+import { useAfterFirstPaint } from '../hooks/useAfterFirstPaint';
+import type { Avatar } from '../../shared/types';
 import PictureButtons from './PictureButtons';
 import TaggedName from './TaggedName';
 
@@ -33,89 +35,136 @@ const byRarity = (a: Cosmetic, b: Cosmetic) => RARITY_ORDER.indexOf(a.rarity) - 
 
 // ---------------- cosmetics ----------------
 
+/** Items per section, sorted once (the catalog never changes while the app runs). */
+const BY_SLOT = {
+  frame: COSMETICS.filter((c) => c.slot === 'frame').sort(byRarity),
+  nameFx: COSMETICS.filter((c) => c.slot === 'nameFx').sort(byRarity),
+  picture: COSMETICS.filter((c) => c.slot === 'picture').sort(byRarity),
+};
+
+interface CardProps {
+  c: Cosmetic;
+  face: Avatar;
+  username: string;
+  tag: string;
+  owned: boolean;
+  worn: boolean;
+  afford: boolean;
+  active: boolean;
+  /** This item's purchase / equip is in progress, and whether any is (which disables the buttons). */
+  busy: boolean;
+  anyBusy: boolean;
+  onTry: (c: Cosmetic) => void;
+  onBuy: (c: Cosmetic) => void;
+  onEquip: (c: Cosmetic, worn: boolean) => void;
+}
+
+/** One shop item. Memoized: hovering another item (to try it on) doesn't redraw this one's preview. */
+const CosmeticCard = memo(function CosmeticCard({ c, face, username, tag, owned, worn, afford, active, busy, anyBusy, onTry, onBuy, onEquip }: CardProps) {
+  const t = useT();
+  const look = RARITY[c.rarity];
+  return (
+    <div
+      className={`flex flex-col overflow-hidden rounded-2xl bg-indigo-50/70 ring-2 ${look.card} ${active ? 'outline-4 outline-pink-400' : ''}`}
+      onMouseEnter={() => c.slot !== 'picture' && onTry(c)}
+    >
+      <button
+        type="button"
+        className="relative grid h-24 cursor-pointer place-items-center bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#312e81]"
+        onClick={() => c.slot !== 'picture' && onTry(c)}
+        aria-label={`${t('shop.tryOn')}: ${t(`cos.${c.id}`)}`}
+      >
+        <span className={`absolute top-1.5 left-1.5 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide uppercase ${look.chip}`}>
+          {look.icon} {t(`rarity.${c.rarity}`)}
+        </span>
+        {c.slot === 'frame' && <AvatarView avatar={{ ...face, frame: c.value as FrameId }} size={66} />}
+        {c.slot === 'nameFx' && <TaggedName name={username} tag={tag} fx={c.value as NameFxId} className="max-w-[90%] truncate px-2 font-display text-lg text-white" />}
+        {c.slot === 'picture' && (c.value === 'draw' ? <Paintbrush className="size-10 text-pink-300" /> : <ImagePlus className="size-10 text-sky-300" />)}
+      </button>
+      <div className="flex flex-1 flex-col gap-1.5 p-2">
+        <div className="text-sm leading-tight font-extrabold text-indigo-950">{t(`cos.${c.id}`)}</div>
+        {!owned ? (
+          <button
+            type="button"
+            className={`btn mt-auto px-2 py-1.5 text-sm ${afford ? 'btn-green' : 'btn-ghost'}`}
+            disabled={anyBusy}
+            onClick={() => onBuy(c)}
+            title={afford ? t('shop.buyFor', { n: c.price }) : t('shop.notEnough')}
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : afford ? <Star className="size-4 fill-current" /> : <Lock className="size-4" />}
+            {c.price}
+          </button>
+        ) : c.slot === 'picture' ? (
+          <PictureButtons only={c.value as 'upload' | 'draw'} compact className="mt-auto" />
+        ) : (
+          <button type="button" className={`btn mt-auto px-2 py-1.5 text-sm ${worn ? 'btn-violet' : 'btn-blue'}`} disabled={anyBusy} onClick={() => onEquip(c, worn)}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : worn && <Check className="size-4" strokeWidth={3} />}
+            {worn ? t('shop.equipped') : t('shop.equip')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
+
 function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
   const t = useT();
   const { account, buyItem, equip } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [trying, setTrying] = useState<Cosmetic | null>(null);
-  if (!account) return null;
+  // The grid (25+ detailed previews) is added a frame after the shop opens, so the window appears at once.
+  const showGrid = useAfterFirstPaint();
+  const savedFace = account?.avatar;
+  const face = useMemo(() => ({ ...(savedFace ?? DEFAULT_FACE) }), [savedFace]);
 
-  const me = { ...(account.avatar ?? DEFAULT_FACE) };
-  const owns = (c: Cosmetic) => account.owned.includes(c.id);
-  const wearing = (c: Cosmetic) => (c.slot === 'frame' || c.slot === 'nameFx') && account.equipped[c.slot] === c.value;
+  // Handlers read the latest values from a ref, so they stay the same functions and memoized cards don't redraw.
+  const latest = useRef({ account, buyItem, equip, onNeedPoints });
+  latest.current = { account, buyItem, equip, onNeedPoints };
+  const run = useCallback(async (id: string, fn: () => Promise<string | null>) => {
+    setBusy(id);
+    setError(await fn());
+    setBusy(null);
+  }, []);
+  const onTry = useCallback((c: Cosmetic) => setTrying(c), []);
+  const onBuy = useCallback(
+    (c: Cosmetic) => {
+      const { account: acc, buyItem: buy, onNeedPoints: needPoints } = latest.current;
+      if (!acc || acc.points < c.price) return needPoints();
+      void run(c.id, () => buy(c.id));
+    },
+    [run],
+  );
+  const onEquip = useCallback((c: Cosmetic, worn: boolean) => void run(c.id, () => latest.current.equip(c.slot as 'frame' | 'nameFx', worn ? null : c.id)), [run]);
+
+  if (!account) return null;
 
   // The showcase shows what you're trying on, on top of what you already wear.
   const showFrame = (trying?.slot === 'frame' ? trying.value : account.equipped.frame) as FrameId | undefined;
   const showFx = (trying?.slot === 'nameFx' ? trying.value : account.equipped.nameFx) as NameFxId | undefined;
 
-  const run = async (id: string, fn: () => Promise<string | null>) => {
-    setBusy(id);
-    setError(await fn());
-    setBusy(null);
-  };
-
   const section = (slot: Cosmetic['slot'], title: string) => (
     <section className="mb-4">
       <h3 className="label">{title}</h3>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {COSMETICS.filter((c) => c.slot === slot).sort(byRarity).map((c) => {
-          const owned = owns(c);
-          const worn = wearing(c);
-          const afford = account.points >= c.price;
-          const look = RARITY[c.rarity];
-          return (
-            <div
-              key={c.id}
-              className={`flex flex-col overflow-hidden rounded-2xl bg-indigo-50/70 ring-2 ${look.card} ${trying?.id === c.id ? 'outline-4 outline-pink-400' : ''}`}
-              onMouseEnter={() => c.slot !== 'picture' && setTrying(c)}
-            >
-              <button
-                type="button"
-                className="relative grid h-24 cursor-pointer place-items-center bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#312e81]"
-                onClick={() => c.slot !== 'picture' && setTrying(c)}
-                aria-label={`${t('shop.tryOn')}: ${t(`cos.${c.id}`)}`}
-              >
-                <span className={`absolute top-1.5 left-1.5 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide uppercase ${look.chip}`}>
-                  {look.icon} {t(`rarity.${c.rarity}`)}
-                </span>
-                {c.slot === 'frame' && <Avatar avatar={{ ...me, frame: c.value as FrameId }} size={66} />}
-                {c.slot === 'nameFx' && (
-                  <TaggedName name={account.username} tag={account.tag} fx={c.value as NameFxId} className="max-w-[90%] truncate px-2 font-display text-lg text-white" />
-                )}
-                {c.slot === 'picture' &&
-                  (c.value === 'draw' ? <Paintbrush className="size-10 text-pink-300" /> : <ImagePlus className="size-10 text-sky-300" />)}
-              </button>
-              <div className="flex flex-1 flex-col gap-1.5 p-2">
-                <div className="text-sm leading-tight font-extrabold text-indigo-950">{t(`cos.${c.id}`)}</div>
-                {!owned ? (
-                  <button
-                    type="button"
-                    className={`btn mt-auto px-2 py-1.5 text-sm ${afford ? 'btn-green' : 'btn-ghost'}`}
-                    disabled={busy !== null}
-                    onClick={() => (afford ? run(c.id, () => buyItem(c.id)) : onNeedPoints())}
-                    title={afford ? t('shop.buyFor', { n: c.price }) : t('shop.notEnough')}
-                  >
-                    {busy === c.id ? <Loader2 className="size-4 animate-spin" /> : afford ? <Star className="size-4 fill-current" /> : <Lock className="size-4" />}
-                    {c.price}
-                  </button>
-                ) : c.slot === 'picture' ? (
-                  <PictureButtons only={c.value as 'upload' | 'draw'} compact className="mt-auto" />
-                ) : (
-                  <button
-                    type="button"
-                    className={`btn mt-auto px-2 py-1.5 text-sm ${worn ? 'btn-violet' : 'btn-blue'}`}
-                    disabled={busy !== null}
-                    onClick={() => run(c.id, () => equip(c.slot as 'frame' | 'nameFx', worn ? null : c.id))}
-                  >
-                    {busy === c.id ? <Loader2 className="size-4 animate-spin" /> : worn && <Check className="size-4" strokeWidth={3} />}
-                    {worn ? t('shop.equipped') : t('shop.equip')}
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {BY_SLOT[slot].map((c) => (
+          <CosmeticCard
+            key={c.id}
+            c={c}
+            face={face}
+            username={account.username}
+            tag={account.tag}
+            owned={account.owned.includes(c.id)}
+            worn={(c.slot === 'frame' || c.slot === 'nameFx') && account.equipped[c.slot] === c.value}
+            afford={account.points >= c.price}
+            active={trying?.id === c.id}
+            busy={busy === c.id}
+            anyBusy={busy !== null}
+            onTry={onTry}
+            onBuy={onBuy}
+            onEquip={onEquip}
+          />
+        ))}
       </div>
     </section>
   );
@@ -124,7 +173,7 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
     <div onMouseLeave={() => setTrying(null)}>
       {/* Showcase: you, wearing what you're looking at. */}
       <div className="mb-4 flex items-center gap-4 rounded-3xl bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#4a044e] p-4">
-        <Avatar avatar={{ ...me, frame: showFrame }} size={96} className="animate-float" />
+        <AvatarView avatar={{ ...face, frame: showFrame }} size={96} className="animate-float" />
         <div className="min-w-0 flex-1">
           <TaggedName name={account.username} tag={account.tag} fx={showFx} className="block truncate font-display text-2xl text-white" />
           <p className="mt-1 text-xs font-bold text-white/90">{trying ? t('shop.tryingOn', { item: t(`cos.${trying.id}`) }) : t('shop.tryHint')}</p>
@@ -135,9 +184,15 @@ function CosmeticsTab({ onNeedPoints }: { onNeedPoints: () => void }) {
           {t(error)}
         </p>
       )}
-      {section('frame', t('shop.frames'))}
-      {section('nameFx', t('shop.nameFx'))}
-      {section('picture', t('shop.pictures'))}
+      {showGrid ? (
+        <>
+          {section('frame', t('shop.frames'))}
+          {section('nameFx', t('shop.nameFx'))}
+          {section('picture', t('shop.pictures'))}
+        </>
+      ) : (
+        <div className="min-h-[60vh]" aria-busy />
+      )}
     </div>
   );
 }
@@ -283,7 +338,7 @@ export default function Shop({ initialTab = 'cosmetics', onClose }: { initialTab
 
   return (
     <div className="fixed inset-0 z-[70] overflow-y-auto bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal aria-labelledby="shop-title" onClick={onClose}>
-      <div className="panel mx-auto my-4 w-full max-w-2xl animate-pop p-4 sm:p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="panel mx-auto my-4 w-full max-w-2xl animate-modal p-4 sm:p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center gap-2">
           <h2 id="shop-title" className="flex flex-1 items-center gap-2 font-display text-2xl font-bold text-indigo-950">
             <ShoppingBag className="size-6 text-amber-500" /> {t('shop.shop')}

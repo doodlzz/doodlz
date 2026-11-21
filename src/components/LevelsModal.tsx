@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Check, Gift, Star, TrendingUp, X } from 'lucide-react';
 import { BADGE_TIERS, CASUAL_XP, LEVEL_UP_POINTS, MAX_LEVEL, levelInfo, xpForLevel } from '../../shared/levels';
 import { POINTS } from '../../shared/quests';
+import { useAfterFirstPaint } from '../hooks/useAfterFirstPaint';
 import { useT } from '../i18n';
 import LevelBadge from './LevelBadge';
 
@@ -18,11 +19,15 @@ export default function LevelsModal({ xp, onClose }: { xp: number; onClose: () =
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const levels = Array.from({ length: MAX_LEVEL - 1 }, (_, i) => i + 2);
+  // Opens with the levels up to a dozen past yours (so it can scroll to the next one), and adds the rest a
+  // frame later, after the window is on screen.
+  const full = useAfterFirstPaint();
+  const last = full ? MAX_LEVEL : Math.min(MAX_LEVEL, level + 12);
+  const levels = Array.from({ length: last - 1 }, (_, i) => i + 2);
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal aria-labelledby="levels-title" onClick={onClose}>
-      <div className="panel flex max-h-[90vh] w-full max-w-lg animate-pop flex-col p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="panel flex max-h-[90vh] w-full max-w-lg animate-modal flex-col p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <h2 id="levels-title" className="flex items-center gap-2 font-display text-2xl font-bold text-indigo-950">
             <TrendingUp className="size-6 text-violet-500" /> {t('levels.title')}
