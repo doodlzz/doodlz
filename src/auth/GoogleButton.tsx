@@ -1,15 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSettings } from '../settings/SettingsContext';
+import { Loader2 } from 'lucide-react';
+import { useT } from '../i18n';
+import { GoogleG } from './AccountSettings';
 
-// Google's "Sign in with Google" button (Google Identity Services). Hidden when the server has no client id.
+// "Sign in with Google": our own button, drawn the same every time (Google's iframe button re-renders after
+// opening: new font, then "Continue as …"). Clicking opens Google's sign-in popup, which gives an access
+// token the server checks with Google. Hidden when the server has no client id.
 
-interface GoogleId {
-  initialize(o: { client_id: string; callback: (r: { credential: string }) => void; ux_mode?: 'popup'; auto_select?: boolean }): void;
-  renderButton(el: HTMLElement, o: Record<string, unknown>): void;
+interface TokenClient {
+  requestAccessToken(o?: { prompt?: string }): void;
+}
+interface GoogleOAuth2 {
+  initTokenClient(o: {
+    client_id: string;
+    scope: string;
+    callback: (r: { access_token?: string; error?: string }) => void;
+    error_callback?: (e: { type?: string }) => void;
+  }): TokenClient;
 }
 declare global {
   interface Window {
-    google?: { accounts: { id: GoogleId } };
+    google?: { accounts: { oauth2: GoogleOAuth2 } };
   }
 }
 
@@ -42,58 +53,78 @@ function loadScript(): Promise<void> {
   return scriptPromise;
 }
 
-// Ask the server and fetch Google's script as soon as the app loads (not when a dialog opens), so the
-// sign-in dialogs open with the button already in place instead of jumping when it arrives.
+// Ask the server and fetch Google's script when the app loads, so the popup can open on the first click
+// (browsers only allow popups straight from a click, not after waiting for a download).
 if (typeof window !== 'undefined') {
   void googleClientId().then((id) => {
     if (id) setTimeout(() => void loadScript().catch(() => {}), 1500);
   });
 }
 
-/** Latest callback, so the button (rendered once) always calls the current handler. */
-let onCredential: ((credential: string) => void) | null = null;
-let initializedFor: string | null = null;
+/** One token client for the page; the latest button's handler gets the result. */
+let tokenClient: TokenClient | null = null;
+let onToken: ((accessToken: string) => void) | null = null;
+let onDone: (() => void) | null = null;
 
-export default function GoogleButton({ text, onSignIn, className = '' }: { text: 'signin_with' | 'signup_with' | 'continue_with'; onSignIn: (credential: string) => void; className?: string }) {
-  const { settings } = useSettings();
-  const el = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState<boolean | null>(null);
-  onCredential = onSignIn;
+function getTokenClient(clientId: string): TokenClient | null {
+  const oauth2 = window.google?.accounts.oauth2;
+  if (!oauth2) return null;
+  tokenClient ??= oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'openid email profile',
+    callback: (r) => {
+      onDone?.();
+      if (r.access_token) onToken?.(r.access_token);
+    },
+    error_callback: () => onDone?.(), // popup closed or blocked
+  });
+  return tokenClient;
+}
+
+type Variant = 'signin_with' | 'signup_with' | 'continue_with';
+const LABEL: Record<Variant, string> = { signin_with: 'auth.google.signin', signup_with: 'auth.google.signup', continue_with: 'auth.google.continue' };
+
+export default function GoogleButton({ text, onSignIn, className = '' }: { text: Variant; onSignIn: (accessToken: string) => void; className?: string }) {
+  const t = useT();
+  const [waiting, setWaiting] = useState(false);
+  const mounted = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const id = await googleClientId();
-      if (!id) return setReady(false);
-      try {
-        await loadScript();
-      } catch {
-        return setReady(false);
-      }
-      const g = window.google?.accounts.id;
-      if (cancelled || !g || !el.current) return;
-      if (initializedFor !== id) {
-        g.initialize({ client_id: id, callback: (r) => onCredential?.(r.credential), ux_mode: 'popup', auto_select: false });
-        initializedFor = id;
-      }
-      el.current.innerHTML = '';
-      // Google's white button in both themes: it stands out on the dark panels too.
-      g.renderButton(el.current, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text, locale: settings.lang, width: Math.min(el.current.offsetWidth || 320, 400) });
-      setReady(true);
-    })();
+    mounted.current = true;
+    void loadScript().catch(() => {}); // in case the early preload hasn't happened yet
     return () => {
-      cancelled = true;
+      mounted.current = false;
     };
-  }, [text, settings.lang]);
+  }, []);
 
-  if (ready === false) return null;
-  // A fixed 44px slot (Google's large button) with a plain pill until it loads, so nothing below moves.
-  // color-scheme: light stops the browser painting a white box behind Google's frame when the site is dark.
+  const click = async () => {
+    const id = knownClientId ?? (await googleClientId());
+    if (!id) return;
+    let client = getTokenClient(id);
+    if (!client) {
+      // Script still downloading (very early click): load it; the next click opens the popup.
+      setWaiting(true);
+      await loadScript().catch(() => {});
+      if (mounted.current) setWaiting(false);
+      return;
+    }
+    onToken = onSignIn;
+    onDone = () => mounted.current && setWaiting(false);
+    setWaiting(true);
+    client.requestAccessToken({ prompt: '' });
+  };
+
+  // Google's look for a light button: white, grey outline, dark text, the "G" on the left.
   return (
-    <div className={`relative h-11 ${className}`}>
-      {!ready && <div className="absolute inset-0 rounded-full border border-slate-300 bg-white" aria-hidden />}
-      <div ref={el} style={{ colorScheme: 'light' }} className="relative flex h-11 justify-center overflow-hidden" />
-    </div>
+    <button
+      type="button"
+      onClick={() => void click()}
+      disabled={waiting}
+      className={`flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-[#747775] bg-white px-4 font-sans text-[15px] font-semibold text-[#1f1f1f] transition hover:bg-[#f2f6fc] active:bg-[#e8eef7] disabled:cursor-wait disabled:opacity-80 ${className}`}
+    >
+      {waiting ? <Loader2 className="size-5 animate-spin text-[#1f1f1f]" /> : <GoogleG className="size-5" />}
+      {t(LABEL[text])}
+    </button>
   );
 }
 

@@ -62,8 +62,8 @@ interface Ctx {
   /** Permanently delete the signed-in account (needs the password). Returns an error key, or null on success. */
   deleteAccount: (password: string) => Promise<string | null>;
   login: (login: string, password: string, remember: boolean) => Promise<string | null>;
-  /** Sign in or up with a Google ID token. 'auth.err.googleNew' means a new account needs consent first. */
-  googleSignIn: (credential: string, remember: boolean, consent: boolean) => Promise<string | null>;
+  /** Sign in or up with an access token from Google's popup. 'auth.err.googleNew' means a new account needs consent first. */
+  googleSignIn: (accessToken: string, remember: boolean, consent: boolean) => Promise<string | null>;
   /** Returns an error key, or null on success. */
   updateAccount: (changes: AccountChanges) => Promise<string | null>;
   /** Upload a picture (data URL) or remove it with null. Returns an error key, or null on success. */
@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       },
       login: async (login, password, remember) => signedIn(await api('login', { login, password }), remember),
-      googleSignIn: async (credential, remember, consent) => signedIn(await api('google', { credential, consent }), remember),
+      googleSignIn: async (accessToken, remember, consent) => signedIn(await api('google', { accessToken, consent }), remember),
       updateAccount: async (changes) => {
         const res = await api('account', changes, readToken());
         if (!res.account) return res.error ?? 'auth.err.network';

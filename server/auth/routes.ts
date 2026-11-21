@@ -1,7 +1,7 @@
 import express, { type Request, type Router } from 'express';
 import type { AccountStore } from './accounts.js';
 import { config } from '../config.js';
-import { verifyGoogleToken } from './google.js';
+import { verifyGoogleAccessToken, verifyGoogleToken } from './google.js';
 
 const bearer = (req: Request) => req.get('authorization')?.replace(/^Bearer\s+/i, '') || undefined;
 
@@ -42,10 +42,11 @@ export function authRoutes(accounts: AccountStore): Router {
   // Which sign-in options the client should show.
   router.get('/config', (_req, res) => res.json({ googleClientId: config.googleClientId || null }));
 
-  // Sign in or sign up with Google: { credential, consent? }. A new account needs consent: true.
+  // Sign in or sign up with Google: { accessToken } from the popup (or { credential }, an ID token), plus
+  // consent: true for a new account.
   router.post('/google', async (req, res) => {
     if (!allow(req.ip ?? '')) return res.status(429).json({ error: 'auth.err.tooMany' });
-    const profile = await verifyGoogleToken(req.body?.credential);
+    const profile = req.body?.accessToken ? await verifyGoogleAccessToken(req.body.accessToken) : await verifyGoogleToken(req.body?.credential);
     if (!profile) return res.status(401).json({ error: 'auth.err.google' });
     const result = accounts.signInWithGoogle(profile, req.body?.consent);
     res.status('error' in result ? (result.error === 'auth.err.googleNew' ? 409 : 400) : 200).json(result);
