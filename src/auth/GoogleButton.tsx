@@ -14,12 +14,15 @@ declare global {
 }
 
 let clientIdPromise: Promise<string | null> | null = null;
+/** The client id once known (undefined while still asking), so dialogs can lay out right on their first frame. */
+let knownClientId: string | null | undefined;
 /** The server's Google client id, fetched once. */
 function googleClientId(): Promise<string | null> {
   clientIdPromise ??= fetch('/api/auth/config')
     .then((r) => (r.ok ? r.json() : null))
     .then((c: { googleClientId?: string | null } | null) => c?.googleClientId ?? null)
-    .catch(() => null);
+    .catch(() => null)
+    .then((id) => (knownClientId = id));
   return clientIdPromise;
 }
 
@@ -37,6 +40,14 @@ function loadScript(): Promise<void> {
     document.head.appendChild(s);
   });
   return scriptPromise;
+}
+
+// Ask the server and fetch Google's script as soon as the app loads (not when a dialog opens), so the
+// sign-in dialogs open with the button already in place instead of jumping when it arrives.
+if (typeof window !== 'undefined') {
+  void googleClientId().then((id) => {
+    if (id) setTimeout(() => void loadScript().catch(() => {}), 1500);
+  });
 }
 
 /** Latest callback, so the button (rendered once) always calls the current handler. */
@@ -76,13 +87,19 @@ export default function GoogleButton({ text, onSignIn, className = '' }: { text:
   }, [text, settings.lang]);
 
   if (ready === false) return null;
+  // A fixed 44px slot (Google's large button) with a plain pill until it loads, so nothing below moves.
   // color-scheme: light stops the browser painting a white box behind Google's frame when the site is dark.
-  return <div ref={el} style={{ colorScheme: 'light' }} className={`flex min-h-11 justify-center ${className}`} />;
+  return (
+    <div className={`relative h-11 ${className}`}>
+      {!ready && <div className="absolute inset-0 rounded-full border border-slate-300 bg-white" aria-hidden />}
+      <div ref={el} style={{ colorScheme: 'light' }} className="relative flex h-11 justify-center overflow-hidden" />
+    </div>
+  );
 }
 
 /** Whether Google sign-in is set up on the server (so screens can hide the "or" divider too). */
 export function useGoogleEnabled(): boolean {
-  const [on, setOn] = useState(false);
+  const [on, setOn] = useState(() => !!knownClientId);
   useEffect(() => {
     googleClientId().then((id) => setOn(!!id));
   }, []);

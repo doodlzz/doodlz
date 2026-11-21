@@ -111,7 +111,7 @@ export default function AuthModal({ mode, setMode, onClose, onGuest }: Props) {
 
   return (
     <div className="fixed inset-0 z-[75] flex overflow-y-auto bg-indigo-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal aria-labelledby="auth-title" onClick={onClose}>
-      <div className={`panel m-auto w-full animate-pop p-5 ${mode === 'account' ? 'max-w-md' : 'max-w-sm'}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`panel m-auto w-full animate-modal p-5 ${mode === 'account' ? 'max-w-md' : 'max-w-sm'}`} onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 id="auth-title" className="font-display text-2xl font-bold text-indigo-950">
             {title}
