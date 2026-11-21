@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { CalendarCheck, CalendarRange, Check, Star } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { CalendarCheck, CalendarRange, Check, ChevronDown, Star } from 'lucide-react';
 import { levelInfo } from '../../shared/levels';
 import { POINTS, utcDay, utcWeek } from '../../shared/quests';
 import LevelBadge from './LevelBadge';
@@ -78,6 +78,49 @@ function QuestList({ quests, progress, showPoints }: { quests: QuestDef[]; progr
   );
 }
 
+/** Remembers whether a quest section is folded up, per browser. */
+function useCollapsed(key: string) {
+  const storageKey = `doodlz:quests-collapsed:${key}`;
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(storageKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggle = () =>
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(storageKey, c ? '0' : '1');
+      } catch {
+        /* storage blocked: still works for this visit */
+      }
+      return !c;
+    });
+  return [collapsed, toggle] as const;
+}
+
+/** Section title that folds its quests away when clicked; the arrow flips to match. */
+function SectionToggle({ icon, title, collapsed, onToggle }: { icon: ReactNode; title: string; collapsed: boolean; onToggle: () => void }) {
+  return (
+    <h2 className="font-display text-lg font-semibold text-indigo-950">
+      <button type="button" onClick={onToggle} aria-expanded={!collapsed} className="group flex cursor-pointer items-center gap-2 rounded-lg text-left whitespace-nowrap">
+        {icon} {title}
+        <ChevronDown className={`size-5 text-indigo-400 transition-transform duration-200 group-hover:text-violet-500 ${collapsed ? '-rotate-90' : ''}`} strokeWidth={2.5} aria-hidden />
+      </button>
+    </h2>
+  );
+}
+
+/** Smoothly folds its children open and shut. */
+function Collapsible({ collapsed, children }: { collapsed: boolean; children: ReactNode }) {
+  return (
+    <div className={`grid transition-[grid-template-rows] duration-200 ease-out ${collapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'}`} inert={collapsed}>
+      <div className="min-h-0 overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
 export default function DailyQuests({ className = '' }: { className?: string }) {
   const t = useT();
   const { account, open } = useAuth();
@@ -85,6 +128,8 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
   const [localWeek, setLocalWeek] = useState(loadWeeklyProgress);
   const [left, setLeft] = useState(msUntilReset);
   const [weekLeft, setWeekLeft] = useState(msUntilWeeklyReset);
+  const [dailyCollapsed, toggleDaily] = useCollapsed('daily');
+  const [weeklyCollapsed, toggleWeekly] = useCollapsed('weekly');
 
   useEffect(() => {
     const refresh = () => {
@@ -114,33 +159,33 @@ export default function DailyQuests({ className = '' }: { className?: string }) 
   return (
     <div className={`panel p-4 ${className}`}>
       {account && <LevelBar xp={account.xp ?? 0} />}
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-indigo-950">
-          <CalendarCheck className="size-5 text-emerald-500" /> {t('quests.title')}
-        </h2>
-        <span className="text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(left) })}</span>
+      <div className={`flex items-center justify-between gap-2 transition-[margin] duration-200 ${dailyCollapsed ? 'mb-0' : 'mb-1.5'}`}>
+        <SectionToggle icon={<CalendarCheck className="size-5 text-emerald-500" />} title={t('quests.title')} collapsed={dailyCollapsed} onToggle={toggleDaily} />
+        <span className="text-right text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(left) })}</span>
       </div>
-      <p className="-mt-1.5 mb-2.5 text-xs font-bold text-indigo-400">
-        {account ? (
-          t('quests.rankedNote', { n: POINTS.rankedMinPlayers })
-        ) : (
-          <>
-            {t('quests.note')}{' '}
-            <button type="button" className="cursor-pointer text-pink-500 underline underline-offset-2 hover:text-pink-400" onClick={() => open('register')}>
-              {t('quests.signIn')}
-            </button>
-          </>
-        )}
-      </p>
-      <QuestList quests={quests} progress={progress} showPoints={!!account} />
+      <Collapsible collapsed={dailyCollapsed}>
+        <p className="mb-2.5 text-xs font-bold text-indigo-400">
+          {account ? (
+            t('quests.rankedNote', { n: POINTS.rankedMinPlayers })
+          ) : (
+            <>
+              {t('quests.note')}{' '}
+              <button type="button" className="cursor-pointer text-pink-500 underline underline-offset-2 hover:text-pink-400" onClick={() => open('register')}>
+                {t('quests.signIn')}
+              </button>
+            </>
+          )}
+        </p>
+        <QuestList quests={quests} progress={progress} showPoints={!!account} />
+      </Collapsible>
 
-      <div className="mt-4 mb-2 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-indigo-950">
-          <CalendarRange className="size-5 text-violet-500" /> {t('quests.weeklyTitle')}
-        </h2>
-        <span className="text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(weekLeft) })}</span>
+      <div className={`mt-4 flex items-center justify-between gap-2 transition-[margin] duration-200 ${weeklyCollapsed ? 'mb-0' : 'mb-2'}`}>
+        <SectionToggle icon={<CalendarRange className="size-5 text-violet-500" />} title={t('quests.weeklyTitle')} collapsed={weeklyCollapsed} onToggle={toggleWeekly} />
+        <span className="text-right text-xs font-bold text-indigo-300">{t('quests.resets', { time: formatLeft(weekLeft) })}</span>
       </div>
-      <QuestList quests={weekly} progress={weekProgress} showPoints={!!account} />
+      <Collapsible collapsed={weeklyCollapsed}>
+        <QuestList quests={weekly} progress={weekProgress} showPoints={!!account} />
+      </Collapsible>
     </div>
   );
 }

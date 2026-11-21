@@ -235,8 +235,9 @@ function HomeView({ game }: { game: GameApi }) {
       </div>
       <SupportCard className="mt-4 w-full max-w-xl" />
       <AdSlot className="mt-4 w-full max-w-xl" />
-      {/* Pinned to the bottom corners on wide screens (socials from 1024px, quests from 1280px); stacked at the end on smaller ones. */}
-      <DailyQuests className="crayon-edge mt-4 w-full max-w-xl xl:fixed xl:bottom-4 xl:left-4 xl:z-10 xl:mt-0 xl:max-h-[calc(100vh-4.5rem)] xl:w-80 xl:overflow-y-auto" />
+      {/* Pinned to the bottom corners on wide screens (socials from 1024px, quests from 1152px); stacked at the end on smaller ones.
+          Quests narrow to fit the gap beside the 36rem lobby column, up to 20rem wide. */}
+      <DailyQuests className="crayon-edge no-scrollbar mt-4 w-full max-w-xl min-[1152px]:fixed min-[1152px]:bottom-4 min-[1152px]:left-4 min-[1152px]:z-10 min-[1152px]:mt-0 min-[1152px]:max-h-[calc(100vh-4.5rem)] min-[1152px]:w-[min(20rem,calc((100vw_-_36rem)/2_-_2rem))] min-[1152px]:overflow-x-hidden min-[1152px]:overflow-y-auto" />
       <Socials className="mt-6 lg:fixed lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0" />
       <Footer className="mt-8 pb-14" />
     </div>

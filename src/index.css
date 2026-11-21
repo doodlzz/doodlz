@@ -324,6 +324,10 @@ html.dark {
 }
 .crayon-edge::before { inset: -3px; filter: url(#cr-edge-a); }
 .crayon-edge::after { inset: 1px -1px -1px 2px; opacity: 0.5; filter: url(#cr-edge-b); }
+/* Still scrolls if it has to, but never shows a scrollbar. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* For boxes that clip their overflow (e.g. the chat): keep both lines inside the edge. */
 .crayon-inset::before { inset: 3px; }
 .crayon-inset::after { inset: 6px 5px 5px 7px; }
