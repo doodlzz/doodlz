@@ -66,6 +66,18 @@ export const en = {
   'gs.customPlaceholder': 'Comma-separated, e.g. pizza party, my cat, homework',
   'gs.customOnly': 'Use only custom words',
   'gs.customCount': '{n} words',
+  "rules.title": "Before you draw",
+  "rules.mixed": "Mixed",
+  "rules.custom": "Custom words",
+  "rules.picking": "Being picked…",
+  "rules.firstTo": "First to {n} points",
+  "rules.rounds": "{n} rounds",
+  "rules.main": "Draw it, don't write it!",
+  "rules.noSpoil": "Don't type the word in chat once you've guessed it.",
+  "rules.beKind": "Be kind. Players who break the rules can be reported and removed.",
+  "rules.ok": "Let's draw!",
+  "rules.words": "Words & numbers",
+  "rules.pictures": "Pictures",
 
   // game
   'game.round': 'Round',

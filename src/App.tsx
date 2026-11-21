@@ -27,10 +27,11 @@ const GameOver = lazy(loadGameOver);
 const Shop = lazy(loadShop);
 const LevelsModal = lazy(loadLevels);
 const FriendsPanel = lazy(loadFriendsPanel);
+const RulesModal = lazy(() => import('./components/RulesModal'));
 const LegalPage = lazy(() => import('./legal/LegalPages').then((m) => ({ default: m.LegalPage })));
 
 function preloadScreens() {
-  const go = () => [loadGame, loadGameOver, loadShop, loadLevels, loadFriendsPanel].forEach((load) => void load().catch(() => {}));
+  const go = () => [loadGame, loadGameOver, loadShop, loadLevels, loadFriendsPanel, () => import('./components/RulesModal')].forEach((load) => void load().catch(() => {}));
   if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 4000 });
   else setTimeout(go, 1500);
 }
@@ -78,6 +79,30 @@ function Shell() {
 
   useEffect(preloadScreens, []);
 
+  // The rules pop up once each time you join a room (remembered per tab, so a refresh doesn't show them again).
+  const [rulesFor, setRulesFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!code) return setRulesFor(null);
+    let seen: string[] = [];
+    try {
+      seen = JSON.parse(sessionStorage.getItem('doodlz:rulesSeen') ?? '[]');
+    } catch {
+      // storage unavailable: show them
+    }
+    if (!seen.includes(code)) setRulesFor(code);
+  }, [code]);
+  const closeRules = useCallback(() => {
+    if (rulesFor) {
+      try {
+        const seen: string[] = JSON.parse(sessionStorage.getItem('doodlz:rulesSeen') ?? '[]');
+        sessionStorage.setItem('doodlz:rulesSeen', JSON.stringify([...seen, rulesFor].slice(-20)));
+      } catch {
+        // ignore
+      }
+    }
+    setRulesFor(null);
+  }, [rulesFor]);
+
   const phase = game.state?.phase;
   return (
     <FriendsProvider onJoin={joinFriend} myRoomCode={code ?? null}>
@@ -95,6 +120,7 @@ function Shell() {
 
       <CookieNotice />
       <Suspense fallback={null}>
+        {game.state && rulesFor === game.state.code && <RulesModal state={game.state} onClose={closeRules} />}
         {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
         {levelsOpen && account && <LevelsModal xp={account.xp ?? 0} onClose={closeLevels} />}
       </Suspense>
