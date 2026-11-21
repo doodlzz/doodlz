@@ -395,3 +395,52 @@ html.dark {
 @media (prefers-reduced-motion: reduce) {
   .level-rainbow { animation: none; }
 }
+
+/* ---------------- playful text motion (transforms only, off for reduced motion) ---------------- */
+.logo-letter { display: inline-block; transform: rotate(var(--r, 0deg)); }
+/* Big logo: each letter bobs a little later than the one before, so a wave runs through the word. */
+.logo-wave { animation: logo-bob 2.8s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 0.14s); }
+@keyframes logo-bob {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-7px) rotate(calc(var(--r, 0deg) * -1)); }
+}
+.logo-letter:hover { animation: logo-hop 0.55s cubic-bezier(0.3, 1.6, 0.6, 1); }
+@keyframes logo-hop {
+  0% { transform: translateY(0) rotate(var(--r, 0deg)) scale(1); }
+  40% { transform: translateY(-14px) rotate(calc(var(--r, 0deg) * -2)) scale(1.12); }
+  100% { transform: translateY(0) rotate(var(--r, 0deg)) scale(1); }
+}
+
+/* Tagline: phrases pop in one after another once; the pencil scribbles now and then. */
+.tagline-part { display: inline-block; animation: tagline-in 0.5s cubic-bezier(0.3, 1.5, 0.6, 1) both; animation-delay: calc(0.25s + var(--i, 0) * 0.28s); }
+@keyframes tagline-in {
+  from { transform: translateY(10px) scale(0.6); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.scribble-wiggle { display: inline-block; transform-origin: 20% 80%; animation: scribble 5s ease-in-out 1.6s infinite; }
+/* A small scribble every few seconds, resting in between (a constant wiggle was too busy). */
+@keyframes scribble {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  92% { transform: rotate(-8deg); }
+  96% { transform: rotate(5deg); }
+}
+
+/* Big green play buttons: the icon hops every few seconds, and wiggles quicker on hover. */
+.btn-play > svg,
+.btn-hop > svg { animation: icon-hop 3.2s ease-in-out infinite; }
+/* Out of step with the green one next to it, so they take turns. */
+.btn-hop > svg { animation-delay: 1.6s; }
+.btn-play:hover > svg,
+.btn-hop:hover > svg { animation-duration: 0.9s; animation-delay: 0s; }
+.btn-play:disabled > svg,
+.btn-hop:disabled > svg { animation: none; }
+@keyframes icon-hop {
+  0%, 72%, 100% { transform: translateY(0) rotate(0deg); }
+  80% { transform: translateY(-5px) rotate(-14deg); }
+  88% { transform: translateY(0) rotate(10deg); }
+  94% { transform: translateY(-2px) rotate(-4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-wave, .logo-letter:hover, .tagline-part, .scribble-wiggle, .btn-play > svg, .btn-hop > svg { animation: none !important; }
+}

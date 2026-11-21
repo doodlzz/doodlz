@@ -53,6 +53,32 @@ function OnlineBadge({ online }: { online: number | null }) {
   );
 }
 
+/**
+ * "Draw it. Guess it. Win it. ✏️": each phrase pops in after the one before (once), and emoji wiggle.
+ * Splits after sentence punctuation in any language.
+ */
+function Tagline({ text }: { text: string }) {
+  const parts = text.split(/(?<=[.!?。！？])\s*/).filter(Boolean);
+  return (
+    <p className="mt-2 mb-6 text-center font-display text-lg font-medium text-white/90" aria-label={text}>
+      {parts.map((part, i) => (
+        <span key={i} aria-hidden className="tagline-part" style={{ '--i': i } as React.CSSProperties}>
+          {part.split(/(\p{Extended_Pictographic}\uFE0F?)/u).map((bit, j) =>
+            /\p{Extended_Pictographic}/u.test(bit) ? (
+              <span key={j} className="scribble-wiggle">
+                {bit}
+              </span>
+            ) : (
+              bit
+            ),
+          )}
+          {i < parts.length - 1 && '\u00a0'}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 // ---------------- home ----------------
 
 function HomeView({ game }: { game: GameApi }) {
@@ -118,7 +144,7 @@ function HomeView({ game }: { game: GameApi }) {
         <SettingsButton />
       </div>
       <Logo />
-      <p className="mt-2 mb-6 text-center font-display text-lg font-medium text-white/90">{t('app.tagline')}</p>
+      <Tagline text={t('app.tagline')} />
       <ConnectionBadge connected={game.connected} resuming={game.resuming} />
 
       <div className="panel crayon-edge mt-5 w-full max-w-xl animate-pop p-5 sm:p-7">
@@ -184,7 +210,7 @@ function HomeView({ game }: { game: GameApi }) {
             <button className="btn btn-green btn-play crayon-edge crayon-grain py-4 text-lg" disabled={!ready} onClick={() => run((n) => game.quickPlay(n, avatar))}>
               <Shuffle className="size-5" /> {t('home.playRandoms')}
             </button>
-            <button className="btn btn-blue crayon-edge crayon-grain py-4 text-lg" disabled={!ready} onClick={() => requireAccount(() => setPicking(true))}>
+            <button className="btn btn-blue btn-hop crayon-edge crayon-grain py-4 text-lg" disabled={!ready} onClick={() => requireAccount(() => setPicking(true))}>
               <Play className="size-5 fill-current" /> {t('home.createPrivate')}
             </button>
           </div>
