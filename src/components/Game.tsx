@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlarmClock, DoorOpen, Eye, EyeOff, Flag, Lightbulb, Pencil, WifiOff, Zap } from 'lucide-react';
 import { useSettings } from '../settings/SettingsContext';
-import type { ClientRoomState } from '../../shared/types';
+import { SCORING, type ClientRoomState } from '../../shared/types';
 import type { GameApi } from '../hooks/useGame';
 import { useCountdown } from '../hooks/useCountdown';
 import { useT } from '../i18n';
@@ -108,19 +108,25 @@ function WordDisplay({ state, game }: { state: ClientRoomState; game: GameApi })
         )}
       </div>
       {eye}
-      {state.phase === 'drawing' && !isDrawer && !known && (
+      {/* The drawer gives hints: one more letter for everyone still guessing. */}
+      {state.phase === 'drawing' && isDrawer && (
         <button
           type="button"
           onClick={game.requestHint}
           disabled={state.hintsLeft <= 0}
           className="btn btn-yellow shrink-0 flex-col gap-0 px-2.5 py-1 text-sm leading-tight"
-          title={t('game.hintCost')}
+          title={t('game.giveHintTitle', { n: SCORING.drawerHintCost })}
         >
           <span className="flex items-center gap-1">
-            <Lightbulb className="size-4" /> {t('game.hint')} ({state.hintsLeft})
+            <Lightbulb className="size-4" /> {t('game.giveHint')} ({state.hintsLeft})
           </span>
-          <span className="text-[10px] font-extrabold opacity-70">{t('game.hintCost')}</span>
+          <span className="text-[10px] font-extrabold opacity-70">{t('game.giveHintCost', { n: SCORING.drawerHintCost })}</span>
         </button>
+      )}
+      {state.phase === 'drawing' && !isDrawer && !known && state.hintsGiven > 0 && (
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-700 dark:bg-amber-400/20 dark:text-amber-200" title={t('game.hintsGivenTitle')}>
+          <Lightbulb className="size-3.5" /> {t('game.hintsGiven', { n: state.hintsGiven })}
+        </span>
       )}
     </div>
   );

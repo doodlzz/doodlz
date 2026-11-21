@@ -4,7 +4,6 @@ import {
   CATEGORIES,
   MAX_TARGET_ROUNDS,
   MAX_WARNINGS,
-  SCORING,
   SINGLE_COLORS,
   type Avatar,
   type Award,
@@ -56,8 +55,6 @@ export interface Player {
   hasGuessed: boolean;
   connected: boolean;
   graceTimer: NodeJS.Timeout | null;
-  hintIdx: Set<number>; // letters revealed to this player via the hint button
-  hintsUsed: number;
   warnings: number;
   /** Signed-in players' account id (set by the server from their session, never by the client). */
   accountId: string | null;
@@ -139,6 +136,8 @@ export class Room {
   private turnMs = 0;
   private phaseEndsAt: number | null = null;
   private revealed = new Set<number>();
+  /** Hints the drawer has given this turn. */
+  private drawerHints = 0;
   private revealAt: number[] = [];
   private deltas: Record<string, number> = {};
   private guessScores: number[] = [];
@@ -234,8 +233,6 @@ export class Room {
       hasGuessed: false,
       connected: true,
       graceTimer: null,
-      hintIdx: new Set(),
-      hintsUsed: 0,
       warnings: 0,
       chatTimes: [],
       accountId,
@@ -482,13 +479,12 @@ export class Room {
     this.drawerIds = drawers;
     for (const p of this.players.values()) {
       p.hasGuessed = false;
-      p.hintIdx.clear();
-      p.hintsUsed = 0;
     }
     this.word = null;
     this.parts = null;
     this.difficulty = null;
     this.revealed.clear();
+    this.drawerHints = 0;
     this.deltas = {};
     this.guessScores = [];
     this.history = [];
@@ -590,15 +586,26 @@ export class Room {
       }
     }
 
-    // Drawers are paid at the end of the turn: 10 for every player who guessed, up to 50.
+    // Points are banked now, at the end of the turn. If the drawer left, nobody scores this turn.
     const correct = this.guessScores.length;
-    const pts = drawerPoints(correct);
-    for (const id of this.drawerIds) {
-      const d = this.players.get(id);
-      if (d && pts > 0) {
-        d.score += pts;
-        this.deltas[id] = (this.deltas[id] ?? 0) + pts;
-        this.chat('system', 'chat.drawerPoints', { name: d.name, points: pts, n: correct });
+    if (reason === 'drawer_left') {
+      if (correct > 0) this.chat('system', 'chat.drawerLeftNoPoints');
+      this.deltas = {};
+    } else {
+      for (const [id, pts] of Object.entries(this.deltas)) {
+        const p = this.players.get(id);
+        if (p) p.score += pts;
+      }
+      // Drawers: their share of the guessers who got it (see scoring.ts).
+      const guessers = this.connectedPlayers.filter((p) => !this.drawerIds.includes(p.id)).length;
+      const pts = drawerPoints({ difficulty: this.difficulty ?? 'easy', guessed: correct, guessers, hintsGiven: this.drawerHints });
+      for (const id of this.drawerIds) {
+        const d = this.players.get(id);
+        if (d && pts > 0) {
+          d.score += pts;
+          this.deltas[id] = (this.deltas[id] ?? 0) + pts;
+          this.chat('system', 'chat.drawerPoints', { name: d.name, points: pts, n: correct });
+        }
       }
     }
 
@@ -736,15 +743,16 @@ export class Room {
 
   private correctGuess(player: Player): void {
     const order = this.guessScores.length;
-    const points = guessPoints({ difficulty: this.difficulty ?? 'easy', order, hintsUsed: player.hintsUsed });
-    player.score += points;
+    const timeLeft = this.phaseEndsAt && this.turnMs ? (this.phaseEndsAt - Date.now()) / this.turnMs : 0;
+    const points = guessPoints({ difficulty: this.difficulty ?? 'easy', order, timeLeft, hintsGiven: this.drawerHints });
+    // Banked when the turn ends (see endTurn), so a drawer leaving mid-turn cancels it.
     player.hasGuessed = true;
     // Only guesses made after some real drawing count toward quests.
     const took = Date.now() - this.drawingStartedAt;
     if (took >= config.questGuessMinMs && this.history.length >= config.questMinOps) {
       player.gameGuesses++;
       if (order === 0) player.gameFirstGuesses++;
-      if (player.hintsUsed === 0) player.gameCleanGuesses++;
+      if (this.drawerHints === 0) player.gameCleanGuesses++;
       player.gameFastestMs = player.gameFastestMs === null ? took : Math.min(player.gameFastestMs, took);
       for (const id of this.drawerIds) {
         const d = this.players.get(id);
@@ -760,17 +768,20 @@ export class Room {
     else this.broadcastState();
   }
 
-  /** Guesser hint button: reveal one more letter to this player only, at a point penalty. */
+  /**
+   * Drawer hint button: reveal one more letter to everyone still guessing. Each hint lowers what later guesses
+   * are worth and costs the drawer some points (see scoring.ts); never the last hidden letter.
+   */
   requestHint(by: string): void {
     const p = this.players.get(by);
-    if (!p || this.phase !== 'drawing' || !this.word || this.drawerIds.includes(by) || p.hasGuessed) return;
-    if (p.hintsUsed >= this.maxHints()) return;
-    const hidden = this.hiddenIndices(new Set([...this.revealed, ...p.hintIdx]));
+    if (!p || this.phase !== 'drawing' || !this.word || !this.drawerIds.includes(by)) return;
+    if (this.drawerHints >= this.maxHints()) return;
+    const hidden = this.hiddenIndices(this.revealed);
     if (hidden.length <= 1) return;
-    p.hintIdx.add(pick(hidden));
-    p.hintsUsed++;
-    this.privateMsg(p, 'system', 'chat.hintUsed', { penalty: p.hintsUsed * SCORING.hintCost });
-    this.sendState(p);
+    this.revealed.add(pick(hidden));
+    this.drawerHints++;
+    this.chat('system', 'chat.drawerHint', { name: p.name });
+    this.broadcastState();
   }
 
   private maxHints(): number {
@@ -868,7 +879,7 @@ export class Room {
       players: [...this.players.values()].map(({ id, name, avatar, score, hasGuessed, connected }) => ({ id, name, avatar, score, hasGuessed, connected })),
       round: this.round,
       drawerIds: this.drawerIds,
-      hint: word ? [...word].map((ch, i) => (!isLetter(ch) || knows || this.revealed.has(i) || p.hintIdx.has(i) ? ch : '_')) : null,
+      hint: word ? [...word].map((ch, i) => (!isLetter(ch) || knows || this.revealed.has(i) ? ch : '_')) : null,
       word: word && knows ? word : null,
       myPart: this.parts && partIdx >= 0 && this.phase === 'drawing' ? this.parts[partIdx] : null,
       difficulty: word ? this.difficulty : null,
@@ -879,8 +890,8 @@ export class Room {
       background: this.background,
       drawColor: this.drawColor,
       rerollsLeft: this.drawerIds[0] === p.id ? this.rerollsLeft : 0,
-      hintsLeft: this.phase === 'drawing' && !knows ? Math.max(0, this.maxHints() - p.hintsUsed) : 0,
-      hintsUsed: p.hintsUsed,
+      hintsLeft: this.phase === 'drawing' && isDrawer ? Math.max(0, this.maxHints() - this.drawerHints) : 0,
+      hintsGiven: this.drawerHints,
       autoStartAt: this.autoStartAt,
       awards: this.phase === 'game_over' ? this.awards.filter((a) => this.players.has(a.playerId)) : [],
       categoryPending: this.categoryPending,

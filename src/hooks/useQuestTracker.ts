@@ -56,7 +56,7 @@ export function useQuestTracker(game: GameApi) {
     if (m.kind === 'correct' && state && m.playerId === state.you) {
       holdQuestEvent(state.code, 'guessed');
       if (m.key === 'chat.correctFirst') holdQuestEvent(state.code, 'firstGuess');
-      if (state.hintsUsed === 0) holdQuestEvent(state.code, 'cleanGuess');
+      if (state.hintsGiven === 0) holdQuestEvent(state.code, 'cleanGuess');
     }
   }, [messages, state?.you, state?.code, toLocalTime]);
 }

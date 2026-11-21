@@ -37,14 +37,22 @@ export type SpeedCap = 0 | 30 | 40;
 export type ReportReason = 'drawing' | 'chat' | 'name' | 'other';
 
 /** Simple, visible scoring rules (shown to players in "How points work"). */
+/**
+ * Points (see server/game/scoring.ts):
+ *   guess  = round(word × speed × 0.85^hints) + place bonus, at least 10
+ *            speed goes from 1 (guessed instantly) down to 0.5 (last second)
+ *   drawer = round(drawerWord × guessed / guessers) + 10 if everyone guessed − 8 per hint given, at least 0
+ * Points are banked when the turn ends; if the drawer leaves mid-turn, nobody scores that turn.
+ */
 export const SCORING = {
-  word: { easy: 30, medium: 40, hard: 50 } as Record<Difficulty, number>, // a correct guess
-  firstBonus: 10, // first player to guess
-  secondBonus: 5, // second player to guess
-  hintCost: 10, // each hint a guesser uses
+  word: { easy: 30, medium: 40, hard: 50 } as Record<Difficulty, number>, // a correct guess, at full speed
+  minSpeed: 0.5, // share of the word value left for a guess in the very last second
+  placeBonus: [15, 10, 5], // 1st, 2nd and 3rd to guess
+  hintFactor: 0.85, // each drawer hint given before your guess keeps 85% of the word value
   minGuess: 10, // a correct guess is always worth at least this
-  drawerPerGuess: 10, // drawer earns this for each player who guesses
-  drawerMax: 50,
+  drawer: { easy: 40, medium: 50, hard: 60 } as Record<Difficulty, number>, // drawer, if every guesser gets it
+  allGuessedBonus: 10, // drawer bonus when everyone guessed
+  drawerHintCost: 8, // taken off the drawer's points for each hint they give
 } as const;
 /** "First to X points" presets; 0 means off (play a set number of rounds). */
 export const TARGET_SCORES = [100, 150, 200, 250, 300] as const;
@@ -96,7 +104,7 @@ export interface RoomSettings {
   rounds: number;
   drawTime: number; // seconds
   maxPlayers: number;
-  hints: boolean; // automatic letter reveals over time
+  hints: boolean; // automatic letter reveals over time (off by default: the drawer gives hints)
   mode: GameMode;
   speed: SpeedCap; // 0 = off, otherwise caps the draw time
   singleColor: boolean;
@@ -112,7 +120,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   rounds: 3,
   drawTime: 80,
   maxPlayers: 8,
-  hints: true,
+  hints: false,
   mode: 'classic',
   speed: 0,
   singleColor: false,
@@ -190,8 +198,9 @@ export interface ClientRoomState {
   background: BackgroundId;
   drawColor: string | null; // set in single-color mode
   rerollsLeft: number; // for the lead drawer
-  hintsLeft: number; // for this guesser
-  hintsUsed: number;
+  hintsLeft: number; // drawer: hints they can still give this turn (0 for everyone else)
+  /** Hints the drawer has given this turn (each lowers what a guess is worth). */
+  hintsGiven: number;
   autoStartAt: number | null; // public rooms start themselves
   /** End screen only: who won which award (empty when nobody qualified). */
   awards: Award[];

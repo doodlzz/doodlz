@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { HelpCircle, Lightbulb, Pencil, Target, Trophy, Zap } from 'lucide-react';
+import { HelpCircle, Lightbulb, Pencil, Target, Timer, Trophy, Zap } from 'lucide-react';
 import { SCORING } from '../../shared/types';
 import { useT } from '../i18n';
 
@@ -28,13 +28,24 @@ export default function ScoringHelp({ targetScore = 0, className = '' }: { targe
       value: `${SCORING.word.easy} / ${SCORING.word.medium} / ${SCORING.word.hard}`,
       note: t('score.guessNote'),
     },
-    { icon: <Zap className="size-4 text-pink-500" />, title: t('score.fast'), value: `+${SCORING.firstBonus} / +${SCORING.secondBonus}`, note: t('score.fastNote') },
-    { icon: <Lightbulb className="size-4 text-yellow-500" />, title: t('score.hint'), value: `−${SCORING.hintCost}`, note: t('score.hintNote') },
+    { icon: <Timer className="size-4 text-sky-500" />, title: t('score.speed'), value: `100% → ${SCORING.minSpeed * 100}%`, note: t('score.speedNote') },
     {
-      icon: <Pencil className="size-4 text-sky-500" />,
+      icon: <Zap className="size-4 text-pink-500" />,
+      title: t('score.place'),
+      value: SCORING.placeBonus.map((b) => `+${b}`).join(' / '),
+      note: t('score.placeNote'),
+    },
+    {
+      icon: <Lightbulb className="size-4 text-yellow-500" />,
+      title: t('score.hint'),
+      value: `−${Math.round((1 - SCORING.hintFactor) * 100)}%`,
+      note: t('score.hintNote', { n: SCORING.drawerHintCost }),
+    },
+    {
+      icon: <Pencil className="size-4 text-violet-500" />,
       title: t('score.draw'),
-      value: `+${SCORING.drawerPerGuess}`,
-      note: t('score.drawNote', { max: SCORING.drawerMax }),
+      value: `${SCORING.drawer.easy} / ${SCORING.drawer.medium} / ${SCORING.drawer.hard}`,
+      note: t('score.drawNote', { bonus: SCORING.allGuessedBonus }),
     },
   ];
 
@@ -65,6 +76,7 @@ export default function ScoringHelp({ targetScore = 0, className = '' }: { targe
               </li>
             ))}
           </ul>
+          <p className="mt-2 text-xs font-bold text-indigo-400">{t('score.banked')}</p>
           <p className="mt-3 flex items-start gap-2 text-xs font-bold text-indigo-500">
             <Target className="mt-0.5 size-4 shrink-0 text-emerald-500" />
             {targetScore > 0 ? t('score.winTarget', { n: targetScore }) : t('score.winRounds')}
