@@ -79,10 +79,13 @@ function Shell() {
 
   useEffect(preloadScreens, []);
 
-  // The rules pop up once each time you join a room (remembered per tab, so a refresh doesn't show them again).
+  // The rules pop up when a game in your room actually starts (the host picked the mode and pressed Start),
+  // or when you join one that's already running. Once per room, remembered per tab so a refresh doesn't repeat it.
   const [rulesFor, setRulesFor] = useState<string | null>(null);
+  const playing = game.state?.phase === 'choosing' || game.state?.phase === 'drawing' || game.state?.phase === 'turn_end';
   useEffect(() => {
     if (!code) return setRulesFor(null);
+    if (!playing) return;
     let seen: string[] = [];
     try {
       seen = JSON.parse(sessionStorage.getItem('doodlz:rulesSeen') ?? '[]');
@@ -90,7 +93,7 @@ function Shell() {
       // storage unavailable: show them
     }
     if (!seen.includes(code)) setRulesFor(code);
-  }, [code]);
+  }, [code, playing]);
   const closeRules = useCallback(() => {
     if (rulesFor) {
       try {
