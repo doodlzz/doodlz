@@ -2,11 +2,13 @@ import { useEffect, useRef } from 'react';
 import type { GameApi } from '../hooks/useGame';
 import { playSfx } from './sfx';
 
-/** Plays sound effects in response to game events (new chat lines, phase changes, timer). */
+/** Plays sound effects in response to game events (joins and leaves, turns, guesses, timer). */
 export function useGameSounds(game: GameApi) {
   const { state, messages, toLocalTime } = game;
   const lastMsg = useRef<string | null>(null);
   const lastPhase = useRef<string | null>(null);
+  const lastCode = useRef<string | null>(null);
+  const lastTurn = useRef<string | null>(null);
 
   useEffect(() => {
     const m = messages[messages.length - 1];
@@ -16,10 +18,28 @@ export function useGameSounds(game: GameApi) {
     if (first) return;
     if (m.kind === 'correct') playSfx(m.playerId === state?.you ? 'myCorrect' : 'correct');
     else if (m.kind === 'close') playSfx('close');
-    else if (m.kind === 'join') playSfx('join');
+    else if (m.kind === 'join' && m.playerId !== state?.you) playSfx('join');
+    else if (m.kind === 'leave') playSfx('leave');
     else if (m.kind === 'warning') playSfx('warning');
     else if (m.kind === 'guess' || m.kind === 'private') playSfx('pop');
   }, [messages, state?.you]);
+
+  // You joined a room (not when coming back to the same one after a refresh or reconnect).
+  useEffect(() => {
+    const code = state?.code ?? null;
+    if (code && code !== lastCode.current) playSfx('youJoined');
+    lastCode.current = code;
+  }, [state?.code]);
+
+  // A new turn: a fanfare when it's yours to draw, a short chime when it's someone else's.
+  useEffect(() => {
+    const turn = state && state.phase === 'choosing' ? `${state.round}:${state.drawerIds.join(',')}` : null;
+    if (!turn || turn === lastTurn.current) return;
+    const first = lastTurn.current === null && lastPhase.current === null;
+    lastTurn.current = turn;
+    if (first) return;
+    playSfx(state!.drawerIds.includes(state!.you) ? 'myTurn' : 'turnStart');
+  }, [state?.phase, state?.round, state?.drawerIds.join(','), state?.you]);
 
   useEffect(() => {
     const phase = state?.phase ?? null;
@@ -27,8 +47,7 @@ export function useGameSounds(game: GameApi) {
     const prev = lastPhase.current;
     lastPhase.current = phase;
     if (prev === null) return;
-    if (phase === 'drawing') playSfx('turnStart');
-    else if (phase === 'turn_end') playSfx('turnEnd');
+    if (phase === 'turn_end') playSfx('turnEnd');
     else if (phase === 'game_over') playSfx('win');
   }, [state?.phase]);
 

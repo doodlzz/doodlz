@@ -1,6 +1,6 @@
 // Sound effects synthesized with the Web Audio API — no audio files, nothing to license.
 
-export type Sfx = 'pop' | 'join' | 'correct' | 'myCorrect' | 'close' | 'tick' | 'turnStart' | 'turnEnd' | 'win' | 'warning';
+export type Sfx = 'pop' | 'join' | 'youJoined' | 'leave' | 'correct' | 'myCorrect' | 'close' | 'tick' | 'turnStart' | 'myTurn' | 'turnEnd' | 'win' | 'warning';
 
 let ctx: AudioContext | null = null;
 let volume = 0.6;
@@ -39,11 +39,17 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = '
 const SOUNDS: Record<Sfx, () => void> = {
   pop: () => tone(660, 0, 0.08, 'triangle', 0.2),
   join: () => [523, 784].forEach((f, i) => tone(f, i * 0.08, 0.15, 'triangle', 0.18)),
+  // You walked into a room: a brighter three-note hello.
+  youJoined: () => [523, 659, 988].forEach((f, i) => tone(f, i * 0.07, 0.2, 'triangle', 0.2)),
+  // Someone left: the join chime turned upside down, softer.
+  leave: () => [659, 440].forEach((f, i) => tone(f, i * 0.09, 0.16, 'triangle', 0.13)),
   correct: () => [659, 880].forEach((f, i) => tone(f, i * 0.09, 0.18, 'sine', 0.2)),
   myCorrect: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.25, 'triangle', 0.22)),
   close: () => tone(440, 0, 0.12, 'square', 0.08),
   tick: () => tone(1200, 0, 0.04, 'square', 0.06),
   turnStart: () => [392, 523].forEach((f, i) => tone(f, i * 0.12, 0.2, 'sine', 0.2)),
+  // Your turn to draw: a rising fanfare that stands out from everyone else's turn.
+  myTurn: () => [392, 523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.07, 0.22, i === 4 ? 'sine' : 'triangle', 0.22)),
   turnEnd: () => [523, 392, 330].forEach((f, i) => tone(f, i * 0.1, 0.22, 'triangle', 0.18)),
   win: () => [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.3, 'triangle', 0.22)),
   warning: () => [220, 196].forEach((f, i) => tone(f, i * 0.12, 0.18, 'sawtooth', 0.08)),

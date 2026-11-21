@@ -251,7 +251,8 @@ export class Room {
     this.players.set(player.id, player);
     if (!this.hostId) this.hostId = player.id;
     if (!this.creator) this.creator = name;
-    this.chat('join', 'chat.joined', { name });
+    // playerId (but no name, so it shows as a system line) lets each client tell whether it was them.
+    this.io.to(this.code).emit('chat_message', { ...this.message('join', { key: 'chat.joined', params: { name } }), playerId: player.id });
     this.checkAutoStart();
     this.broadcastState();
     return player;
@@ -278,7 +279,7 @@ export class Room {
     const wasConnected = p.connected;
     p.connected = true;
     p.socketId = socketId;
-    if (!wasConnected) this.chat('join', 'chat.reconnected', { name: p.name });
+    if (!wasConnected) this.io.to(this.code).emit('chat_message', { ...this.message('join', { key: 'chat.reconnected', params: { name: p.name } }), playerId: p.id });
     if (!this.connectedPlayers.some((x) => x.id === this.hostId)) this.hostId = p.id;
 
     this.io.to(socketId).emit('canvas_history', this.canvas());
