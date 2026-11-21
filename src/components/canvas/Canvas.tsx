@@ -209,7 +209,9 @@ export default function Canvas({ isDrawer, canDraw, blindfolded, lockedColor, ba
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="panel relative overflow-hidden p-0">
+      {/* Crayon outline outside, clipping inside (an overflow-hidden box would cut its own outline off). */}
+      <div className="panel crayon-edge relative p-0">
+        <div className="relative overflow-hidden rounded-[inherit]">
         <div className="relative aspect-[4/3] w-full" style={BACKGROUND_STYLES[background]}>
           <canvas
             ref={canvasRef}
@@ -245,6 +247,7 @@ export default function Canvas({ isDrawer, canDraw, blindfolded, lockedColor, ba
           )}
         </div>
         {overlay}
+        </div>
       </div>
 
       {isDrawer && (

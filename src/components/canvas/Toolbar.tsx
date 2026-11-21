@@ -89,7 +89,7 @@ export default function Toolbar(p: Props) {
   };
 
   return (
-    <div className={`panel flex flex-col gap-2.5 p-3 transition ${p.enabled ? '' : 'pointer-events-none opacity-60'}`}>
+    <div className={`panel crayon-edge flex flex-col gap-2.5 p-3 transition ${p.enabled ? '' : 'pointer-events-none opacity-60'}`}>
       {/* colors */}
       <div className="flex flex-wrap items-center gap-2">
         {p.lockedColor ? (

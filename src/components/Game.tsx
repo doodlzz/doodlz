@@ -138,7 +138,7 @@ function TurnSummary({ state }: { state: ClientRoomState }) {
   const reasons = { all_guessed: t('game.everyoneGuessed'), time_up: t('game.timeUp'), drawer_left: t('game.drawerLeft') };
   const rows = [...state.players].sort((a, b) => (turn.deltas[b.id] ?? 0) - (turn.deltas[a.id] ?? 0));
   return (
-    <div className="panel animate-pop p-4" role="status">
+    <div className="panel crayon-edge animate-pop p-4" role="status">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         {turn.word ? (
           <p className="font-display text-xl font-semibold text-indigo-950">
@@ -191,7 +191,7 @@ export default function Game({ game }: { game: GameApi }) {
           <WifiOff className="size-5" /> {t('game.reconnectBanner')}
         </div>
       )}
-      <header className="panel flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 sm:flex-nowrap sm:px-4">
+      <header className="panel crayon-edge flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 sm:flex-nowrap sm:px-4">
         <Timer secondsLeft={secondsLeft} total={timerTotal} />
         <div className="hidden flex-col leading-tight sm:flex">
           <span className="flex items-center gap-1 text-xs font-extrabold tracking-wider text-indigo-300 uppercase">
@@ -257,14 +257,15 @@ export default function Game({ game }: { game: GameApi }) {
             </div>
           )}
         </div>
-        <Leaderboard state={state} game={game} className="order-3 max-h-72 sm:order-none sm:h-[320px] sm:max-h-none lg:order-1 lg:h-auto lg:max-h-[calc(100vh-110px)]" />
+        {/* Sized to its players (not stretched to the row), up to a scrolling maximum. */}
+        <Leaderboard state={state} game={game} className="crayon-edge crayon-inset order-3 max-h-72 self-start sm:order-none sm:max-h-[320px] lg:order-1 lg:max-h-[calc(100vh-110px)]" />
         <Chat
           messages={game.messages}
           players={state.players}
           onSend={game.sendGuess}
           placeholder={placeholder}
           title={state.phase === 'drawing' && !isDrawer && !me?.hasGuessed ? t('chat.guessTitle') : t('chat.title')}
-          className="order-2 h-80 sm:order-none sm:h-[320px] lg:order-3 lg:h-[calc(100vh-110px)]"
+          className="crayon-edge crayon-inset order-2 h-80 sm:order-none sm:h-[320px] lg:order-3 lg:h-[calc(100vh-110px)]"
         />
       </main>
 
