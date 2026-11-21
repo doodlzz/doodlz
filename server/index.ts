@@ -42,9 +42,18 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, accountStorage: useSu
 // In production, serve the built client from ./dist.
 const distDir = path.resolve(process.cwd(), 'dist');
 if (existsSync(path.join(distDir, 'index.html'))) {
-  app.use(express.static(distDir));
+  // Built files in /assets have a content hash in their name, so browsers may keep them for a year; the page
+  // itself is re-checked on every visit so a deploy shows up straight away.
+  app.use(
+    express.static(distDir, {
+      setHeaders(res, file) {
+        res.setHeader('Cache-Control', file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache');
+      },
+    }),
+  );
   app.use((req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/socket.io') || req.path.startsWith('/api')) return next();
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(distDir, 'index.html'));
   });
 }

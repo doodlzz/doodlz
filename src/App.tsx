@@ -1,24 +1,39 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useGameSounds } from './audio/useGameSounds';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import CookieNotice from './components/CookieNotice';
 import CrayonScene from './components/CrayonScene';
-import Game from './components/Game';
-import GameOver from './components/GameOver';
 import Lobby from './components/Lobby';
-import Shop from './components/Shop';
-import LevelsModal from './components/LevelsModal';
 import { FriendsProvider, useFriends } from './friends/FriendsContext';
-import FriendsPanel from './friends/FriendsPanel';
 import InviteToast from './friends/InviteToast';
 import { loadProfile } from './lib/avatar';
 import MouseTrail from './components/MouseTrail';
 import { useGame } from './hooks/useGame';
 import { useQuestTracker } from './hooks/useQuestTracker';
 import { useT } from './i18n';
-import { isLegalPath, LegalPage } from './legal/LegalPages';
+import { isLegalPath } from './legal/paths';
 import { SettingsProvider, useSettings } from './settings/SettingsContext';
+
+// Screens and windows that aren't on the home screen load as separate files, so the first visit downloads less.
+// They're fetched in the background once the home screen is up, so opening them later is still instant.
+const loadGame = () => import('./components/Game');
+const loadGameOver = () => import('./components/GameOver');
+const loadShop = () => import('./components/Shop');
+const loadLevels = () => import('./components/LevelsModal');
+const loadFriendsPanel = () => import('./friends/FriendsPanel');
+const Game = lazy(loadGame);
+const GameOver = lazy(loadGameOver);
+const Shop = lazy(loadShop);
+const LevelsModal = lazy(loadLevels);
+const FriendsPanel = lazy(loadFriendsPanel);
+const LegalPage = lazy(() => import('./legal/LegalPages').then((m) => ({ default: m.LegalPage })));
+
+function preloadScreens() {
+  const go = () => [loadGame, loadGameOver, loadShop, loadLevels, loadFriendsPanel].forEach((load) => void load().catch(() => {}));
+  if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 4000 });
+  else setTimeout(go, 1500);
+}
 
 function Shell() {
   const t = useT();
@@ -61,6 +76,8 @@ function Shell() {
     [game.joinRoom],
   );
 
+  useEffect(preloadScreens, []);
+
   const phase = game.state?.phase;
   return (
     <FriendsProvider onJoin={joinFriend} myRoomCode={code ?? null}>
@@ -71,12 +88,16 @@ function Shell() {
       <CrayonScene />
       <MouseTrail />
       <div id="main" tabIndex={-1}>
-        {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}
+        <Suspense fallback={null}>
+          {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}
+        </Suspense>
       </div>
 
       <CookieNotice />
-      {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
-      {levelsOpen && account && <LevelsModal xp={account.xp ?? 0} onClose={closeLevels} />}
+      <Suspense fallback={null}>
+        {shopTab && account && <Shop initialTab={shopTab} onClose={closeShop} />}
+        {levelsOpen && account && <LevelsModal xp={account.xp ?? 0} onClose={closeLevels} />}
+      </Suspense>
       <FriendsOverlays />
       {shopNote && !game.toast && (
         <div
@@ -105,7 +126,7 @@ function FriendsOverlays() {
   const { panelOpen } = useFriends();
   return (
     <>
-      {panelOpen && <FriendsPanel />}
+      <Suspense fallback={null}>{panelOpen && <FriendsPanel />}</Suspense>
       <InviteToast />
     </>
   );
@@ -117,7 +138,9 @@ function Routes() {
   if (isLegalPath(path)) {
     return (
       <>
-        <LegalPage path={path} />
+        <Suspense fallback={null}>
+          <LegalPage path={path} />
+        </Suspense>
         <CookieNotice />
       </>
     );

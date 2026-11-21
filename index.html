@@ -7,6 +7,18 @@
     <meta name="theme-color" content="#4f46e5" />
     <title>doodlz.io</title>
     <meta name="description" content="Free multiplayer drawing and guessing game. Draw, guess, and play with friends." />
+    <!-- Apply the saved theme before anything is drawn, so dark mode never flashes light on load. -->
+    <script>
+      try {
+        var t = (JSON.parse(localStorage.getItem('doodlz:settings') || '{}').theme) || 'system';
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    </script>
+    <!-- The page colour before the stylesheet arrives (matches body in index.css). -->
+    <style>
+      html { background: #5b3fe0 linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%) fixed; color-scheme: light; }
+      html.dark { background: #1d1342 linear-gradient(135deg, #17123a 0%, #2a1250 50%, #45103a 100%) fixed; color-scheme: dark; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

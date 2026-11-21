@@ -3,16 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import DeleteAccountPage from '../auth/DeleteAccountPage';
 import { BUSINESS, OPERATOR } from '../config/business';
 
-export type LegalPath = '/privacy' | '/terms' | '/refunds' | '/cookies' | '/contact' | '/delete-account';
-export const LEGAL_PATHS: { path: LegalPath; label: string }[] = [
-  { path: '/privacy', label: 'Privacy Policy' },
-  { path: '/terms', label: 'Terms of Service' },
-  { path: '/refunds', label: 'Refund Policy' },
-  { path: '/cookies', label: 'Cookie Policy' },
-  { path: '/delete-account', label: 'Delete my data' },
-  { path: '/contact', label: 'Contact' },
-];
-export const isLegalPath = (p: string): p is LegalPath => LEGAL_PATHS.some((l) => l.path === p);
+import type { LegalPath } from './paths';
+export { LEGAL_PATHS, isLegalPath, type LegalPath } from './paths';
 
 const mail = (subject: string) => (
   <a href={`mailto:${BUSINESS.email}?subject=${encodeURIComponent(subject)}`}>{BUSINESS.email}</a>

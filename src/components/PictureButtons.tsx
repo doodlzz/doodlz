@@ -1,11 +1,12 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ImagePlus, Loader2, Lock, Paintbrush, Trash2 } from 'lucide-react';
 import { findCosmetic } from '../../shared/cosmetics';
 import { useAuth } from '../auth/AuthContext';
 import { useT } from '../i18n';
-import PictureCropper from './PictureCropper';
-import PictureDrawer from './PictureDrawer';
+// The picture tools only load when someone opens them.
+const PictureCropper = lazy(() => import('./PictureCropper'));
+const PictureDrawer = lazy(() => import('./PictureDrawer'));
 
 interface Props {
   className?: string;
@@ -92,6 +93,7 @@ export default function PictureButtons({ className = '', only, compact = false }
       {/* Portals: the shop window animates with a transform, which would trap full-screen pop-ups inside it. */}
       {picked &&
         createPortal(
+          <Suspense fallback={null}>
           <PictureCropper
             file={picked}
             onCancel={() => setPicked(null)}
@@ -99,11 +101,13 @@ export default function PictureButtons({ className = '', only, compact = false }
               await run(() => setImage(dataUrl));
               setPicked(null);
             }}
-          />,
+          />
+          </Suspense>,
           document.body,
         )}
       {drawing &&
         createPortal(
+          <Suspense fallback={null}>
           <PictureDrawer
             background={account.avatar?.color ?? '#ffffff'}
             onCancel={() => setDrawing(false)}
@@ -111,7 +115,8 @@ export default function PictureButtons({ className = '', only, compact = false }
               await run(() => setImage(dataUrl));
               setDrawing(false);
             }}
-          />,
+          />
+          </Suspense>,
           document.body,
         )}
       {error && (
