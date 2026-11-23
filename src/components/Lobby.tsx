@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, Crown, DoorOpen, Globe2, Loader2, Lock, Play, RefreshCw, Shuffle, Tags, UserPlus, Users, Wifi, WifiOff } from 'lucide-react';
-import type { Category } from '../../shared/types';
+import type { RoomSettings } from '../../shared/types';
 import AuthButtons from '../auth/AuthButtons';
 import { useAuth } from '../auth/AuthContext';
 import CategoryPicker, { CategoryTile } from './CategoryPicker';
+import RoomSetup from './RoomSetup';
 import DailyQuests from './DailyQuests';
 import LobbyBrowser from './LobbyBrowser';
 import Footer from './Footer';
@@ -128,14 +129,14 @@ function HomeView({ game }: { game: GameApi }) {
       setBusy(false);
     });
 
-  const createWith = (c: Category) => {
+  const createWith = (settings: Partial<RoomSettings>) => {
     setPicking(false);
-    run((n) => game.createRoom(n, avatar, { categories: [c] }));
+    run((n) => game.createRoom(n, avatar, settings));
   };
 
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center px-4 pt-16 pb-8 sm:py-12">
-      {picking && <CategoryPicker onPick={createWith} onClose={() => setPicking(false)} />}
+      {picking && <RoomSetup onCreate={createWith} onClose={() => setPicking(false)} />}
       <div className="absolute top-4 left-4">
         <OnlineBadge online={game.online} />
       </div>

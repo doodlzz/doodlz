@@ -370,6 +370,12 @@ export const es: Dict = {
   'err.pickCategory': "Primero elige una categoría",
 
   // accounts
+  'setup.title': "Prepara tu sala",
+  'setup.game': "Partida",
+  'setup.category': "Categoría",
+  'setup.more': "Más opciones dentro de la sala",
+  'setup.create': "Crear sala",
+  'setup.pickFirst': "Elige una categoría",
   "auth.register": "Registrarse",
   "auth.signIn": "Iniciar sesión",
   "auth.signOut": "Cerrar sesión",

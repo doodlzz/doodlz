@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { BookText, Clock, EyeOff, Flag, Lightbulb, Minus, Palette, Plus, Repeat, Settings, Users, Users2, User, Zap } from 'lucide-react';
-import { MAX_CUSTOM_WORDS, SETTING_LIMITS, TARGET_SCORES, type RoomSettings, type SpeedCap } from '../../shared/types';
+import { MAX_CUSTOM_WORDS, SETTING_LIMITS, TARGET_SCORES, type GameMode, type RoomSettings, type SpeedCap } from '../../shared/types';
 import { useT } from '../i18n';
 import ScoringHelp from './ScoringHelp';
 
-const DRAW_TIMES = [30, 45, 60, 80, 100, 120, 150, 180];
+export const DRAW_TIMES = [30, 45, 60, 80, 100, 120, 150, 180];
 const SPEEDS: SpeedCap[] = [0, 30, 40];
 
-function Row({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
+export function Row({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-indigo-50/70 px-3 py-2.5">
       <div className="flex items-center gap-2 font-bold text-indigo-900">
@@ -19,7 +19,7 @@ function Row({ icon, label, children }: { icon: ReactNode; label: string; childr
   );
 }
 
-function Stepper({ value, min, max, onChange, disabled }: { value: number; min: number; max: number; onChange: (v: number) => void; disabled: boolean }) {
+export function Stepper({ value, min, max, onChange, disabled }: { value: number; min: number; max: number; onChange: (v: number) => void; disabled: boolean }) {
   return (
     <div className="flex items-center gap-2">
       <button type="button" disabled={disabled || value <= min} onClick={() => onChange(value - 1)} className="btn btn-ghost size-8 rounded-xl p-0" aria-label="−">
@@ -33,7 +33,7 @@ function Stepper({ value, min, max, onChange, disabled }: { value: number; min: 
   );
 }
 
-function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: boolean) => void; disabled: boolean; label: string }) {
+export function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: boolean) => void; disabled: boolean; label: string }) {
   return (
     <button
       type="button"
@@ -46,6 +46,36 @@ function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: 
     >
       <span className={`absolute top-1 size-6 rounded-full bg-white shadow transition-all ${on ? 'left-7' : 'left-1'}`} />
     </button>
+  );
+}
+
+/** Classic or Duo, as two big buttons. Also used on the room setup screen. */
+export function ModePicker({ mode: current, disabled, onChange }: { mode: GameMode; disabled: boolean; onChange: (m: GameMode) => void }) {
+  const t = useT();
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(
+        [
+          ['classic', <User key="c" className="size-5" />, t('gs.classic'), t('gs.classicDesc')],
+          ['duo', <Users2 key="d" className="size-5" />, t('gs.duo'), t('gs.duoDesc')],
+        ] as const
+      ).map(([mode, icon, name, desc]) => (
+        <button
+          key={mode}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(mode)}
+          className={`flex flex-col items-start gap-0.5 rounded-2xl border-4 p-3 text-left transition ${
+            current === mode ? 'border-indigo-400 bg-indigo-100' : 'border-transparent bg-indigo-50/70 enabled:hover:bg-indigo-100'
+          } ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
+        >
+          <span className="flex items-center gap-1.5 font-display text-lg font-semibold text-indigo-950">
+            {icon} {name}
+          </span>
+          <span className="text-xs leading-snug font-bold text-indigo-400">{desc}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -157,30 +187,7 @@ export default function GameSettingsPanel({ settings, editable, isPublic, minPla
       </div>
 
       <div className="flex flex-col gap-2">
-        {/* mode */}
-        <div className="grid grid-cols-2 gap-2">
-          {(
-            [
-              ['classic', <User key="c" className="size-5" />, t('gs.classic'), t('gs.classicDesc')],
-              ['duo', <Users2 key="d" className="size-5" />, t('gs.duo'), t('gs.duoDesc')],
-            ] as const
-          ).map(([mode, icon, name, desc]) => (
-            <button
-              key={mode}
-              type="button"
-              disabled={!editable}
-              onClick={() => onChange({ mode })}
-              className={`flex flex-col items-start gap-0.5 rounded-2xl border-4 p-3 text-left transition ${
-                settings.mode === mode ? 'border-indigo-400 bg-indigo-100' : 'border-transparent bg-indigo-50/70 enabled:hover:bg-indigo-100'
-              } ${editable ? 'cursor-pointer' : 'cursor-default'}`}
-            >
-              <span className="flex items-center gap-1.5 font-display text-lg font-semibold text-indigo-950">
-                {icon} {name}
-              </span>
-              <span className="text-xs leading-snug font-bold text-indigo-400">{desc}</span>
-            </button>
-          ))}
-        </div>
+        <ModePicker mode={settings.mode} disabled={!editable} onChange={(mode) => onChange({ mode })} />
 
         <Row icon={<Repeat className="size-4 text-pink-500" />} label={t('gs.rounds')}>
           {settings.targetScore > 0 ? (

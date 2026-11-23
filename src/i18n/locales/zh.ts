@@ -370,6 +370,12 @@ export const zh: Dict = {
   'err.pickCategory': "请先选择类别",
 
   // accounts
+  'setup.title': "设置你的房间",
+  'setup.game': "游戏",
+  'setup.category': "类别",
+  'setup.more': "进入房间后还有更多选项",
+  'setup.create': "创建房间",
+  'setup.pickFirst': "选择一个类别",
   "auth.register": "注册",
   "auth.signIn": "登录",
   "auth.signOut": "退出登录",

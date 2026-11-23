@@ -370,6 +370,12 @@ export const de: Dict = {
   'err.pickCategory': "Wähle zuerst eine Kategorie",
 
   // accounts
+  'setup.title': "Richte deinen Raum ein",
+  'setup.game': "Spiel",
+  'setup.category': "Kategorie",
+  'setup.more': "Weitere Optionen gibt's im Raum",
+  'setup.create': "Raum erstellen",
+  'setup.pickFirst': "Wähle eine Kategorie",
   "auth.register": "Registrieren",
   "auth.signIn": "Anmelden",
   "auth.signOut": "Abmelden",

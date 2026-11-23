@@ -370,6 +370,12 @@ export const ru: Dict = {
   'err.pickCategory': "Сначала выбери категорию",
 
   // accounts
+  'setup.title': "Настрой свою комнату",
+  'setup.game': "Игра",
+  'setup.category': "Категория",
+  'setup.more': "Больше настроек — в комнате",
+  'setup.create': "Создать комнату",
+  'setup.pickFirst': "Выбери категорию",
   "auth.register": "Регистрация",
   "auth.signIn": "Войти",
   "auth.signOut": "Выйти",

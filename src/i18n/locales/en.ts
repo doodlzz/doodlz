@@ -387,6 +387,12 @@ export const en = {
   'err.pickCategory': "Pick a category first",
 
   // accounts
+  'setup.title': "Set up your room",
+  'setup.game': "Game",
+  'setup.category': "Category",
+  'setup.more': "More options once you're in the room",
+  'setup.create': "Create room",
+  'setup.pickFirst': "Pick a category",
   "auth.register": "Register",
   "auth.signIn": "Sign in",
   "auth.signOut": "Sign out",

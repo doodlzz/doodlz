@@ -5,7 +5,7 @@ import { useT } from '../i18n';
 import { CATEGORY_LOOK } from '../lib/categories';
 
 /** One category tile: emoji, name and a few keywords. Also used (small) in the lobby. */
-export function CategoryTile({ category, selected, small, onClick }: { category: Category; selected?: boolean; small?: boolean; onClick?: () => void }) {
+export function CategoryTile({ category, selected, small, onPanel, onClick }: { category: Category; selected?: boolean; small?: boolean; onPanel?: boolean; onClick?: () => void }) {
   const t = useT();
   const look = CATEGORY_LOOK[category];
   const Tag = onClick ? 'button' : 'div';
@@ -15,11 +15,11 @@ export function CategoryTile({ category, selected, small, onClick }: { category:
       className={`relative flex flex-col items-center justify-center overflow-hidden rounded-3xl text-center text-white transition ${
         small ? 'gap-0.5 p-3' : 'aspect-square gap-1 p-3 sm:p-4'
       } ${onClick ? 'cursor-pointer hover:-translate-y-1 hover:brightness-110 active:translate-y-1 active:shadow-none' : ''} ${
-        selected ? 'ring-4 ring-white ring-offset-4 ring-offset-indigo-600' : ''
+        selected ? `outline-4 outline-offset-4 ${onPanel ? 'outline-indigo-400' : 'outline-white'}` : ''
       }`}
       style={{ backgroundColor: look.color, boxShadow: `0 6px 0 ${look.shadow}` }}
     >
-      {/* soft decorative shapes */}
+      {/* soft decorative shapes (an outline marks the selected tile: a ring would be hidden by the inline shadow) */}
       <span className="pointer-events-none absolute -top-6 -right-6 size-20 rounded-full bg-white/15" />
       <span className="pointer-events-none absolute -bottom-5 -left-5 size-14 rotate-12 rounded-2xl bg-black/10" />
       {selected && (
