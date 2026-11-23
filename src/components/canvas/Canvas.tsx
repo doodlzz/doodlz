@@ -44,7 +44,8 @@ export default function Canvas({ isDrawer, canDraw, blindfolded, lockedColor, ba
 
   // Set up the context and subscribe to remote drawing.
   useEffect(() => {
-    const ctx = canvasRef.current!.getContext('2d', { willReadFrequently: true })!;
+    // No willReadFrequently: it would keep the whole canvas off the GPU just so the fill bucket can read pixels.
+    const ctx = canvasRef.current!.getContext('2d')!;
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     clearCtx(ctx);
     ctxRef.current = ctx;

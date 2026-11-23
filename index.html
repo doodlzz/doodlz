@@ -13,6 +13,10 @@
         var t = (JSON.parse(localStorage.getItem('doodlz:settings') || '{}').theme) || 'system';
         if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
       } catch (e) {}
+      // Safari draws the wobbly crayon outlines (SVG filters on CSS) on the CPU and redraws them on every change
+      // inside the box, which makes drawing lag. It gets plain outlines instead (see .plain-edges in index.css).
+      var ua = navigator.userAgent;
+      if (/AppleWebKit/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android/.test(ua)) document.documentElement.classList.add('plain-edges');
     </script>
     <!-- The page colour before the stylesheet arrives (matches body in index.css). -->
     <style>

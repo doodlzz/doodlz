@@ -114,7 +114,8 @@ function Shell() {
       </a>
       {/* The doodle backdrop (and the crayon outline filters) behind every game screen. */}
       <CrayonScene />
-      <MouseTrail />
+      {/* Off during a round: it redraws a full-screen canvas every frame, which costs drawing smoothness. */}
+      {!playing && <MouseTrail />}
       <div id="main" tabIndex={-1}>
         <Suspense fallback={null}>
           {!game.state || phase === 'lobby' ? <Lobby game={game} /> : phase === 'game_over' ? <GameOver game={game} /> : <Game game={game} />}

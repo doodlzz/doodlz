@@ -329,6 +329,9 @@ html.dark {
 }
 .crayon-edge::before { inset: -3px; filter: url(#cr-edge-a); }
 .crayon-edge::after { inset: 1px -1px -1px 2px; opacity: 0.5; filter: url(#cr-edge-b); }
+/* Safari (set in index.html): no SVG filter, just the two offset lines, which still read as hand-drawn. */
+.plain-edges .crayon-edge::before,
+.plain-edges .crayon-edge::after { filter: none; }
 /* Still scrolls if it has to, but never shows a scrollbar. */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
