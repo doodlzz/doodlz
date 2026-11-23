@@ -407,11 +407,13 @@ html.dark {
   0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
   50% { transform: translateY(-7px) rotate(calc(var(--r, 0deg) * -1)); }
 }
-.logo-letter:hover { animation: logo-hop 0.55s cubic-bezier(0.3, 1.6, 0.6, 1); }
+.logo-hop { display: inline-block; }
+/* Added on hover by Logo.tsx and removed when the hop ends, so a hop always finishes smoothly. */
+.logo-hopping { animation: logo-hop 0.55s cubic-bezier(0.3, 1.6, 0.6, 1); }
 @keyframes logo-hop {
-  0% { transform: translateY(0) rotate(var(--r, 0deg)) scale(1); }
-  40% { transform: translateY(-14px) rotate(calc(var(--r, 0deg) * -2)) scale(1.12); }
-  100% { transform: translateY(0) rotate(var(--r, 0deg)) scale(1); }
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  40% { transform: translateY(-14px) rotate(-8deg) scale(1.12); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
 }
 
 /* Tagline: phrases pop in one after another once; the pencil scribbles now and then. */
@@ -445,5 +447,5 @@ html.dark {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-wave, .logo-letter:hover, .tagline-part, .scribble-wiggle, .btn-play > svg, .btn-hop > svg { animation: none !important; }
+  .logo-wave, .logo-hopping, .tagline-part, .scribble-wiggle, .btn-play > svg, .btn-hop > svg { animation: none !important; }
 }
