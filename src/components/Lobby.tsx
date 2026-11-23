@@ -26,6 +26,7 @@ import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import { AdSlot, SupportCard } from './Promo';
 import SettingsButton from './SettingsModal';
 import TaggedName from './TaggedName';
+import HomeInfo from './HomeInfo';
 import LeaveConfirm from './LeaveConfirm';
 import FriendsButton from '../friends/FriendsButton';
 
@@ -246,21 +247,8 @@ function HomeView({ game }: { game: GameApi }) {
         <LobbyBrowser game={game} disabled={!ready} onJoin={(c) => run((n) => game.joinRoom(c, n, avatar))} />
       </div>
 
-      <div className="mt-6 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
-        {(
-          [
-            ['✏️', 'home.howDraw', 'home.howDrawText'],
-            ['💬', 'home.howGuess', 'home.howGuessText'],
-            ['🏆', 'home.howWin', 'home.howWinText'],
-          ] as const
-        ).map(([emoji, title, text]) => (
-          <div key={title} className="rounded-3xl bg-white/15 p-4 text-white backdrop-blur-sm">
-            <div className="text-2xl">{emoji}</div>
-            <div className="font-display text-lg font-semibold">{t(title)}</div>
-            <div className="text-sm font-semibold text-white/95">{t(text)}</div>
-          </div>
-        ))}
-      </div>
+      {/* For first-time visitors: what this is and how a game goes. */}
+      <HomeInfo className="mt-4 max-w-xl" />
       <SupportCard className="mt-4 w-full max-w-xl" />
       <AdSlot className="mt-4 w-full max-w-xl" />
       {/* Pinned to the bottom corners on wide screens (socials from 1024px, quests from 1152px); stacked at the end on smaller ones.
