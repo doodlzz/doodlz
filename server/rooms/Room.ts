@@ -141,6 +141,8 @@ export class Room {
   private revealAt: number[] = [];
   private deltas: Record<string, number> = {};
   private guessScores: number[] = [];
+  /** Time left (0..1) at each correct guess this turn; the drawer's points follow these. */
+  private guessTimesLeft: number[] = [];
   private lastTurn: TurnSummary | null = null;
   private background: BackgroundId = 'white';
   private drawColor: string | null = null;
@@ -450,9 +452,11 @@ export class Room {
     const connectedIds = () => this.connectedPlayers.map((p) => p.id);
     if (this.players.size < 2 || connectedIds().length === 0) return this.endGame(false);
 
-    // "First to X points": the game ends after the turn in which someone gets there.
+    // "First to X points": once someone gets there, the round is finished first so everyone has
+    // drawn the same number of times, then the game ends.
     const target = this.settings.targetScore;
-    if (target > 0 && [...this.players.values()].some((p) => p.score >= target)) return this.endGame();
+    const roundOpen = this.drawQueue.some((id) => this.players.get(id)?.connected);
+    if (target > 0 && !roundOpen && [...this.players.values()].some((p) => p.score >= target)) return this.endGame();
 
     if (this.drawQueue.length === 0) {
       this.round++;
@@ -487,6 +491,7 @@ export class Room {
     this.drawerHints = 0;
     this.deltas = {};
     this.guessScores = [];
+    this.guessTimesLeft = [];
     this.history = [];
     this.background = 'white';
     this.drawColor = this.settings.singleColor ? pick(SINGLE_COLORS) : null;
@@ -596,9 +601,14 @@ export class Room {
         const p = this.players.get(id);
         if (p) p.score += pts;
       }
-      // Drawers: their share of the guessers who got it (see scoring.ts).
+      // Drawers: their share of the guessers who got it, scaled by how fast (see scoring.ts).
       const guessers = this.connectedPlayers.filter((p) => !this.drawerIds.includes(p.id)).length;
-      const pts = drawerPoints({ difficulty: this.difficulty ?? 'easy', guessed: correct, guessers, hintsGiven: this.drawerHints });
+      const pts = drawerPoints({
+        difficulty: this.difficulty ?? 'easy',
+        guessers,
+        hintsGiven: this.drawerHints,
+        guessTimesLeft: this.guessTimesLeft,
+      });
       for (const id of this.drawerIds) {
         const d = this.players.get(id);
         if (d && pts > 0) {
@@ -745,6 +755,7 @@ export class Room {
     const order = this.guessScores.length;
     const timeLeft = this.phaseEndsAt && this.turnMs ? (this.phaseEndsAt - Date.now()) / this.turnMs : 0;
     const points = guessPoints({ difficulty: this.difficulty ?? 'easy', order, timeLeft, hintsGiven: this.drawerHints });
+    this.guessTimesLeft.push(timeLeft);
     // Banked when the turn ends (see endTurn), so a drawer leaving mid-turn cancels it.
     player.hasGuessed = true;
     // Only guesses made after some real drawing count toward quests.

@@ -51,8 +51,7 @@ export const SCORING = {
   placeBonus: [15, 10, 5], // 1st, 2nd and 3rd to guess
   hintFactor: 0.85, // each drawer hint given before your guess keeps 85% of the word value
   minGuess: 10, // a correct guess is always worth at least this
-  drawer: { easy: 40, medium: 50, hard: 60 } as Record<Difficulty, number>, // drawer, if every guesser gets it
-  allGuessedBonus: 10, // drawer bonus when everyone guessed
+  drawer: { easy: 40, medium: 50, hard: 60 } as Record<Difficulty, number>, // drawer, if every guesser gets it instantly
   drawerHintCost: 8, // taken off the drawer's points for each hint they give
 } as const;
 /** "First to X points" presets; 0 means off (play a set number of rounds). */

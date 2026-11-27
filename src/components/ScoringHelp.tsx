@@ -45,7 +45,7 @@ export default function ScoringHelp({ targetScore = 0, className = '' }: { targe
       icon: <Pencil className="size-4 text-violet-500" />,
       title: t('score.draw'),
       value: `${SCORING.drawer.easy} / ${SCORING.drawer.medium} / ${SCORING.drawer.hard}`,
-      note: t('score.drawNote', { bonus: SCORING.allGuessedBonus }),
+      note: t('score.drawNote'),
     },
   ];
 
