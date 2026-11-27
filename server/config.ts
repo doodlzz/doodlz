@@ -15,6 +15,8 @@ export const config = {
   /** Resend (email). Without an API key nothing is sent and every account counts as verified. MAIL_FROM must be on a domain verified in Resend. */
   /** OAuth client id for "Sign in with Google" (Google Cloud Console); empty hides the button. */
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  /** Google AdSense publisher id (ca-pub-…), the same value the client is built with; empty means no ads.txt entry. */
+  adsenseClient: (process.env.VITE_ADSENSE_CLIENT ?? '').trim(),
   resendApiKey: process.env.RESEND_API_KEY ?? '',
   resendApiUrl: process.env.RESEND_API_URL ?? 'https://api.resend.com/emails',
   mailFrom: process.env.MAIL_FROM ?? 'Doodlz <noreply@doodlz.io>',

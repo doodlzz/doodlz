@@ -454,6 +454,7 @@ export const en = {
   "footer.delete": "Delete my data",
   "footer.contact": "Contact",
   "consent.text": "doodlz.io only stores what the game needs to work (your sign-in and settings). No ads, no tracking.",
+  "consent.textAds": "doodlz.io stores what the game needs to work (your sign-in and settings) and shows ads from Google between games. In the EU and UK, Google asks for your choice about ad cookies.",
   "consent.ok": "OK",
   "consent.more": "Cookie Policy",
   "a11y.skip": "Skip to main content",

@@ -32,3 +32,17 @@ services:
         sync: false
       - key: VITE_CONTACT_EMAIL
         sync: false
+      # Ads (see src/config/ads.ts). Unset = no ads. "preview" = grey boxes where ads will go. "adsense" = real
+      # Google ads; then also set the publisher id (ca-pub-…) and one ad unit id per placement from AdSense → Ads → By ad unit.
+      - key: VITE_ADS
+        sync: false
+      - key: VITE_ADSENSE_CLIENT
+        sync: false
+      - key: VITE_ADSENSE_SLOT_HOME
+        sync: false
+      - key: VITE_ADSENSE_SLOT_SIDE
+        sync: false
+      - key: VITE_ADSENSE_SLOT_ROOM
+        sync: false
+      - key: VITE_ADSENSE_SLOT_GAMEOVER
+        sync: false

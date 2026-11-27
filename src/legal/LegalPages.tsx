@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import DeleteAccountPage from '../auth/DeleteAccountPage';
+import { ADS_LIVE } from '../config/ads';
 import { BUSINESS, OPERATOR } from '../config/business';
 
 import type { LegalPath } from './paths';
@@ -52,14 +53,20 @@ const Privacy = () => (
       <li>To keep the game fair and secure, prevent abuse and fraud (legitimate interests).</li>
       <li>To process payments and keep purchase records for accounting (contract, legal obligation).</li>
     </ul>
-    <p>We don’t sell your personal data, don’t use it for advertising profiles, and don’t send marketing emails.</p>
+    {ADS_LIVE && <ul><li>To show ads that pay for the free game (consent where required; otherwise legitimate interests, with non-personalised ads).</li></ul>}
+    <p>We don’t sell your personal data{ADS_LIVE ? '' : ', don’t use it for advertising profiles,'} and don’t send marketing emails.</p>
     <h2>Who receives it</h2>
     <ul>
       <li>Paddle.com, our reseller and Merchant of Record (payment processing, tax and invoicing, only if you buy points).</li>
       <li>Our hosting provider, which runs the servers that store account data.</li>
+      {ADS_LIVE && (
+        <li>
+          Google (AdSense), which shows the ads between games and receives your IP address, browser details and ad cookies. In the EU, UK and Switzerland Google asks for your consent first; without it you only see non-personalised ads. See <a href="https://policies.google.com/technologies/partner-sites" rel="noreferrer">how Google uses data from sites that use its services</a>; you can turn off personalised ads at <a href="https://adssettings.google.com" rel="noreferrer">Google Ad Settings</a>.
+        </li>
+      )}
       <li>Other players in your room see your name, avatar, chat and drawings.</li>
     </ul>
-    <p>The site loads no analytics, advertising or tracking scripts, and its fonts are served from our own server, so visiting does not send your IP address to a font provider.</p>
+    <p>The site loads no analytics or tracking scripts{ADS_LIVE ? ' other than Google’s ad script described above' : ', and no advertising scripts'}, and its fonts are served from our own server, so visiting does not send your IP address to a font provider.</p>
     <h2>How long we keep it</h2>
     <p>Account data is kept until you delete your account. When you delete it, your profile, picture, sign-ins and purchase records on our servers are removed immediately. Paddle keeps its own payment records for as long as the law requires.</p>
     <h2>Your rights</h2>
@@ -128,7 +135,11 @@ const Refunds = () => (
 
 const Cookies = () => (
   <Page title="Cookie Policy">
-    <p>We keep this simple: {BUSINESS.siteName} uses <b>no advertising, analytics or tracking cookies</b>. It only stores small items in your browser that the game needs to work.</p>
+    {ADS_LIVE ? (
+      <p>{BUSINESS.siteName} stores small items in your browser that the game needs to work, and shows <b>ads from Google</b> between games, which use cookies (see below). We use no analytics cookies.</p>
+    ) : (
+      <p>We keep this simple: {BUSINESS.siteName} uses <b>no advertising, analytics or tracking cookies</b>. It only stores small items in your browser that the game needs to work.</p>
+    )}
     <table>
       <thead>
         <tr><th>Item (browser storage)</th><th>What it does</th><th>How long</th></tr>
@@ -140,7 +151,15 @@ const Cookies = () => (
         <tr><td>Notice acknowledged</td><td>Remembers that you saw the notice at the bottom of the page.</td><td>Until you clear site data</td></tr>
       </tbody>
     </table>
-    <p>These are strictly necessary, so they are not subject to consent under the ePrivacy rules. If we ever add anything optional, such as analytics or ads, we will ask you first and update this page. You can delete all of the above at any time in your browser’s settings; the game will then treat you as a new visitor.</p>
+    <p>These are strictly necessary, so they are not subject to consent under the ePrivacy rules. {ADS_LIVE ? '' : 'If we ever add anything optional, such as analytics or ads, we will ask you first and update this page. '}You can delete all of the above at any time in your browser’s settings; the game will then treat you as a new visitor.</p>
+    {ADS_LIVE && (
+      <>
+        <h2>Advertising cookies</h2>
+        <p>
+          The ads are served by Google AdSense, which sets its own cookies (for example to limit how often you see an ad, fight ad fraud and, if you allow it, personalise ads). In the EU, UK and Switzerland Google shows a consent message first and you can say no; you can change your choice later from the “Privacy and cookie settings” link that Google adds to the page. Details: <a href="https://policies.google.com/technologies/ads" rel="noreferrer">how Google uses cookies in advertising</a>.
+        </p>
+      </>
+    )}
     <p>If you buy points, Paddle’s checkout opens on top of the page and sets its own cookies under <a href="https://www.paddle.com/legal/privacy" rel="noreferrer">Paddle’s privacy policy</a>.</p>
   </Page>
 );

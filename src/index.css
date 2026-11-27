@@ -449,3 +449,7 @@ html.dark {
 @media (prefers-reduced-motion: reduce) {
   .logo-wave, .logo-hopping, .tagline-part, .scribble-wiggle, .btn-play > svg, .btn-hop > svg { animation: none !important; }
 }
+
+/* Ad spaces (components/Promo.tsx): a small label above, and the whole thing collapses when Google has no ad for it. */
+.ad-slot .ad-label { margin-bottom: 0.25rem; text-align: center; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: rgb(255 255 255 / 0.7); }
+.ad-slot:has(ins.adsbygoogle[data-ad-status='unfilled']) { display: none; }

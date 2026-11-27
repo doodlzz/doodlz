@@ -37,6 +37,13 @@ await friends.init();
 app.use('/api/auth', authRoutes(accounts));
 app.use('/api/shop', shopRoutes(accounts));
 
+// ads.txt: tells ad buyers which ad accounts may sell space on this site. Google AdSense requires it.
+app.get('/ads.txt', (_req, res) => {
+  const pub = config.adsenseClient.replace(/^ca-/, '');
+  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(pub ? `google.com, ${pub}, DIRECT, f08c47fec0942fa0\n` : '# No ad sellers.\n');
+});
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, accountStorage: useSupabase ? 'supabase' : 'local-file', online: io.engine.clientsCount, ...manager.stats() }));
 
 // In production, serve the built client from ./dist.

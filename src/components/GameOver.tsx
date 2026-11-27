@@ -240,7 +240,7 @@ export default function GameOver({ game }: { game: GameApi }) {
           </div>
         )}
       </div>
-      <AdSlot className="mt-6 w-full max-w-md" />
+      <AdSlot placement="gameover" className="mt-6 w-full max-w-md" />
     </div>
   );
 }

@@ -250,7 +250,9 @@ function HomeView({ game }: { game: GameApi }) {
       {/* For first-time visitors: what this is and how a game goes. */}
       <HomeInfo className="mt-4 max-w-xl" />
       <SupportCard className="mt-4 w-full max-w-xl" />
-      <AdSlot className="mt-4 w-full max-w-xl" />
+      <AdSlot placement="home" className="mt-4 w-full max-w-xl" />
+      {/* Wide screens: a tall ad in the empty space on the right, mirroring the daily quests on the left. */}
+      <AdSlot placement="side" className="fixed top-1/2 right-4 z-10 w-[min(300px,calc((100vw_-_36rem)/2_-_2rem))] -translate-y-1/2" />
       {/* Pinned to the bottom corners on wide screens (socials from 1024px, quests from 1152px); stacked at the end on smaller ones.
           Quests narrow to fit the gap beside the 36rem lobby column, up to 20rem wide. */}
       <DailyQuests className="crayon-edge no-scrollbar mt-4 w-full max-w-xl min-[1152px]:fixed min-[1152px]:bottom-4 min-[1152px]:left-4 min-[1152px]:z-10 min-[1152px]:mt-0 min-[1152px]:max-h-[calc(100vh-4.5rem)] min-[1152px]:w-[min(20rem,calc((100vw_-_36rem)/2_-_2rem))] min-[1152px]:overflow-x-hidden min-[1152px]:overflow-y-auto" />
@@ -427,6 +429,7 @@ function RoomView({ game }: { game: GameApi }) {
 
         <Chat messages={game.messages} players={state.players} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="crayon-edge crayon-inset h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
       </div>
+      <AdSlot placement="room" className="mx-auto mt-6 w-full max-w-3xl" />
     </div>
   );
 }
