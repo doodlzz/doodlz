@@ -2,6 +2,7 @@ import type { Category } from '../../shared/types';
 
 /** How each category looks on its tile. Names and keywords live in the locale files (cat.* / catk.*). */
 export const CATEGORY_LOOK: Record<Category, { emoji: string; color: string; shadow: string }> = {
+  general: { emoji: '🎨', color: '#6366f1', shadow: '#3730a3' },
   games: { emoji: '🎮', color: '#8b5cf6', shadow: '#5b21b6' },
   heroes: { emoji: '🦸', color: '#ef4444', shadow: '#991b1b' },
   cartoons: { emoji: '📺', color: '#f59e0b', shadow: '#b45309' },

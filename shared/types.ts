@@ -8,6 +8,7 @@ import type { DirectMessage, FriendAck, FriendInvite, FriendsState } from './fri
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export const CATEGORIES = [
+  'general',
   'games',
   'heroes',
   'cartoons',
