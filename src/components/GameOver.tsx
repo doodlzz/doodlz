@@ -241,6 +241,9 @@ export default function GameOver({ game }: { game: GameApi }) {
         )}
       </div>
       <AdSlot placement="gameover" className="mt-6 w-full max-w-md" />
+      {/* Wide screens: tall ads in the empty space either side of the podium. */}
+      <AdSlot placement="gameoverLeft" className="fixed top-1/2 left-4 z-10 w-[min(300px,calc((100vw_-_48rem)/2_-_2rem))] -translate-y-1/2" />
+      <AdSlot placement="gameoverSide" className="fixed top-1/2 right-4 z-10 w-[min(300px,calc((100vw_-_48rem)/2_-_2rem))] -translate-y-1/2" />
     </div>
   );
 }

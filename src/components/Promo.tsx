@@ -40,16 +40,24 @@ function loadAdSense() {
   document.head.appendChild(adScript);
 }
 
-const PREVIEW_SIZE: Record<AdPlacement, string> = {
-  side: 'Tall ad · 160 to 300 wide × 600 high, wide screens only',
-  home: 'Responsive banner · about 576×100 on desktop, 320×100 on phones',
-  room: 'Responsive banner · about 728×90 on desktop, 320×100 on phones',
-  gameover: 'Responsive banner · about 448×100 on desktop, 320×100 on phones',
+type Shape = 'banner' | 'tall' | 'square';
+// query: the screen size an ad needs; below it the ad isn't rendered at all.
+const SHAPES: Record<Shape, { height: string; format: string; query: string | null }> = {
+  banner: { height: 'min-h-[100px]', format: 'horizontal', query: null },
+  // Needs the gap beside the centre column and room for 600px between the buttons at the top and "Follow us" at the bottom.
+  tall: { height: 'h-[600px]', format: 'vertical', query: '(min-width: 1152px) and (min-height: 820px)' },
+  // In the 250px scores column of the game, which only exists from 1024px; tall enough that the scores keep room.
+  square: { height: 'h-[250px]', format: 'rectangle', query: '(min-width: 1024px) and (min-height: 760px)' },
 };
-
-// The side ad needs the gap beside the 36rem home column (as wide as the daily quests on the left) and room
-// for 600px between the sign-in buttons at the top and "Follow us" at the bottom.
-const SIDE_QUERY = '(min-width: 1152px) and (min-height: 820px)';
+const PLACEMENTS: Record<AdPlacement, { shape: Shape; preview: string }> = {
+  home: { shape: 'banner', preview: 'Responsive banner · about 576×100 on desktop, 320×100 on phones' },
+  side: { shape: 'tall', preview: 'Tall ad · 160 to 300 wide × 600 high, wide screens only' },
+  room: { shape: 'banner', preview: 'Responsive banner under the players' },
+  game: { shape: 'square', preview: '250×250 square, wide screens only' },
+  gameover: { shape: 'banner', preview: 'Responsive banner · about 448×100 on desktop, 320×100 on phones' },
+  gameoverSide: { shape: 'tall', preview: 'Tall ad · 160 to 300 wide × 600 high, wide screens only' },
+  gameoverLeft: { shape: 'tall', preview: 'Tall ad · 160 to 300 wide × 600 high, wide screens only' },
+};
 function useFits(query: string | null) {
   const [fits, setFits] = useState(() => !query || matchMedia(query).matches);
   useEffect(() => {
@@ -70,9 +78,9 @@ export function AdSlot({ placement, className = '' }: { placement: AdPlacement; 
   const t = useT();
   const ref = useRef<HTMLModElement>(null);
   const slot = ADS.slots[placement];
-  const side = placement === 'side';
+  const shape = SHAPES[PLACEMENTS[placement].shape];
   // Not rendered at all when it doesn't fit, so Google is never asked to fill a hidden box.
-  const fits = useFits(side ? SIDE_QUERY : null);
+  const fits = useFits(shape.query);
 
   useEffect(() => {
     if (ADS.mode !== 'adsense' || !slot || !ref.current) return;
@@ -92,9 +100,9 @@ export function AdSlot({ placement, className = '' }: { placement: AdPlacement; 
     return (
       <div className={`ad-slot ${className}`} aria-label={t('ad.label')}>
         <div className="ad-label">{t('ad.label')}</div>
-        <div className={`grid place-items-center gap-1 rounded-2xl border-4 border-dashed border-white/40 bg-white/10 p-3 text-center text-white ${side ? 'h-[600px]' : 'min-h-[100px]'}`}>
+        <div className={`grid place-items-center gap-1 rounded-2xl border-4 border-dashed border-white/40 bg-white/10 p-3 text-center text-white ${shape.height}`}>
           <div className="font-display text-lg font-semibold">Ad preview: {placement}</div>
-          <div className="text-xs font-bold text-white/80">{PREVIEW_SIZE[placement]}</div>
+          <div className="text-xs font-bold text-white/80">{PLACEMENTS[placement].preview}</div>
         </div>
       </div>
     );
@@ -105,11 +113,11 @@ export function AdSlot({ placement, className = '' }: { placement: AdPlacement; 
       <div className="ad-label">{t('ad.label')}</div>
       <ins
         ref={ref}
-        className={`adsbygoogle block overflow-hidden rounded-2xl ${side ? 'h-[600px]' : 'min-h-[100px]'}`}
+        className={`adsbygoogle block overflow-hidden rounded-2xl ${shape.height}`}
         data-ad-client={ADS.client}
         data-ad-slot={slot}
-        data-ad-format={side ? 'vertical' : 'horizontal'}
-        data-full-width-responsive={side ? 'false' : 'true'}
+        data-ad-format={shape.format}
+        data-full-width-responsive={shape.query ? 'false' : 'true'}
       />
     </div>
   );

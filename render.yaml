@@ -44,5 +44,7 @@ services:
         sync: false
       - key: VITE_ADSENSE_SLOT_ROOM
         sync: false
+      - key: VITE_ADSENSE_SLOT_GAME
+        sync: false
       - key: VITE_ADSENSE_SLOT_GAMEOVER
         sync: false

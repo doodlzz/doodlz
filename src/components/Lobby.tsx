@@ -373,6 +373,7 @@ function RoomView({ game }: { game: GameApi }) {
           />
         </div>
 
+        <div className="flex flex-col gap-4">
         <div className="panel crayon-edge flex flex-col p-5">
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold text-indigo-900">
             <Users className="size-5 text-emerald-500" /> {t('lobby.players')}
@@ -426,10 +427,11 @@ function RoomView({ game }: { game: GameApi }) {
             {isHost && connectedCount < 2 && <p className="mt-2 text-center text-sm font-bold text-indigo-400">{t('lobby.inviteOne')}</p>}
           </div>
         </div>
+        <AdSlot placement="room" className="w-full" />
+        </div>
 
         <Chat messages={game.messages} players={state.players} onSend={game.sendGuess} placeholder={t('chat.phLobby')} title={t('chat.title')} className="crayon-edge crayon-inset h-[360px] lg:sticky lg:top-4 lg:h-[560px]" />
       </div>
-      <AdSlot placement="room" className="mx-auto mt-6 w-full max-w-3xl" />
     </div>
   );
 }

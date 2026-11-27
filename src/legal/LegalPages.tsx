@@ -61,7 +61,7 @@ const Privacy = () => (
       <li>Our hosting provider, which runs the servers that store account data.</li>
       {ADS_LIVE && (
         <li>
-          Google (AdSense), which shows the ads between games and receives your IP address, browser details and ad cookies. In the EU, UK and Switzerland Google asks for your consent first; without it you only see non-personalised ads. See <a href="https://policies.google.com/technologies/partner-sites" rel="noreferrer">how Google uses data from sites that use its services</a>; you can turn off personalised ads at <a href="https://adssettings.google.com" rel="noreferrer">Google Ad Settings</a>.
+          Google (AdSense), which shows the ads on the site and receives your IP address, browser details and ad cookies. In the EU, UK and Switzerland Google asks for your consent first; without it you only see non-personalised ads. See <a href="https://policies.google.com/technologies/partner-sites" rel="noreferrer">how Google uses data from sites that use its services</a>; you can turn off personalised ads at <a href="https://adssettings.google.com" rel="noreferrer">Google Ad Settings</a>.
         </li>
       )}
       <li>Other players in your room see your name, avatar, chat and drawings.</li>
@@ -136,7 +136,7 @@ const Refunds = () => (
 const Cookies = () => (
   <Page title="Cookie Policy">
     {ADS_LIVE ? (
-      <p>{BUSINESS.siteName} stores small items in your browser that the game needs to work, and shows <b>ads from Google</b> between games, which use cookies (see below). We use no analytics cookies.</p>
+      <p>{BUSINESS.siteName} stores small items in your browser that the game needs to work, and shows <b>ads from Google</b>, which use cookies (see below). We use no analytics cookies.</p>
     ) : (
       <p>We keep this simple: {BUSINESS.siteName} uses <b>no advertising, analytics or tracking cookies</b>. It only stores small items in your browser that the game needs to work.</p>
     )}

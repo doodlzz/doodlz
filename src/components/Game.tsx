@@ -11,6 +11,7 @@ import Chat from './Chat';
 import Leaderboard from './Leaderboard';
 import LeaveConfirm from './LeaveConfirm';
 import Logo from './Logo';
+import { AdSlot } from './Promo';
 import { CodeEyeButton, maskCode, useCodeVisibility } from './RoomCode';
 import SettingsButton from './SettingsModal';
 import WordSelectModal from './WordSelectModal';
@@ -293,7 +294,11 @@ export default function Game({ game }: { game: GameApi }) {
           )}
         </div>
         {/* Sized to its players (not stretched to the row), up to a scrolling maximum. */}
-        <Leaderboard state={state} game={game} className="crayon-edge crayon-inset order-3 max-h-72 self-start sm:order-none sm:max-h-[320px] lg:order-1 lg:max-h-[calc(100vh-110px)]" />
+        {/* Wide screens: one still ad below the scores (the column shrinks the scores to make room), away from the canvas and chat. */}
+        <div className="order-3 flex min-h-0 flex-col gap-3 self-start sm:order-none lg:order-1 lg:h-[calc(100vh-110px)]">
+          <Leaderboard state={state} game={game} className="crayon-edge crayon-inset min-h-0 max-h-72 sm:max-h-[320px] lg:max-h-none" />
+          <AdSlot placement="game" className="w-full shrink-0 lg:mt-auto" />
+        </div>
         <Chat
           messages={game.messages}
           players={state.players}
