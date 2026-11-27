@@ -17,7 +17,7 @@ export const BUSINESS = {
   /** Business registration / tax number, if you have one. Hidden when empty. */
   registration: typeof env.VITE_BUSINESS_REG === 'string' ? env.VITE_BUSINESS_REG.trim() : '',
   /** Update when you change the policies. */
-  policiesUpdated: '2026-11-08',
+  policiesUpdated: '2026-11-27',
 };
 
 /** Only the contact email is required; name and address are shown only when you choose to set them. */

@@ -30,7 +30,7 @@ export default function DeleteAccountPage() {
       <article className="panel legal p-6 sm:p-8">
         <h1>Delete my data</h1>
         <p>
-          You can delete your {BUSINESS.siteName} account yourself. This removes your username, email, password hash, the link to your Google account (if you sign in with Google), friends, messages, avatar and picture, points, cosmetics, quest progress and purchase records from our servers, and signs you out everywhere. <b>It can’t be undone, and unspent points are lost.</b> Payment records held by Stripe are kept by Stripe as the law requires.
+          You can delete your {BUSINESS.siteName} account yourself. This removes your username, email, password hash, the link to your Google account (if you sign in with Google), friends, messages, avatar and picture, points, cosmetics, quest progress and purchase records from our servers, and signs you out everywhere. <b>It can’t be undone, and unspent points are lost.</b> Payment records held by Paddle, our reseller, are kept by Paddle as the law requires.
         </p>
         {done ? (
           <p role="status" className="rounded-2xl bg-emerald-100 p-3 font-bold text-emerald-700">

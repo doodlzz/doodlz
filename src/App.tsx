@@ -46,7 +46,7 @@ function Shell() {
   const { account, applyReward, refresh, shopTab, closeShop, levelsOpen, closeLevels } = useAuth();
   const [shopNote, setShopNote] = useState<'success' | 'cancel' | null>(null);
 
-  // Back from Stripe's payment page. The points are added when Stripe confirms the payment to the
+  // Back from Paddle's checkout. The points are added when Paddle confirms the payment to the
   // server, which can take a few seconds, so check the account again a few times.
   useEffect(() => {
     const result = new URLSearchParams(location.search).get('points');

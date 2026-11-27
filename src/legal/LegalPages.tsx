@@ -36,13 +36,13 @@ const Privacy = () => (
         <b>If you play as a guest:</b> a nickname you type. Your browser stores a random device ID and a #tag so you keep the same name and so one person can’t fill a room with tabs. We don’t ask for your email.
       </li>
       <li>
-        <b>If you create an account:</b> username, email address, a salted hash of your password (we never store the password itself), or, if you sign in with Google, your Google account ID and the email and first name Google shares with us (we never see your Google password), the time you accepted these policies, your avatar or picture, points, purchased and equipped cosmetics, daily and weekly quest progress, your friends list and friend requests, the private messages you send to and receive from friends (the last 100 per conversation), and a record of point purchases (Stripe session ID, pack, amount, date).
+        <b>If you create an account:</b> username, email address, a salted hash of your password (we never store the password itself), or, if you sign in with Google, your Google account ID and the email and first name Google shares with us (we never see your Google password), the time you accepted these policies, your avatar or picture, points, purchased and equipped cosmetics, daily and weekly quest progress, your friends list and friend requests, the private messages you send to and receive from friends (the last 100 per conversation), and a record of point purchases (Paddle transaction ID, pack, amount, date).
       </li>
       <li>
         <b>While you play:</b> chat messages, drawings and guesses are shared with the other players in your room and are kept only while the room exists. They are not saved to your account. Your IP address is used by the server in memory to limit abuse (for example, how many players join from one address and ranked-game fairness) and to slow down password guessing; we don’t store it in your account.
       </li>
       <li>
-        <b>Payments:</b> handled by Stripe on Stripe’s own page. We never see or store your card number.
+        <b>Payments:</b> handled by Paddle in its own secure checkout. Paddle collects your payment details and billing country directly; we never see or store your card number.
       </li>
     </ul>
     <p>We don’t collect anything that isn’t needed to run the game, and we don’t ask for date of birth, address, or phone number.</p>
@@ -55,13 +55,13 @@ const Privacy = () => (
     <p>We don’t sell your personal data, don’t use it for advertising profiles, and don’t send marketing emails.</p>
     <h2>Who receives it</h2>
     <ul>
-      <li>Stripe (payment processing, only if you buy points).</li>
+      <li>Paddle.com, our reseller and Merchant of Record (payment processing, tax and invoicing, only if you buy points).</li>
       <li>Our hosting provider, which runs the servers that store account data.</li>
       <li>Other players in your room see your name, avatar, chat and drawings.</li>
     </ul>
     <p>The site loads no analytics, advertising or tracking scripts, and its fonts are served from our own server, so visiting does not send your IP address to a font provider.</p>
     <h2>How long we keep it</h2>
-    <p>Account data is kept until you delete your account. When you delete it, your profile, picture, sign-ins and purchase records on our servers are removed immediately. Stripe may keep payment records for as long as the law requires.</p>
+    <p>Account data is kept until you delete your account. When you delete it, your profile, picture, sign-ins and purchase records on our servers are removed immediately. Paddle keeps its own payment records for as long as the law requires.</p>
     <h2>Your rights</h2>
     <p>
       Depending on where you live (for example under the GDPR or the CCPA) you can ask to access, correct, export or delete your data, object to processing, or complain to your data protection authority. You can change your username, email and password in Account settings, and delete your account yourself on the <a href="/delete-account">Delete my data</a> page. For anything else, write to {mail('Privacy request')}.
@@ -92,7 +92,7 @@ const Terms = () => (
     <p>You keep ownership of your drawings, chat and pictures. You give us permission to display them to other players in the game as needed to run it. Only upload pictures you have the right to use.</p>
     <h2>Points and cosmetics</h2>
     <p>
-      Points can be earned in ranked games and quests, or bought. They and the cosmetics bought with them are a licence to use features inside {BUSINESS.siteName}; they have no cash value, can’t be transferred or exchanged for money, and are lost if your account is deleted. Prices are shown in US dollars on the buy screen before you pay and the amount shown is the amount charged by Stripe; any tax Stripe adds for your location is shown on Stripe’s payment page before you confirm. See the <a href="/refunds">Refund Policy</a>.
+      Points can be earned in ranked games and quests, or bought. They and the cosmetics bought with them are a licence to use features inside {BUSINESS.siteName}; they have no cash value, can’t be transferred or exchanged for money, and are lost if your account is deleted. Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders, handles payment, tax and invoicing, and its <a href="https://www.paddle.com/legal/checkout-buyer-terms" rel="noreferrer">buyer terms</a> also apply to your purchase. Prices are shown in US dollars on the buy screen; Paddle’s checkout shows the final amount, including any tax for your location and the currency you pay in, before you confirm. See the <a href="/refunds">Refund Policy</a>.
     </p>
     <h2>Availability</h2>
     <p>The game is provided “as is”. We may change it, or take it offline for maintenance, and we don’t guarantee it will always be available or error-free. Nothing here limits rights you have under consumer-protection law that cannot be waived.</p>
@@ -107,7 +107,7 @@ const Terms = () => (
 
 const Refunds = () => (
   <Page title="Refund Policy">
-    <p>Point packs are digital content delivered to your account as soon as Stripe confirms payment.</p>
+    <p>Point packs are digital content delivered to your account as soon as Paddle confirms payment. Paddle.com is our reseller and Merchant of Record and handles refunds for our orders.</p>
     <h2>Right to withdraw (EU/UK)</h2>
     <p>
       If you live in the EU or UK you normally have 14 days to cancel a purchase. We don’t make you give that up: within 14 days of buying, ask us and we will refund any points you haven’t spent.
@@ -121,7 +121,7 @@ const Refunds = () => (
     </ul>
     <h2>How to ask</h2>
     <p>
-      Email {mail('Refund request')} with your username and the date of the purchase. Refunds go back to the original payment method through Stripe and usually take 5–10 business days to appear. If you started a payment and then cancelled, you weren’t charged.
+      Email {mail('Refund request')} with your username and the date of the purchase. You can also ask Paddle directly at <a href="https://paddle.net" rel="noreferrer">paddle.net</a> using the receipt email Paddle sent you. Refunds go back to the original payment method through Paddle and usually take 5–10 business days to appear. If you started a payment and then cancelled, you weren’t charged.
     </p>
   </Page>
 );
@@ -141,7 +141,7 @@ const Cookies = () => (
       </tbody>
     </table>
     <p>These are strictly necessary, so they are not subject to consent under the ePrivacy rules. If we ever add anything optional, such as analytics or ads, we will ask you first and update this page. You can delete all of the above at any time in your browser’s settings; the game will then treat you as a new visitor.</p>
-    <p>If you buy points, you are sent to Stripe’s payment page, which sets its own cookies under <a href="https://stripe.com/privacy" rel="noreferrer">Stripe’s policy</a>.</p>
+    <p>If you buy points, Paddle’s checkout opens on top of the page and sets its own cookies under <a href="https://www.paddle.com/legal/privacy" rel="noreferrer">Paddle’s privacy policy</a>.</p>
   </Page>
 );
 

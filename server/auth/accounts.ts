@@ -45,7 +45,7 @@ interface Account {
 }
 
 interface Purchase {
-  id: string; // Stripe Checkout session id; each one is credited once
+  id: string; // payment transaction id (Paddle txn_…); each one is credited once
   pack: string;
   points: number;
   cents: number;
@@ -477,8 +477,8 @@ export class AccountStore {
   }
 
   /**
-   * Add bought points once per paid Stripe session. Returns the new balance,
-   * or null if the account is gone or this session was already credited.
+   * Add bought points once per paid transaction. Returns the new balance,
+   * or null if the account is gone or this transaction was already credited.
    */
   creditPurchase(accountId: string, p: Purchase): number | null {
     const a = this.store.accounts.find((x) => x.id === accountId);

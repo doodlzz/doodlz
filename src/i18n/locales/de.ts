@@ -535,7 +535,7 @@ export const de: Dict = {
   "shop.starter": "Startpaket",
   "shop.best": "Bester Preis",
   "shop.popular": "Beliebt",
-  "shop.secure": "Sichere Zahlung über Stripe. Danach kommst du hierher zurück.",
+  "shop.secure": "Sichere Zahlung über Paddle, unseren Händler. Deine Kartendaten sehen wir nie.",
   "shop.off": "Punkte kaufen ist noch nicht verfügbar.",
   "shop.error": "Die Zahlung konnte nicht gestartet werden. Versuch es noch mal.",
   "shop.thanks": "Danke! Deine Punkte erscheinen in ein paar Sekunden.",

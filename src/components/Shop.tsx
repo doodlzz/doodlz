@@ -249,8 +249,7 @@ function PointsTab() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${readToken() ?? ''}` },
         body: JSON.stringify({ pack }),
       });
-      const data = (await res.json()) as { url?: string; transactionId?: string; error?: string };
-      if (data.url) return void (window.location.href = data.url);
+      const data = (await res.json()) as { transactionId?: string; error?: string };
       if (data.transactionId && shop?.paddle) {
         const paddle = await loadPaddle(shop.paddle.token, shop.paddle.env);
         paddle.Checkout.open({ transactionId: data.transactionId, settings: { successUrl: `${window.location.origin}/?points=success` } });

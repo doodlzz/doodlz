@@ -535,7 +535,7 @@ export const zh: Dict = {
   "shop.starter": "入门礼包",
   "shop.best": "最划算",
   "shop.popular": "热门",
-  "shop.secure": "由 Stripe 安全支付，付款后会回到这里。",
+  "shop.secure": "由我们的经销商 Paddle 安全支付，我们不会看到你的银行卡信息。",
   "shop.off": "暂时还不能购买积分。",
   "shop.error": "无法开始付款，请重试。",
   "shop.thanks": "谢谢！积分会在几秒内到账。",
