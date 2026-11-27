@@ -14,7 +14,7 @@ export default function CookieNotice() {
   const [seen, setSeen] = useState(() => readJson<{ v?: number }>(KEY, {}).v === 1);
   if (seen) return null;
   return (
-    <div role="region" aria-label="Storage notice" className="fixed inset-x-0 bottom-0 z-[90] flex flex-wrap items-center justify-center gap-3 bg-indigo-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_-4px_0_rgba(0,0,0,0.25)]">
+    <div role="region" aria-label="Storage notice" className="fixed inset-x-0 bottom-0 z-[90] flex flex-wrap items-center justify-center gap-3 bg-[#1e1b4b] px-4 py-3 text-sm font-semibold text-white shadow-[0_-4px_0_rgba(0,0,0,0.25)]">
       <p className="max-w-2xl">
         {t('consent.text')}{' '}
         <a href="/cookies" className="underline underline-offset-2">
